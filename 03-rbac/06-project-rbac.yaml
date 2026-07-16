@@ -1,0 +1,99 @@
+# Per-project RoleBindings — who can do what in each tenant namespace
+
+# ── inference-team-project ─────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alice-admin
+  namespace: inference-team-project
+subjects:
+  - kind: User
+    name: alice
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# ── ds-team-project ────────────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bob-admin
+  namespace: ds-team-project
+subjects:
+  - kind: User
+    name: bob
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# Alice can view/contribute to DS shared project
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alice-contributor
+  namespace: ds-team-project
+subjects:
+  - kind: User
+    name: alice
+roleRef:
+  kind: ClusterRole
+  name: edit
+  apiGroup: rbac.authorization.k8s.io
+---
+# ── research-team-project ──────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: charlie-admin
+  namespace: research-team-project
+subjects:
+  - kind: User
+    name: charlie
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# ── finetune-team-project ──────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: diana-admin
+  namespace: finetune-team-project
+subjects:
+  - kind: User
+    name: diana
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# ── analytics-project ──────────────────────────────────────────────────────────
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eve-admin
+  namespace: analytics-project
+subjects:
+  - kind: User
+    name: eve
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# Eve can view DS shared project (read-only; no GPU access)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: eve-viewer
+  namespace: ds-team-project
+subjects:
+  - kind: User
+    name: eve
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,48 @@
+# Wave 1 — RHOAI DataScienceCluster
+# API v2 required for RHOAI 3.3+. Field name: aipipelines (not datasciencepipelines).
+# kueue: Unmanaged — Kueue is managed by the separate openshift-kueue-operator subscription.
+apiVersion: datasciencecluster.opendatahub.io/v2
+kind: DataScienceCluster
+metadata:
+  name: default-dsc
+spec:
+  components:
+    dashboard:
+      managementState: Managed
+    workbenches:
+      managementState: Managed
+    kserve:
+      managementState: Managed
+      serving:
+        ingressGateway:
+          certificate:
+            type: SelfSigned
+        managementState: Managed
+        name: knative-serving
+    modelmeshserving:
+      managementState: Managed
+    aipipelines:
+      managementState: Managed
+    modelregistry:
+      managementState: Managed
+      registriesNamespace: rhoai-model-registries
+    ray:
+      managementState: Managed
+    codeflare:
+      managementState: Managed
+    trainingoperator:
+      managementState: Managed
+    llamastackoperator:
+      managementState: Managed
+    kueue:
+      managementState: Unmanaged
+    trustyai:
+      managementState: Removed
+    feastoperator:
+      managementState: Removed
+    mlflowoperator:
+      managementState: Removed
+    modelsasservice:
+      managementState: Removed
+    trainer:
+      managementState: Removed

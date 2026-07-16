@@ -1,0 +1,25 @@
+# LocalQueues for global-gpu-queue — one per tenant namespace
+# Used during UC7 demo to submit cross-cluster workloads
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: global-queue
+  namespace: inference-team-project
+spec:
+  clusterQueue: global-gpu-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: global-queue
+  namespace: finetune-team-project
+spec:
+  clusterQueue: global-gpu-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: global-queue
+  namespace: research-team-project
+spec:
+  clusterQueue: global-gpu-queue

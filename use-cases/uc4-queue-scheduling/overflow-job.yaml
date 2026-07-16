@@ -1,0 +1,47 @@
+# UC4: Queue-Based Scheduling — overflow job (job 5, goes Inadmissible)
+#
+# Apply AFTER 05-queue-demo-jobs.yaml — all 4 MIG slices are in use.
+# charlie has hit borrowingLimit=3 AND physical capacity is exhausted.
+# This job goes Inadmissible — tracked by Kueue, zero pods created.
+#
+# Key demo moment: delete one of jobs 1-4 → Kueue auto-admits this job.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-research-queue-overflow
+  namespace: research-team-project
+  labels:
+    demo/uc: uc4-queue-scheduling
+    demo/role: overflow
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc4-queue-scheduling
+        demo/role: overflow
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: gpu-workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, time, socket
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"Job 5 — was QUEUED (Inadmissible), now ADMITTED by Kueue!")
+              print(f"Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
+              x = torch.randn(1024, 1024, device='cuda')
+              for i in range(20):
+                  _ = torch.mm(x, x)
+                  time.sleep(5)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

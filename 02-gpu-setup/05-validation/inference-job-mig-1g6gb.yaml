@@ -1,0 +1,40 @@
+# Validation job — confirms 1g.6gb MIG slices are working on A30
+# Run after MIG configuration to verify GPU slices are properly partitioned
+# Can also be used as a live UC1/UC3 demo workload
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: validate-mig-1g6gb
+  namespace: research-team-project
+  labels:
+    demo/purpose: validation
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: gpu-validation
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch
+              assert torch.cuda.is_available(), "CUDA not available!"
+              name = torch.cuda.get_device_name(0)
+              mem  = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[PASS] GPU detected  : {name}")
+              print(f"[PASS] VRAM          : {mem:.1f} GB")
+              assert mem < 8, f"Expected ~6GB for 1g.6gb slice, got {mem:.1f}GB"
+              print(f"[PASS] Memory within expected range for 1g.6gb MIG slice")
+              x = torch.randn(1024, 1024, device='cuda')
+              y = torch.mm(x, x)
+              print(f"[PASS] Matrix multiply: OK (result shape {y.shape})")
+              print("=== 1g.6gb MIG slice validation PASSED ===")
+          resources:
+            requests:
+              nvidia.com/mig-1g.6gb: "1"
+            limits:
+              nvidia.com/mig-1g.6gb: "1"

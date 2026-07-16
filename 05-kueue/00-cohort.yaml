@@ -1,0 +1,9 @@
+# Kueue Cohort — shared resource pool across all team ClusterQueues.
+# In Kueue 1.3.x (Red Hat build), Cohort is a first-class object that must
+# exist before ClusterQueues can reference it via spec.cohort.
+# All 5 team ClusterQueues reference this cohort to enable cross-team borrowing.
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: Cohort
+metadata:
+  name: gpuaas-cohort
+spec: {}

@@ -1,0 +1,63 @@
+# UC2: ResourceClaimTemplate — the blueprint Kubernetes copies per pod
+#
+# How it works:
+#   1. This template exists ahead of time (you apply it once)
+#   2. Pod spec references this template by name
+#   3. When Kubernetes creates the pod, it automatically creates a NEW ResourceClaim
+#      from this template — one ResourceClaim per pod instance
+#   4. DRA scheduler finds a free device matching the DeviceClass
+#   5. ResourceClaim is bound to that device → pod starts
+#   6. When pod is deleted → ResourceClaim is deleted → GPU returned to pool
+#
+# API version: resource.k8s.io/v1 (GA in OCP 4.21 / K8s 1.34)
+# v1 DeviceRequest structure: uses `exactly:` wrapper (replaces v1beta1 allocationMode)
+---
+# Full A30 GPU (GPU 1 on Cluster A — non-MIG, 24GB)
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: a30-gpu-claim
+  namespace: research-team-project
+  labels:
+    demo/uc: uc2-dra
+spec:
+  spec:
+    devices:
+      requests:
+        - name: gpu
+          exactly:
+            deviceClassName: nvidia-a30-gpu
+            count: 1
+---
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: a30-gpu-claim
+  namespace: inference-team-project
+  labels:
+    demo/uc: uc2-dra
+spec:
+  spec:
+    devices:
+      requests:
+        - name: gpu
+          exactly:
+            deviceClassName: nvidia-a30-gpu
+            count: 1
+---
+# MIG 1g.6gb slice (GPU 0 on Cluster A — 4 slices available, 6GB each)
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaimTemplate
+metadata:
+  name: a30-mig-1g6gb-claim
+  namespace: research-team-project
+  labels:
+    demo/uc: uc2-dra
+spec:
+  spec:
+    devices:
+      requests:
+        - name: gpu
+          exactly:
+            deviceClassName: nvidia-a30-mig-1g6gb
+            count: 1

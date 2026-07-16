@@ -1,0 +1,63 @@
+# UC5: Workload Priority & Preemption — medium-priority filler (alice's queue)
+#
+# inference-cluster-queue: nominalQuota=1 for mig-1g.6gb, withinClusterQueue: LowerPriority
+#
+# Demo flow:
+#   Step 2: Apply this file — alice's medium-priority dev job fills her 1 mig-1g.6gb slot
+#           Pod starts Running → slot occupied
+#   Step 3: Apply 07-priority-inference-job.yaml — alice's high-priority production job arrives
+#           Kueue triggers withinClusterQueue: LowerPriority preemption
+#           Medium-priority dev pod is deleted → high-priority pod starts Running
+#   Step 4: Inspect the preempted workload (Inadmissible, not deleted, not failed)
+#   Step 5: Watch medium-priority job re-admit when high-priority finishes
+#
+# Key message: "Production workloads always win. Dev workloads yield automatically.
+#               No manual intervention — priority is platform policy."
+#
+# NOTE: kueue.x-k8s.io/queue-name and priority-class must be in Pod template LABELS
+#       Red Hat Kueue uses Pod integration.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alice-dev-medium
+  namespace: inference-team-project
+  labels:
+    demo/uc: uc5-priority
+    demo/user: alice
+    demo/priority: medium
+    demo/role: dev-experiment
+    kueue.x-k8s.io/queue-name: inference-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc5-priority
+        demo/user: alice
+        demo/priority: medium
+        demo/role: dev-experiment
+        kueue.x-k8s.io/queue-name: inference-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: gpu-workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, time, socket
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[alice-dev] MEDIUM-PRIORITY experiment | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB")
+              print("[alice-dev] Running dev experiment — will be preempted by production job")
+              x = torch.randn(1024, 1024, device='cuda')
+              for i in range(360):
+                  _ = torch.mm(x, x)
+                  time.sleep(5)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

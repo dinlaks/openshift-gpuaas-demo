@@ -1,0 +1,182 @@
+# UC8: Gang Scheduling — All GPUs Must Start Together
+#
+# Demo flow:
+#   Step 1: Occupy 3 of the 4 available mig-1g.6gb slices with medium-priority filler jobs
+#           (fillers are medium-priority = same as gang → Kueue will NOT auto-preempt them)
+#   Step 2: Submit the gang job requesting 4x mig-1g.6gb simultaneously
+#           → gang stays Inadmissible (only 1 slot free, needs 4 — atomic)
+#   Step 3: Show the gang job is Inadmissible — zero pods created
+#   Step 4: Delete all 3 fillers simultaneously → 4 slots free
+#           → Kueue admits ALL 4 gang pods at the exact same moment [the dramatic reveal]
+#
+# Why same-priority fillers? research-cluster-queue has withinClusterQueue: LowerPriority.
+# Low-priority fillers would be auto-preempted immediately when the gang job arrives —
+# there would be no "Inadmissible" state to show the audience. Using medium-priority
+# fillers preserves the dramatic wait: gang stays inadmissible until we manually free 4 slots.
+#
+# Key message: "No partial start. 4 GPUs or nothing. Kueue enforces atomicity."
+#
+# Watch gang scheduling:
+#   oc get workloads -n research-team-project -w
+#   oc get pods -n research-team-project -l demo/uc=uc8-gang -w
+
+# ── Step 1: Occupy 3 slices with medium-priority filler jobs ──────────────────
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: filler-job-1
+  namespace: research-team-project
+  labels:
+    demo/uc: uc8-gang
+    demo/role: filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc8-gang
+        demo/role: filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c, "import time; print('Filler 1 holding GPU slice'); time.sleep(3600)"]  # holds slot for demo
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: filler-job-2
+  namespace: research-team-project
+  labels:
+    demo/uc: uc8-gang
+    demo/role: filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc8-gang
+        demo/role: filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c, "import time; print('Filler 2 holding GPU slice'); time.sleep(3600)"]  # holds slot for demo
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: filler-job-3
+  namespace: research-team-project
+  labels:
+    demo/uc: uc8-gang
+    demo/role: filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc8-gang
+        demo/role: filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c, "import time; print('Filler 3 holding GPU slice'); time.sleep(3600)"]  # holds slot for demo
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+# ── Step 2: The gang-scheduled training job — needs 4x mig-1g.6gb simultaneously ──
+# parallelism=4 tells Kueue this is a 4-pod gang (minCount=4).
+# Kueue will NOT start ANY pod until all 4 can be admitted together.
+# With 3 medium-priority fillers holding 3/4 slots: this stays Inadmissible.
+# Delete all 3 fillers → 4 free → Kueue starts all 4 pods at the same second.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: distributed-training-gang
+  namespace: research-team-project
+  labels:
+    demo/uc: uc8-gang
+    demo/role: gang-job
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 4       # Kueue treats all 4 pods as an atomic unit (minCount=4)
+  completions: 4
+  completionMode: Indexed
+  template:
+    metadata:
+      labels:
+        demo/uc: uc8-gang
+        demo/role: gang-worker
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: training-worker
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os, socket
+              rank = int(os.getenv('JOB_COMPLETION_INDEX', '0'))
+              world_size = 4
+              hostname = socket.gethostname()
+              gpu = torch.cuda.get_device_name(0)
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print("=" * 60)
+              print(f"UC8: GANG SCHEDULING — ATOMIC DISTRIBUTED TRAINING")
+              print("=" * 60)
+              print(f"Worker rank     : {rank}/{world_size}")
+              print(f"Node            : {hostname}")
+              print(f"GPU             : {gpu}")
+              print(f"VRAM            : {mem:.1f} GB")
+              print(f"Gang guarantee  : All {world_size} workers started SIMULTANEOUSLY")
+              print("=" * 60)
+              # Simulate distributed training workload
+              x = torch.randn(2048, 2048, device='cuda')
+              for step in range(50):
+                  grad = torch.mm(x, x.T)
+                  x = x - 0.01 * grad[:2048, :2048]
+                  if step % 10 == 0:
+                      print(f"[Worker {rank}] Training step {step}/50")
+                  time.sleep(2)
+              print(f"[Worker {rank}] Training complete — no deadlock possible!")
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

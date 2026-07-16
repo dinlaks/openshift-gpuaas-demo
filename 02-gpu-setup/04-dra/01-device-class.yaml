@@ -1,0 +1,44 @@
+# UC2: DRA DeviceClasses for NVIDIA A30 — full GPU and MIG slice allocation
+#
+# DRA scope: Cluster A only (Cluster B stays device-plugin for UC7 MultiKueue)
+#   Full GPU via DRA    : ✅ End-to-end working (GPU 1, Cluster A)
+#   MIG 1g.6gb via DRA  : ✅ Scheduling works; CDI injection has upstream driver bug
+#
+# The NVIDIA DRA driver publishes every GPU and MIG slice as a DRA device
+# under driver name "gpu.nvidia.com". DeviceClass CEL expressions select
+# devices by attribute — type ("gpu" vs "mig"), productName, profile, etc.
+#
+# NOTE: Verify attribute names from live ResourceSlices after DRA driver starts:
+#   oc get resourceslices -o yaml | grep -A20 attributes
+# Adjust CEL expressions below if attribute names differ.
+---
+# Full A30 GPU (GPU 1 on Cluster A — non-MIG, 24GB)
+apiVersion: resource.k8s.io/v1
+kind: DeviceClass
+metadata:
+  name: nvidia-a30-gpu
+  labels:
+    demo/uc: uc2-dra
+spec:
+  selectors:
+    - cel:
+        expression: >
+          device.driver == "gpu.nvidia.com" &&
+          device.attributes["gpu.nvidia.com"].productName.contains("A30") &&
+          device.attributes["gpu.nvidia.com"].type == "gpu"
+---
+# MIG 1g.6gb slice (GPU 0 on both clusters — 4 slices each, 6GB each)
+apiVersion: resource.k8s.io/v1
+kind: DeviceClass
+metadata:
+  name: nvidia-a30-mig-1g6gb
+  labels:
+    demo/uc: uc2-dra
+spec:
+  selectors:
+    - cel:
+        expression: >
+          device.driver == "gpu.nvidia.com" &&
+          device.attributes["gpu.nvidia.com"].productName.contains("A30") &&
+          device.attributes["gpu.nvidia.com"].type == "mig" &&
+          device.attributes["gpu.nvidia.com"].profile == "1g.6gb"

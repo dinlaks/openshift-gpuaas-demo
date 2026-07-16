@@ -1,0 +1,77 @@
+# UC7: Global GPU Pool Demo — submit once, platform picks the cluster
+#
+# Architecture:
+#   Cluster A: 4× mig-1g.6gb (GPU 0 only — GPU 1 is full A30 for DRA)
+#   Cluster B: 6× mig-1g.6gb (GPU 0: 4× + GPU 1: 2× from MIG-mixed)
+#   Global pool: 10× mig-1g.6gb total
+#
+# Demo flow:
+#   Step 3: Fill ALL 4 of Cluster A's mig-1g.6gb slots with local filler jobs
+#           (apply 07-uc7-cluster-a-fillers.yaml to local queues)
+#   Step 4: Submit THIS job to global-queue (MultiKueue enabled)
+#           → Cluster A is full (4/4 slots used)
+#           → MultiKueue checks Cluster B → finds free 1g.6gb capacity
+#           → Dispatches job to Cluster B automatically
+#   Step 5: Confirm job running on Cluster B
+#
+# Watch cross-cluster dispatch:
+#   oc get workloads -n inference-team-project -w         # hub — watch RESERVED IN column
+#   oc get jobs -n inference-team-project --context cluster-b  # spoke confirmation
+#
+# Key message: "Submit once to global-queue. Platform picked Dell 750 #2 automatically."
+#
+# NOTE: kueue.x-k8s.io/queue-name in Job labels (for batch/job integration on hub)
+#       AND in Pod template labels (for spoke pod routing via Pod integration on spoke).
+#       Hub Job stays SUSPENDED by MultiKueue so hub pods are never created.
+#       Spoke shadow Job creates pods with queue-name label → routed to global-queue on spoke.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: global-inference-job
+  namespace: inference-team-project
+  labels:
+    demo/uc: uc7-multi-cluster
+    demo/user: alice
+    kueue.x-k8s.io/queue-name: global-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc7-multi-cluster
+        demo/user: alice
+        kueue.x-k8s.io/queue-name: global-queue   # needed for spoke pod routing via Pod integration
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: inference
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, socket
+              hostname = socket.gethostname()
+              gpu = torch.cuda.get_device_name(0)
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print("=" * 60)
+              print("UC7: GLOBAL GPU POOL — CROSS-CLUSTER DISPATCH")
+              print("=" * 60)
+              print(f"Running on node : {hostname}")
+              print(f"GPU             : {gpu}")
+              print(f"GPU Memory      : {mem:.1f} GB  (1g.6gb MIG slice on Cluster B)")
+              print("Cluster A full  : Job dispatched to Cluster B by MultiKueue")
+              print("User submitted to global-queue — no cluster specified")
+              print("=" * 60)
+              x = torch.randn(2048, 2048, device='cuda')
+              for i in range(36):       # 36 × 15s = 9 min — gives presenter time to show all steps
+                  _ = torch.mm(x, x)
+                  print(f"  inference step {i+1}/36 | GPU mem: {torch.cuda.memory_allocated()/1e9:.2f}GB")
+                  time.sleep(15)
+              print("Job complete — ran on whichever cluster had capacity!")
+          resources:
+            requests:
+              nvidia.com/mig-1g.6gb: "1"
+            limits:
+              nvidia.com/mig-1g.6gb: "1"

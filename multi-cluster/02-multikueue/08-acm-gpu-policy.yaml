@@ -1,0 +1,192 @@
+# ACM Policy: GPU Fleet Governance
+#
+# Enforces consistent GPU configuration across ALL managed clusters.
+# Any cluster in gpuaas-clusterset that drifts gets auto-remediated.
+#
+# Architecture difference between clusters:
+#   Cluster A: GPU 0 = 4× 1g.6gb, GPU 1 = Full A30 (NO MIG — used for DRA)
+#   Cluster B: GPU 0 = 4× 1g.6gb, GPU 1 = MIG-mixed (1× 2g.12gb + 2× 1g.6gb)
+#
+# What this policy governs:
+#   1. GPU Operator Subscription must exist on every cluster
+#   2. MIG parted-config with BOTH cluster profiles (applied per-node via nvidia.com/mig.config label)
+#   3. Kueue ResourceFlavors must be identical (MultiKueue requires same flavors on all clusters)
+#   4. MultiKueue service account must exist on spoke clusters (in open-cluster-management-agent-addon)
+#
+# Apply on Cluster A (Hub) — ACM propagates enforcement to all managed clusters:
+#   oc apply -f 07-acm/08-acm-gpu-policy.yaml
+#   oc apply -f 07-acm/09-acm-policy-binding.yaml
+
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: gpuaas-gpu-config-policy
+  namespace: open-cluster-management
+  annotations:
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+spec:
+  remediationAction: enforce   # auto-fix drift — not just report it
+  disabled: false
+  policy-templates:
+
+    # ── 1. GPU Operator must be installed ──────────────────────────────────────
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: gpu-operator-namespace
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: nvidia-gpu-operator
+
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: gpu-operator-subscription
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operators.coreos.com/v1alpha1
+                kind: Subscription
+                metadata:
+                  name: gpu-operator-certified
+                  namespace: nvidia-gpu-operator
+                spec:
+                  channel: v25.10
+                  name: gpu-operator-certified
+                  source: certified-operators
+                  sourceNamespace: openshift-marketplace
+
+    # ── 2. MIG config — different per cluster ─────────────────────────────────
+    # cluster-a-profile: GPU 0 = 4× 1g.6gb, GPU 1 = NO MIG (full A30 for DRA)
+    # cluster-b-profile: GPU 0 = 4× 1g.6gb, GPU 1 = MIG-mixed (1× 2g.12gb + 2× 1g.6gb)
+    # ACM enforces the ConfigMap exists; nodes are labelled separately with
+    # nvidia.com/mig.config=cluster-a-profile or cluster-b-profile to activate.
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: mig-parted-config
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: mig-parted-config
+                  namespace: nvidia-gpu-operator
+                data:
+                  config.yaml: |
+                    version: v1
+                    mig-configs:
+                      # Cluster A: GPU 0 = 4× 1g.6gb, GPU 1 = full A30 (no MIG)
+                      cluster-a-profile:
+                        - devices: [0]
+                          mig-enabled: true
+                          mig-devices:
+                            "1g.6gb": 4
+                        - devices: [1]
+                          mig-enabled: false    # full GPU for DRA demo
+                      # Cluster B: GPU 0 = 4× 1g.6gb, GPU 1 = MIG-mixed
+                      cluster-b-profile:
+                        - devices: [0]
+                          mig-enabled: true
+                          mig-devices:
+                            "1g.6gb": 4
+                        - devices: [1]
+                          mig-enabled: true
+                          mig-devices:
+                            "2g.12gb": 1
+                            "1g.6gb": 2
+
+    # ── 3. Kueue ResourceFlavors must be identical (MultiKueue requires this) ─
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: kueue-resource-flavor-1g6gb
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: kueue.x-k8s.io/v1beta2
+                kind: ResourceFlavor
+                metadata:
+                  name: a30-mig-1g6gb
+                spec:
+                  nodeLabels:
+                    demo/gpu-type: a30
+                    demo/gpu-mode: mig-mixed
+                  tolerations:
+                    - key: nvidia.com/gpu
+                      operator: Exists
+                      effect: NoSchedule
+
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: kueue-resource-flavor-2g12gb
+        spec:
+          remediationAction: enforce
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: kueue.x-k8s.io/v1beta2
+                kind: ResourceFlavor
+                metadata:
+                  name: a30-mig-2g12gb
+                spec:
+                  nodeLabels:
+                    demo/gpu-type: a30
+                    demo/gpu-gpu1-mode: mig-mixed
+                  tolerations:
+                    - key: nvidia.com/gpu
+                      operator: Exists
+                      effect: NoSchedule
+
+    # ── 4. MultiKueue service account must exist on every spoke ───────────────
+    # SA lives in open-cluster-management-agent-addon (where ACM creates it via
+    # ManagedServiceAccount). The ClusterRoleBinding grants it cluster-admin on the spoke.
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: multikueue-service-account
+        spec:
+          remediationAction: enforce
+          severity: medium
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: ClusterRoleBinding
+                metadata:
+                  name: multikueue-worker-admin
+                subjects:
+                  - kind: ServiceAccount
+                    name: multikueue-worker
+                    namespace: open-cluster-management-agent-addon
+                roleRef:
+                  kind: ClusterRole
+                  name: cluster-admin
+                  apiGroup: rbac.authorization.k8s.io

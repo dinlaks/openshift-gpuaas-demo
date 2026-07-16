@@ -1,0 +1,40 @@
+# IBM Granite 3.1 2B — Central MaaS InferenceService
+# Hosted on Cluster A GPU 1 (full A30, 24GB). Token auth enabled per user.
+# Model: ibm-granite/granite-3.1-2b-instruct (~5GB, public HuggingFace, no token needed)
+# Deployment mode: RawDeployment (not Serverless — no Knative dependency)
+#
+# NOTE: Deploy via RHOAI Dashboard Model Catalog (recommended) or apply this YAML directly.
+# If applying directly, ensure ServingRuntime (02-serving-runtime.yaml) is applied first.
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: granite-maas
+  namespace: maas-project
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: "IBM Granite 3.1 2B — Shared LLM Endpoint"
+    openshift.io/description: "Central LLM inference. All users access via API token — one GPU serves everyone."
+    serving.kserve.io/deploymentMode: RawDeployment
+    security.opendatahub.io/enable-auth: "true"
+    opendatahub.io/model-type: generative
+    opendatahub.io/hardware-profile-name: gpu-a30-full-maas
+    opendatahub.io/hardware-profile-namespace: maas-project
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: vLLM
+      runtime: vllm-maas-runtime
+      storageUri: "hf://ibm-granite/granite-3.1-2b-instruct"
+      resources:
+        requests:
+          nvidia.com/gpu: "1"
+          cpu: "4"
+          memory: 16Gi
+        limits:
+          nvidia.com/gpu: "1"
+          cpu: "8"
+          memory: 32Gi
+    nodeSelector:
+      demo/gpu-gpu1-mode: full

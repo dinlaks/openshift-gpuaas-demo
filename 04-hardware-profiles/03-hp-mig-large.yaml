@@ -1,0 +1,80 @@
+# RHOAI HardwareProfile — large MIG slice tier.
+# Template: ${MIG_LARGE_RESOURCE}, ${GPU_TYPE} substituted by deploy script.
+
+apiVersion: infrastructure.opendatahub.io/v1
+kind: HardwareProfile
+metadata:
+  name: gpu-mig-large
+  namespace: inference-team-project
+  annotations:
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Large Slice"
+    opendatahub.io/disabled: "false"
+spec:
+  displayName: "${GPU_TYPE} MIG — Large Slice (${MIG_LARGE_RESOURCE})"
+  description: "Large MIG partition. Ideal for inference and fine-tuning workloads."
+  enabled: true
+  identifiers:
+    - displayName: "CPU"
+      identifier: "cpu"
+      minCount: "2"
+      maxCount: "8"
+      defaultCount: "4"
+    - displayName: "Memory"
+      identifier: "memory"
+      minCount: "8Gi"
+      maxCount: "32Gi"
+      defaultCount: "16Gi"
+    - displayName: "GPU (MIG large)"
+      identifier: "${MIG_LARGE_RESOURCE}"
+      minCount: "1"
+      maxCount: "1"
+      defaultCount: "1"
+  scheduling:
+    type: Node
+    node:
+      nodeSelector:
+        demo/gpu-mode: mig-mixed
+        demo/gpu-type: ${GPU_TYPE}
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+---
+apiVersion: infrastructure.opendatahub.io/v1
+kind: HardwareProfile
+metadata:
+  name: gpu-mig-large
+  namespace: finetune-team-project
+  annotations:
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Large Slice"
+    opendatahub.io/disabled: "false"
+spec:
+  displayName: "${GPU_TYPE} MIG — Large Slice (${MIG_LARGE_RESOURCE})"
+  description: "Large MIG partition. Ideal for LLM fine-tuning."
+  enabled: true
+  identifiers:
+    - displayName: "CPU"
+      identifier: "cpu"
+      minCount: "2"
+      maxCount: "8"
+      defaultCount: "4"
+    - displayName: "Memory"
+      identifier: "memory"
+      minCount: "8Gi"
+      maxCount: "32Gi"
+      defaultCount: "16Gi"
+    - displayName: "GPU (MIG large)"
+      identifier: "${MIG_LARGE_RESOURCE}"
+      minCount: "1"
+      maxCount: "1"
+      defaultCount: "1"
+  scheduling:
+    type: Node
+    node:
+      nodeSelector:
+        demo/gpu-mode: mig-mixed
+        demo/gpu-type: ${GPU_TYPE}
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule

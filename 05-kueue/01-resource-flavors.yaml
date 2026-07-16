@@ -1,0 +1,51 @@
+# Kueue ResourceFlavors — define the GPU tiers available in this cluster.
+# This is a template: ${MIG_SMALL_FLAVOR}, ${GPU_TYPE} etc. are substituted
+# from env.sh by deploy-kueue.sh (via envsubst). Do not oc apply directly.
+#
+# GPU_TYPE drives all flavor names and resource names automatically.
+# Set GPU_TYPE in env.sh: a30 | a100 | a100-80gb | h100 | h200
+
+# ── Small MIG slice — economy GPU tier ───────────────────────────────────────
+# Research, development, low-priority batch, gang scheduling (UC8).
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: ${MIG_SMALL_FLAVOR}
+spec:
+  nodeLabels:
+    demo/gpu-type: ${GPU_TYPE}
+    demo/gpu-mode: mig-mixed
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+# ── Large MIG slice — premium GPU tier ───────────────────────────────────────
+# Inference, fine-tuning, high-priority workloads, UC9 weekday mode.
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: ${MIG_LARGE_FLAVOR}
+spec:
+  nodeLabels:
+    demo/gpu-type: ${GPU_TYPE}
+    demo/gpu-gpu1-mode: mig-mixed
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+---
+# ── Full GPU — large model tier ───────────────────────────────────────────────
+# DRA demo (UC2), large model inference (UC6), full-GPU training.
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: ${FULL_GPU_FLAVOR}
+spec:
+  nodeLabels:
+    demo/gpu-type: ${GPU_TYPE}
+    demo/gpu-gpu1-mode: full
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule

@@ -1,0 +1,57 @@
+# UC5: Priority & Preemption — high-priority inference job (alice)
+#
+# Apply AFTER 07-priority-demo-jobs.yaml fills bob's ds-cluster-queue.
+# This high-priority job (value=1000) preempts one of bob's medium-priority jobs (value=500).
+#
+# Demo flow:
+#   1. Bob's medium-priority DS jobs fill ds-cluster-queue
+#   2. Apply this file — alice's high-priority job arrives
+#   3. Kueue preempts one of bob's jobs to admit alice's job immediately
+#   4. Bob's evicted job becomes Inadmissible (not deleted) — re-admits when alice finishes
+#
+# NOTE: kueue.x-k8s.io/queue-name must be in Pod template LABELS (not Job annotations)
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alice-inference-job
+  namespace: inference-team-project
+  labels:
+    demo/uc: uc5-priority
+    demo/user: alice
+    demo/role: preemptor
+    kueue.x-k8s.io/queue-name: inference-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc5-priority
+        demo/user: alice
+        demo/role: preemptor
+        kueue.x-k8s.io/queue-name: inference-queue
+        kueue.x-k8s.io/priority-class: high-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: inference
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, time, socket
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[alice] HIGH-PRIORITY inference | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
+              print("[alice] Preempted a medium-priority job to run — production SLA met.")
+              x = torch.randn(2048, 2048, device='cuda')
+              for i in range(36):  # 3 min — short enough to watch re-admit live
+                  _ = torch.mm(x, x)
+                  if i % 12 == 0:
+                      print(f"  inference running... {i*5}s elapsed")
+                  time.sleep(5)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

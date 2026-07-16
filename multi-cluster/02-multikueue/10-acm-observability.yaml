@@ -1,0 +1,114 @@
+# ACM Observability — unified GPU metrics from BOTH Dell 750s
+#
+# Enables the ACM Observability stack (Thanos + Grafana on Hub).
+# Each managed cluster sends its Prometheus metrics (including DCGM GPU metrics)
+# to the Hub via remote-write.
+#
+# What you get in the demo:
+#   - Single Grafana dashboard on Cluster A showing GPU utilization, memory,
+#     temperature, and power from BOTH Dell 750s simultaneously
+#   - See which tenant is using which GPU slice across both clusters
+#   - Real-time DCGM metrics: DCGM_FI_DEV_GPU_UTIL, DCGM_FI_DEV_MEM_COPY_UTIL,
+#     DCGM_FI_DEV_FB_USED, DCGM_FI_DEV_POWER_USAGE
+#
+# Pre-requisite: Object storage for Thanos (can use local MinIO for demo)
+# Apply on Cluster A (Hub):
+#   oc apply -f 07-acm/10-acm-observability.yaml
+
+# ── Object storage secret (MinIO for demo — replace with S3 in production) ────
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: open-cluster-management-observability
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: thanos-object-storage
+  namespace: open-cluster-management-observability
+type: Opaque
+stringData:
+  thanos.yaml: |
+    type: s3
+    config:
+      bucket: thanos
+      endpoint: minio.minio.svc.cluster.local:9000
+      insecure: true
+      access_key: minio
+      secret_key: minio123
+---
+# ── MultiClusterObservability — enables the full ACM observability stack ───────
+apiVersion: observability.open-cluster-management.io/v1beta2
+kind: MultiClusterObservability
+metadata:
+  name: observability
+spec:
+  enableDownsampling: true
+  observabilityAddonSpec:
+    enableMetrics: true
+    interval: 15            # scrape interval in seconds
+  storageConfig:
+    metricObjectStorage:
+      name: thanos-object-storage
+      key: thanos.yaml
+    statefulSetSize: 10Gi
+    storageClass: lvms-vg1    # provided by LVM Operator on SNO hub
+---
+# ── Custom metrics allowlist — include DCGM GPU metrics from all clusters ──────
+# By default ACM Observability collects only platform metrics.
+# This ConfigMap adds DCGM metrics to the collection list.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observability-metrics-custom-allowlist
+  namespace: open-cluster-management-observability
+data:
+  metrics_list.yaml: |
+    names:
+      # GPU utilization per MIG slice
+      - DCGM_FI_DEV_GPU_UTIL
+      - DCGM_FI_DEV_MEM_COPY_UTIL
+      # GPU memory usage
+      - DCGM_FI_DEV_FB_USED
+      - DCGM_FI_DEV_FB_FREE
+      - DCGM_FI_DEV_FB_TOTAL
+      # Clock speeds
+      - DCGM_FI_DEV_SM_CLOCK
+      - DCGM_FI_DEV_MEM_CLOCK
+      # Power and thermal
+      - DCGM_FI_DEV_POWER_USAGE
+      - DCGM_FI_DEV_GPU_TEMP
+      - DCGM_FI_DEV_MEMORY_TEMP
+      - DCGM_FI_DEV_TOTAL_ENERGY_CONSUMPTION
+      # MIG-specific metrics
+      - DCGM_FI_PROF_GR_ENGINE_ACTIVE
+      - DCGM_FI_PROF_SM_ACTIVE
+      - DCGM_FI_PROF_DRAM_ACTIVE
+      - DCGM_FI_PROF_PIPE_TENSOR_ACTIVE
+      # NVLink (may not apply to A30 — zero if unsupported)
+      - DCGM_FI_DEV_NVLINK_BANDWIDTH_TOTAL
+      # Instance type for MIG
+      - DCGM_FI_DEV_MIG_GPU_INSTANCE_ID
+      # Job-level GPU tracking
+      - DCGM_FI_DEV_VGPU_LICENSE_STATUS
+    rules:
+      # Aggregate GPU utilization per cluster and namespace
+      - record: cluster:gpu_utilization:avg
+        expr: avg by (cluster, namespace, exported_pod) (DCGM_FI_DEV_GPU_UTIL)
+      # Total GPU memory used per cluster
+      - record: cluster:gpu_memory_used_mb:sum
+        expr: sum by (cluster) (DCGM_FI_DEV_FB_USED)
+      # GPU slices in use vs total per cluster
+      - record: cluster:gpu_slices_used:sum
+        expr: count by (cluster) (DCGM_FI_DEV_GPU_UTIL > 0)
+---
+# ── DCGM MIG GPU Grafana Dashboard ────────────────────────────────────────────
+# ACM Observability auto-discovers ConfigMaps with prefix "grafana-dashboard-"
+# Dashboard source: https://grafana.com/grafana/dashboards/23382
+# Shows GPU utilization, MIG memory, power, temperature from both clusters.
+# To regenerate: curl -sLo grafana-dcgm-mig-dashboard.json
+#   "https://grafana.com/api/dashboards/23382/revisions/latest/download"
+# Then: oc create configmap grafana-dashboard-dcgm-mig-gpu
+#   -n open-cluster-management-observability
+#   --from-file=dcgm-mig-dashboard.json=grafana-dcgm-mig-dashboard.json
+# (Cannot embed 59KB JSON in YAML — apply separately via the command above)

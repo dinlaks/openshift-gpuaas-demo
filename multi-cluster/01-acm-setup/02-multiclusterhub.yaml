@@ -1,0 +1,18 @@
+apiVersion: operator.open-cluster-management.io/v1
+kind: MultiClusterHub
+metadata:
+  name: multiclusterhub
+  namespace: open-cluster-management
+spec:
+  availabilityConfig: Basic   # Basic = single replica; use High for production
+  disableHubSelfManagement: false
+  overrides:
+    components:
+      - enabled: true
+        name: search
+      - enabled: true
+        name: console
+      - enabled: false
+        name: insights    # disable for demo — reduces resource footprint
+      - enabled: false
+        name: grc

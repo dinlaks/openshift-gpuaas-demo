@@ -1,0 +1,24 @@
+# OpenShift OAuth — HTPasswd Identity Provider for GPUaaS demo
+#
+# This file externalizes the OAuth IDP config as a declarative YAML.
+# The 01-htpasswd-setup.sh script creates the Secret and patches OAuth
+# programmatically; this file serves as the GitOps reference for the
+# desired IDP configuration.
+#
+# NOTE: The Secret (gpuaas-htpasswd) must exist in openshift-config
+# before applying this. Run 01-htpasswd-setup.sh first.
+#
+# Apply:
+#   oc apply -f 02-rbac/02-idp-oauth.yaml
+apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+    - name: gpuaas-htpasswd
+      mappingMethod: claim
+      type: HTPasswd
+      htpasswd:
+        fileData:
+          name: gpuaas-htpasswd   # Secret created by 01-htpasswd-setup.sh

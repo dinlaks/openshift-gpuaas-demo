@@ -1,0 +1,128 @@
+# UC7: Cluster A fillers — occupy all 4× mig-1g.6gb slots on Cluster A
+#
+# Cluster A has 4× mig-1g.6gb (GPU 0 only). Fill them across team queues:
+#   - charlie's research-queue:  nominalQuota=1 + borrowing=3 → fills 4 total
+#
+# After applying this file, all 4 Cluster A MIG slots are occupied.
+# Submitting 07-uc7-demo-job.yaml to global-queue then forces MultiKueue
+# to dispatch to Cluster B (which has 6× mig-1g.6gb free).
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uc7-cluster-a-filler-1
+  namespace: research-team-project
+  labels:
+    demo/uc: uc7-filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc7-filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c, "import time; print('[filler-1] Holding Cluster A mig-1g.6gb slot 1/4'); time.sleep(3600)"]
+          resources:
+            requests:
+              nvidia.com/mig-1g.6gb: "1"
+            limits:
+              nvidia.com/mig-1g.6gb: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uc7-cluster-a-filler-2
+  namespace: research-team-project
+  labels:
+    demo/uc: uc7-filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc7-filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c, "import time; print('[filler-2] Holding Cluster A mig-1g.6gb slot 2/4'); time.sleep(3600)"]
+          resources:
+            requests:
+              nvidia.com/mig-1g.6gb: "1"
+            limits:
+              nvidia.com/mig-1g.6gb: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uc7-cluster-a-filler-3
+  namespace: research-team-project
+  labels:
+    demo/uc: uc7-filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc7-filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c, "import time; print('[filler-3] Holding Cluster A mig-1g.6gb slot 3/4'); time.sleep(3600)"]
+          resources:
+            requests:
+              nvidia.com/mig-1g.6gb: "1"
+            limits:
+              nvidia.com/mig-1g.6gb: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uc7-cluster-a-filler-4
+  namespace: research-team-project
+  labels:
+    demo/uc: uc7-filler
+    kueue.x-k8s.io/queue-name: research-queue
+    kueue.x-k8s.io/priority-class: medium-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc7-filler
+        kueue.x-k8s.io/queue-name: research-queue
+        kueue.x-k8s.io/priority-class: medium-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c, "import time; print('[filler-4] Holding Cluster A mig-1g.6gb slot 4/4'); time.sleep(3600)"]
+          resources:
+            requests:
+              nvidia.com/mig-1g.6gb: "1"
+            limits:
+              nvidia.com/mig-1g.6gb: "1"

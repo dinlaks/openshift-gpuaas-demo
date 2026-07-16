@@ -1,0 +1,53 @@
+# Kueue LocalQueues — per-namespace submission points for workloads
+# Users submit workloads to their LocalQueue; Kueue routes to the ClusterQueue.
+# LocalQueues enforce the namespace boundary — users cannot submit to other teams' queues.
+
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: inference-queue
+  namespace: inference-team-project
+  annotations:
+    description: "Submit inference workloads here — Kueue routes to inference-cluster-queue"
+spec:
+  clusterQueue: inference-cluster-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: ds-queue
+  namespace: ds-team-project
+  annotations:
+    description: "Submit DS workloads here — Kueue routes to ds-cluster-queue"
+spec:
+  clusterQueue: ds-cluster-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: research-queue
+  namespace: research-team-project
+  annotations:
+    description: "Submit research experiments here — Kueue routes to research-cluster-queue"
+spec:
+  clusterQueue: research-cluster-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: finetune-queue
+  namespace: finetune-team-project
+  annotations:
+    description: "Submit fine-tuning jobs here — Kueue routes to finetune-cluster-queue"
+spec:
+  clusterQueue: finetune-cluster-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  name: analytics-queue
+  namespace: analytics-project
+  annotations:
+    description: "Submit analytics workloads here — CPU only"
+spec:
+  clusterQueue: analytics-cluster-queue

@@ -1,0 +1,155 @@
+# UC3: Multi-Tenant Quota Enforcement — cohort borrowing demo
+#
+# Charlie's research-cluster-queue: nominalQuota=1, borrowingLimit=3 (mig-1g.6gb)
+# Alice and Bob queues are idle → charlie borrows their unused nominalQuota
+#
+# Result: all 4 jobs Admitted
+#   - Job 1: charlie's own nominalQuota (1 slice)
+#   - Jobs 2-4: borrowing from idle inference (1) + ds (2) nominalQuota
+#
+# NOTE: kueue.x-k8s.io/queue-name must be in Pod template LABELS (not just Job annotations)
+#       Red Hat Kueue uses Pod integration, not batch/v1 Job integration.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-research-job-1
+  namespace: research-team-project
+  labels:
+    demo/uc: uc3-quota
+    demo/user: charlie
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc3-quota
+        demo/user: charlie
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, socket, time
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[job-1] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (own nominalQuota)")
+              time.sleep(3600)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-research-job-2
+  namespace: research-team-project
+  labels:
+    demo/uc: uc3-quota
+    demo/user: charlie
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc3-quota
+        demo/user: charlie
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, socket, time
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[job-2] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (borrowing from cohort)")
+              time.sleep(3600)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-research-job-3
+  namespace: research-team-project
+  labels:
+    demo/uc: uc3-quota
+    demo/user: charlie
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc3-quota
+        demo/user: charlie
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, socket, time
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[job-3] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (borrowing from cohort)")
+              time.sleep(3600)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-research-job-4
+  namespace: research-team-project
+  labels:
+    demo/uc: uc3-quota
+    demo/user: charlie
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc3-quota
+        demo/user: charlie
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, socket, time
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[job-4] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (borrowing — hits borrowingLimit=3)")
+              time.sleep(3600)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

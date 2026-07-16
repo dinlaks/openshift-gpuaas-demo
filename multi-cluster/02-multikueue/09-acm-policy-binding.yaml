@@ -1,0 +1,30 @@
+# PlacementBinding — applies gpuaas-gpu-config-policy to all clusters in gpuaas-clusterset
+# Every cluster ACM adds to this ClusterSet immediately receives GPU governance enforcement.
+# Adding a third Dell 750 to ACM = it automatically gets identical GPU config within minutes.
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: gpuaas-policy-placement
+  namespace: open-cluster-management
+spec:
+  clusterSets:
+    - gpuaas-clusterset
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchLabels:
+            demo/gpu-type: a30
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: gpuaas-gpu-policy-binding
+  namespace: open-cluster-management
+placementRef:
+  name: gpuaas-policy-placement
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: gpuaas-gpu-config-policy
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy

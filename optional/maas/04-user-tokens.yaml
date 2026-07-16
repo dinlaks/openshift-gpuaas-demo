@@ -1,0 +1,27 @@
+# Per-user API tokens for MaaS access
+# Each ServiceAccount gets its own token — revoke one without affecting others
+# Users call the same endpoint with their individual Bearer token
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alice-token
+  namespace: maas-project
+  labels:
+    demo/maas-user: alice
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bob-token
+  namespace: maas-project
+  labels:
+    demo/maas-user: bob
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: charlie-token
+  namespace: maas-project
+  labels:
+    demo/maas-user: charlie

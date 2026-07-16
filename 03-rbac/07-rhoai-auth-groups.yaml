@@ -1,0 +1,23 @@
+# RHOAI Auth CR — controls dashboard admin and allowed groups (RHOAI 3.3+)
+#
+# In RHOAI 3.3+, this Auth CR (services.platform.opendatahub.io/v1alpha1)
+# is the source of truth for dashboard access control — NOT OdhDashboardConfig.
+# The RHOAI operator creates it with "rhods-admins" as default. Apply this
+# AFTER the operator has settled (see 07-patch-rhoai-auth.sh).
+#
+# adminGroups:   Full RHOAI platform admin access — dashboard Settings,
+#                hardware profiles, serving runtimes, user management
+# allowedGroups: Who can log into RHOAI at all — system:authenticated
+#                means any valid OpenShift user can access the dashboard
+#
+# Apply:
+#   bash 02-rbac/07-patch-rhoai-auth.sh
+apiVersion: services.platform.opendatahub.io/v1alpha1
+kind: Auth
+metadata:
+  name: auth
+spec:
+  adminGroups:
+    - gpuaas-platform-admins
+  allowedGroups:
+    - system:authenticated

@@ -1,0 +1,103 @@
+# UC6: Model-Specific Placement — two jobs targeting different GPU tiers
+#
+# alice-large-model-inference → inference-team-project → full A30 (GPU 1, nvidia.com/gpu)
+#   nodeSelector: demo/gpu-gpu1-mode: full
+#   Shows: ~23.7GB VRAM — full A30, no MIG partitioning
+#
+# charlie-small-model-dev → research-team-project → 1g.6gb MIG slice (GPU 0)
+#   nodeSelector: demo/gpu-mode: mig-mixed
+#   Shows: ~5.8GB VRAM — silicon-enforced memory boundary
+#
+# Key demo point: same cluster, different nodeSelectors embedded in HardwareProfiles —
+# users pick a tier from a dropdown, the platform routes to the correct GPU automatically.
+#
+# NOTE: kueue.x-k8s.io/queue-name must be in BOTH Job metadata annotations (batch/job integration)
+#       AND Pod template labels (Pod integration). Kueue 1.3 uses batch/job integration when
+#       both batch/job and pod frameworks are enabled — Job annotation takes precedence.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alice-large-model-inference
+  namespace: inference-team-project
+  labels:
+    demo/uc: uc6-placement
+    demo/user: alice
+    demo/model-size: large
+    kueue.x-k8s.io/queue-name: inference-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc6-placement
+        demo/user: alice
+        demo/model-size: large
+        kueue.x-k8s.io/queue-name: inference-queue
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        demo/gpu-gpu1-mode: full
+        demo/gpu-type: a30
+      containers:
+        - name: large-model
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, socket, time
+              node = socket.gethostname()
+              gpu = torch.cuda.get_device_name(0)
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[alice] Node: {node} | GPU: {gpu} | VRAM: {mem:.1f}GB (full A30, no MIG)")
+              print("[alice] Large model inference — 24GB GPU tier selected via hardware profile")
+              time.sleep(1800)
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-small-model-dev
+  namespace: research-team-project
+  labels:
+    demo/uc: uc6-placement
+    demo/user: charlie
+    demo/model-size: small
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc6-placement
+        demo/user: charlie
+        demo/model-size: small
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        demo/gpu-mode: mig-mixed
+      containers:
+        - name: small-model
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, socket, time
+              node = socket.gethostname()
+              gpu = torch.cuda.get_device_name(0)
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[charlie] Node: {node} | GPU: {gpu} | VRAM: {mem:.1f}GB (1g.6gb MIG slice)")
+              print("[charlie] Small model dev — economy MIG tier selected via hardware profile")
+              time.sleep(1800)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

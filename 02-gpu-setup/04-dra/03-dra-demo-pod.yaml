@@ -1,0 +1,127 @@
+# UC2: DRA Demo — capability-based GPU allocation via Dynamic Resource Allocation
+#
+# Two DRA jobs shown side by side:
+#   1. dra-gpu-job  — claims a full A30 (GPU 1) via DeviceClass nvidia-a30-gpu
+#   2. dra-mig-job  — claims a 1g.6gb MIG slice (GPU 0) via DeviceClass nvidia-a30-mig-1g6gb
+#
+# In both cases Kubernetes auto-creates a ResourceClaim from the template,
+# the DRA scheduler selects a free device by CEL capability expression,
+# and the claim is deleted automatically when the pod completes.
+# No hardcoded resource names (nvidia.com/gpu, nvidia.com/mig-1g.6gb) in the pod spec.
+#
+# Demo commands:
+#   oc apply -f 03-gpu-management/03-dra/03-dra-demo-pod.yaml
+#
+#   # Watch ResourceClaims created dynamically as pods start:
+#   oc get resourceclaim -n research-team-project -w
+#
+#   # See which device each claim was bound to:
+#   oc describe resourceclaim -n research-team-project
+#
+#   # Confirm both pods running:
+#   oc get pods -n research-team-project -l demo/uc=uc2-dra
+
+# ── DRA — full A30 (GPU 1, 24GB) via ResourceClaim ────────────────────────────
+# BEFORE this pod: no ResourceClaim exists
+# AFTER Kubernetes creates this pod: a new ResourceClaim is auto-created from
+# the template, bound to a free A30 GPU, and injected into the container
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dra-gpu-job
+  namespace: research-team-project
+  labels:
+    demo/uc: uc2-dra
+    demo/approach: dra
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc2-dra
+        demo/approach: dra
+    spec:
+      restartPolicy: Never
+      runtimeClassName: nvidia-cdi
+      # Kubernetes creates a ResourceClaim from this template for each pod.
+      # The claim is deleted automatically when the pod is deleted.
+      resourceClaims:
+        - name: gpu
+          resourceClaimTemplateName: a30-gpu-claim
+      containers:
+        - name: gpu-workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, os, time, socket
+              print("DRA: ResourceClaim created dynamically by Kubernetes at schedule time")
+              print(f"Node : {socket.gethostname()}")
+              print(f"GPU  : {torch.cuda.get_device_name(0)}")
+              print(f"VRAM : {torch.cuda.get_device_properties(0).total_memory/1e9:.1f}GB")
+              print("No hardcoded resource name in pod spec.")
+              print("DeviceClass selected this A30 by capability, not by name.")
+              print("Holding ResourceClaim open for demo — teardown-dra.sh will release it.")
+              time.sleep(1800)  # hold GPU claim open for 30 min during demo
+          # No resources.requests needed — DRA handles GPU allocation
+          resources: {}
+---
+# ── DRA — MIG 1g.6gb slice (GPU 0) via ResourceClaim ─────────────────────────
+# DeviceClass CEL: type=="mig" && migProfile=="1g.6gb"
+# Targets GPU 0 on Cluster A (4× 1g.6gb slices). Scheduler picks a free slice.
+# No "nvidia.com/mig-1g.6gb" hardcoded in pod spec — capability drives selection.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dra-mig-job
+  namespace: research-team-project
+  labels:
+    demo/uc: uc2-dra
+    demo/approach: dra-mig
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc2-dra
+        demo/approach: dra-mig
+    spec:
+      restartPolicy: Never
+      runtimeClassName: nvidia-cdi
+      resourceClaims:
+        - name: gpu
+          resourceClaimTemplateName: a30-mig-1g6gb-claim
+      containers:
+        - name: gpu-workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import socket, subprocess, time
+              print("DRA MIG: ResourceClaim selected a 1g.6gb MIG slice by capability")
+              print(f"Node : {socket.gethostname()}")
+              print("No hardcoded resource name in pod spec — migProfile CEL drove selection.")
+              print()
+              try:
+                r = subprocess.run(
+                  ["nvidia-smi", "--query-mig/gpu=gpu_name,gpu.uuid,mig.mode.current",
+                   "--format=csv,noheader"],
+                  capture_output=True, text=True, timeout=10)
+                if r.returncode == 0 and r.stdout.strip():
+                  print("MIG devices visible in container (CDI-injected):")
+                  print(r.stdout)
+                else:
+                  r2 = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, timeout=10)
+                  print("GPU topology (nvidia-smi -L):")
+                  print(r2.stdout)
+              except Exception as e:
+                print(f"nvidia-smi not available: {e}")
+              print("ResourceClaim bound to: gpu-0-mig-1g6gb-14-x (verify: oc describe resourceclaim -n research-team-project)")
+              print("Holding ResourceClaim open for demo — teardown-dra.sh will release it.")
+              time.sleep(1800)  # hold MIG claim open for 30 min during demo
+          # No resources.requests — DRA handles MIG slice allocation
+          resources: {}

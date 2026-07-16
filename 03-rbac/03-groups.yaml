@@ -1,0 +1,47 @@
+# GPUaaS Demo User Groups — maps to GPU access tiers
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: gpuaas-platform-admins
+users:
+  - gpuaas-admin
+---
+# Full GPU (dedicated A30 or large MIG slice) — Alice: inference team
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: gpu-inference-users
+users:
+  - alice
+---
+# MIG small slice (1g.6gb A30) — Bob: data science team
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: gpu-standard-users
+users:
+  - bob
+---
+# MIG small slice (1g.6gb or 2g.12gb A30) — Charlie: research team
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: gpu-research-users
+users:
+  - charlie
+---
+# Large MIG slice (4g.24gb A30) — Diana: fine-tuning team
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: gpu-finetune-users
+users:
+  - diana
+---
+# No GPU — Eve: analytics only
+apiVersion: user.openshift.io/v1
+kind: Group
+metadata:
+  name: cpu-only-users
+users:
+  - eve

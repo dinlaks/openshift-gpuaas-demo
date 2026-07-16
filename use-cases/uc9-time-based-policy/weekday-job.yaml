@@ -1,0 +1,59 @@
+# UC9: Time-Based Policy — weekday inference job (baseline)
+# Runs on full A30 GPU (nvidia.com/gpu, 24GB) on Cluster A GPU 1 during weekdays.
+# Cluster A has no mig-2g.12gb slices — GPU 1 is a full non-MIG A30 (${FULL_GPU_FLAVOR} flavor).
+#
+# Lifecycle (managed by CronJobs in gpuaas-system):
+#   Fri 6pm: gpuaas-weekend-policy CronJob deletes this job, zeroes nvidia.com/gpu quota,
+#            then applies uc9-inference-weekend (${MIG_SMALL_RESOURCE}, economy tier).
+#   Mon 6am: gpuaas-weekday-policy CronJob deletes the weekend job, restores quota,
+#            then applies this job again via the uc9-job-templates ConfigMap.
+#
+# Apply:   oc apply -f 06-kueue/09-uc9-weekday-job.yaml
+# Cleanup: oc delete job uc9-inference-weekday -n inference-team-project
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: uc9-inference-weekday
+  namespace: inference-team-project
+  labels:
+    demo/uc: uc9-time-based
+    demo/slot: weekday
+    kueue.x-k8s.io/queue-name: inference-queue
+    kueue.x-k8s.io/priority-class: high-priority
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc9-time-based
+        demo/slot: weekday
+        kueue.x-k8s.io/queue-name: inference-queue
+        kueue.x-k8s.io/priority-class: high-priority
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: inference
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os, socket
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"WEEKDAY INFERENCE | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
+              print("Running on PREMIUM full A30 (24GB) — weekday policy active")
+              x = torch.randn(4096, 4096, device='cuda')
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              for i in range(duration // 5):
+                  _ = torch.mm(x, x)
+                  if i % 12 == 0:
+                      print(f"  inference running... {i*5}s elapsed")
+                  time.sleep(5)
+          env:
+            - name: JOB_DURATION_SECS
+              value: "1800"
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"

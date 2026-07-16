@@ -1,0 +1,108 @@
+# MIG partition profiles — applied by nvidia-mig-manager when a node is labelled
+# nvidia.com/mig.config=<profile-name>
+#
+# Add profiles for your GPU type. See full reference:
+# https://github.com/NVIDIA/mig-parted/tree/main/examples
+#
+# Profiles used in this demo:
+#   mixed-a30     → A30: 1x2g.12gb + 2x1g.6gb  (UC1, UC9 weekend mode)
+#   all-1g.6gb    → A30: 4x1g.6gb               (UC8 gang scheduling)
+#   all-2g.10gb   → A100: 4x2g.10gb
+#   all-1g.5gb    → A100: 7x1g.5gb
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mig-parted-config
+  namespace: nvidia-gpu-operator
+data:
+  config.yaml: |
+    version: v1
+    mig-configs:
+      # ── NVIDIA A30 profiles ────────────────────────────────────────────────
+      all-1g.6gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            1g.6gb: 4
+
+      mixed-a30:
+        - devices: [0]
+          mig-enabled: true
+          mig-devices:
+            1g.6gb: 4
+        - devices: [1]
+          mig-enabled: true
+          mig-devices:
+            2g.12gb: 1
+            1g.6gb:  2
+
+      all-4g.24gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            4g.24gb: 1
+
+      # ── NVIDIA A100 profiles (40GB) ────────────────────────────────────────
+      all-1g.5gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            1g.5gb: 7
+
+      all-2g.10gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            2g.10gb: 3
+
+      all-3g.20gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            3g.20gb: 2
+
+      # ── NVIDIA H100 SXM5 / PCIe (80GB) ───────────────────────────────────────
+      all-1g.10gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            1g.10gb: 7
+
+      all-2g.20gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            2g.20gb: 3
+
+      all-3g.40gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            3g.40gb: 2
+
+      # ── NVIDIA H100 NVL (94GB) ─────────────────────────────────────────────
+      all-1g.12gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            1g.12gb: 7
+
+      all-3g.47gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            3g.47gb: 2
+
+      # ── NVIDIA H200 SXM5 (141GB) ───────────────────────────────────────────
+      all-1g.18gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            1g.18gb: 7
+
+      all-2g.35gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            2g.35gb: 3

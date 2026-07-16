@@ -1,0 +1,298 @@
+# UC9: Time-Based GPU Placement — Kueue-managed, CronJob-triggered
+#
+# Operating model:
+#   Mon-Fri: Alice's inference team runs on premium full A30 (nvidia.com/gpu, 24GB)
+#   Fri 6pm: Weekend CronJob fires:
+#            Step 1 → Delete weekday premium job
+#            Step 2 → stopPolicy: HoldAndDrain + nvidia.com/gpu nominalQuota: "0"
+#                     (enforcement: no one can run premium GPU over the weekend)
+#            Step 3 → stopPolicy: None
+#            Step 4 → Apply economy weekend job (nvidia.com/mig-1g.6gb, 6.2GB)
+#                     Kueue admits the economy job normally
+#   Mon 6am: Weekday CronJob fires:
+#            Step 1 → Delete weekend economy job
+#            Step 2 → Restore nvidia.com/gpu nominalQuota: "1"
+#            Step 3 → Apply weekday premium job (nvidia.com/gpu, 24GB)
+#                     Kueue admits the premium job on full A30
+#
+# Why job lifecycle management (not just quota patching):
+#   Kueue cannot auto-switch a workload between different resource types at runtime.
+#   nvidia.com/gpu and nvidia.com/mig-1g.6gb are different Kubernetes extended resources.
+#   The CronJob deletes the old job and creates the new one — the correct production pattern.
+#   Kueue quota enforcement (nominalQuota=0) ensures no manual workarounds are possible.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gpuaas-system
+  labels:
+    app.kubernetes.io/part-of: gpuaas-demo
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpuaas-policy-manager
+  namespace: gpuaas-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gpuaas-queue-policy-manager
+rules:
+  - apiGroups: ["kueue.x-k8s.io"]
+    resources: ["clusterqueues"]
+    verbs: ["get", "list", "patch", "update"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gpuaas-queue-policy-manager
+subjects:
+  - kind: ServiceAccount
+    name: gpuaas-policy-manager
+    namespace: gpuaas-system
+roleRef:
+  kind: ClusterRole
+  name: gpuaas-queue-policy-manager
+  apiGroup: rbac.authorization.k8s.io
+---
+# ConfigMap holds the job templates so CronJob scripts stay clean (no YAML-in-bash).
+# The weekend CronJob mounts this and applies /config/weekend-job.yaml.
+# The weekday CronJob applies /config/weekday-job.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uc9-job-templates
+  namespace: gpuaas-system
+  labels:
+    demo/uc: uc9-time-based
+data:
+  weekend-job.yaml: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: uc9-inference-weekend
+      namespace: inference-team-project
+      labels:
+        demo/uc: uc9-time-based
+        demo/slot: weekend
+        kueue.x-k8s.io/queue-name: inference-queue
+        kueue.x-k8s.io/priority-class: high-priority
+    spec:
+      parallelism: 1
+      completions: 1
+      template:
+        metadata:
+          labels:
+            demo/uc: uc9-time-based
+            demo/slot: weekend
+            kueue.x-k8s.io/queue-name: inference-queue
+            kueue.x-k8s.io/priority-class: high-priority
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: inference
+              image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+              command: [python, -u, -c]
+              args:
+                - |
+                  import torch, time, os, socket
+                  mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+                  print(f"WEEKEND ECONOMY | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
+                  print("Running on ECONOMY 1g.6gb MIG slice (6.2GB) -- weekend policy active")
+                  duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+                  for i in range(duration // 5):
+                      if i % 12 == 0:
+                          print(f"  weekend inference running... {i*5}s elapsed")
+                      time.sleep(5)
+              env:
+                - name: JOB_DURATION_SECS
+                  value: "1800"
+              resources:
+                requests:
+                  nvidia.com/mig-1g.6gb: "1"
+                limits:
+                  nvidia.com/mig-1g.6gb: "1"
+  weekday-job.yaml: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: uc9-inference-weekday
+      namespace: inference-team-project
+      labels:
+        demo/uc: uc9-time-based
+        demo/slot: weekday
+        kueue.x-k8s.io/queue-name: inference-queue
+        kueue.x-k8s.io/priority-class: high-priority
+    spec:
+      parallelism: 1
+      completions: 1
+      template:
+        metadata:
+          labels:
+            demo/uc: uc9-time-based
+            demo/slot: weekday
+            kueue.x-k8s.io/queue-name: inference-queue
+            kueue.x-k8s.io/priority-class: high-priority
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: inference
+              image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+              command: [python, -u, -c]
+              args:
+                - |
+                  import torch, time, os, socket
+                  mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+                  print(f"WEEKDAY INFERENCE | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
+                  print("Running on PREMIUM full A30 (24GB) -- weekday policy active")
+                  x = torch.randn(4096, 4096, device='cuda')
+                  duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+                  for i in range(duration // 5):
+                      _ = torch.mm(x, x)
+                      if i % 12 == 0:
+                          print(f"  premium inference running... {i*5}s elapsed")
+                      time.sleep(5)
+              env:
+                - name: JOB_DURATION_SECS
+                  value: "1800"
+              resources:
+                requests:
+                  nvidia.com/gpu: "1"
+                limits:
+                  nvidia.com/gpu: "1"
+---
+# Weekend CronJob — fires every Friday at 6pm
+# Deletes premium job, locks out premium GPU tier, starts economy job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gpuaas-weekend-policy
+  namespace: gpuaas-system
+  labels:
+    demo/uc: uc9-time-based
+spec:
+  schedule: "0 18 * * 5"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            demo/uc: uc9-time-based
+            demo/policy: weekend
+        spec:
+          serviceAccountName: gpuaas-policy-manager
+          restartPolicy: OnFailure
+          volumes:
+            - name: job-templates
+              configMap:
+                name: uc9-job-templates
+          containers:
+            - name: policy-manager
+              image: registry.redhat.io/openshift4/ose-cli:latest
+              volumeMounts:
+                - name: job-templates
+                  mountPath: /config
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  echo "=== GPUaaS Weekend Policy: $(date) ==="
+
+                  echo "Step 1: Delete weekday premium job"
+                  oc delete job uc9-inference-weekday -n inference-team-project --ignore-not-found || true
+
+                  echo "Step 2: HoldAndDrain — enforce no premium GPU access this weekend"
+                  oc patch clusterqueue inference-cluster-queue \
+                    --type=merge -p '{"spec":{"stopPolicy":"HoldAndDrain"}}'
+
+                  echo "Waiting 30s for drain..."
+                  sleep 30
+
+                  echo "Step 3: Set nvidia.com/gpu nominalQuota to 0 — premium tier locked"
+                  oc patch clusterqueue inference-cluster-queue --type=json \
+                    -p '[{"op":"replace","path":"/spec/resourceGroups/1/flavors/0/resources/0/nominalQuota","value":"0"}]'
+
+                  echo "Step 4: Release hold"
+                  oc patch clusterqueue inference-cluster-queue \
+                    --type=merge -p '{"spec":{"stopPolicy":"None"}}'
+
+                  echo "Step 5: Apply economy weekend job (mig-1g.6gb, 6.2GB)"
+                  oc apply -f /config/weekend-job.yaml
+
+                  echo "=== Weekend policy active: inference on economy 6.2GB MIG slice ==="
+                  oc get clusterqueue inference-cluster-queue \
+                    -o jsonpath='{.spec.resourceGroups}' | python3 -m json.tool
+---
+# Weekday CronJob — fires every Monday at 6am
+# Deletes economy job, restores premium GPU quota, starts weekday job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gpuaas-weekday-policy
+  namespace: gpuaas-system
+  labels:
+    demo/uc: uc9-time-based
+spec:
+  schedule: "0 6 * * 1"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            demo/uc: uc9-time-based
+            demo/policy: weekday
+        spec:
+          serviceAccountName: gpuaas-policy-manager
+          restartPolicy: OnFailure
+          volumes:
+            - name: job-templates
+              configMap:
+                name: uc9-job-templates
+          containers:
+            - name: policy-manager
+              image: registry.redhat.io/openshift4/ose-cli:latest
+              volumeMounts:
+                - name: job-templates
+                  mountPath: /config
+              command: ["/bin/bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  echo "=== GPUaaS Weekday Policy: $(date) ==="
+
+                  echo "Step 1: Delete weekend economy job"
+                  oc delete job uc9-inference-weekend -n inference-team-project --ignore-not-found || true
+
+                  echo "Step 2: Restore nvidia.com/gpu nominalQuota to 1 — premium tier open"
+                  oc patch clusterqueue inference-cluster-queue --type=json \
+                    -p '[{"op":"replace","path":"/spec/resourceGroups/1/flavors/0/resources/0/nominalQuota","value":"1"}]'
+
+                  echo "Step 3: Apply weekday premium job (nvidia.com/gpu, full A30 24GB)"
+                  oc apply -f /config/weekday-job.yaml
+
+                  echo "=== Weekday policy active: inference on premium full A30 (24GB) ==="
+                  oc get clusterqueue inference-cluster-queue \
+                    -o jsonpath='{.spec.resourceGroups}' | python3 -m json.tool
+
+# Live demo trigger — simulate weekend/weekday policy instantly
+# Step 1: Apply weekday baseline job first:
+#   oc apply -f 06-kueue/09-uc9-weekday-job.yaml
+# Step 2: Trigger weekend policy manually:
+#   oc create job --from=cronjob/gpuaas-weekend-policy weekend-now -n gpuaas-system
+# Step 3: Watch logs, confirm economy job running (VRAM: 6.2GB)
+# Step 4: Restore weekday:
+#   oc create job --from=cronjob/gpuaas-weekday-policy weekday-now -n gpuaas-system
+#
+# NOTE: The standalone weekday job YAML is at 06-kueue/09-uc9-weekday-job.yaml
+#       The standalone weekend job YAML is at 06-kueue/09-uc9-weekend-job.yaml
+#       Both are also embedded in the uc9-job-templates ConfigMap for CronJob use.

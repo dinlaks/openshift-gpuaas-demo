@@ -1,0 +1,22 @@
+# ManagedClusterSet — logical group of both Dell 750 clusters
+# MultiKueue (UC7), ACM Placement, and ACM Observability use this ClusterSet.
+#
+# After applying, move local-cluster into this set (it defaults to "default"):
+#   oc label managedcluster local-cluster \
+#     cluster.open-cluster-management.io/clusterset=gpuaas-clusterset --overwrite
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSet
+metadata:
+  name: gpuaas-clusterset
+  labels:
+    demo/purpose: gpuaas-gpu-pool
+---
+# Bind gpuaas-clusterset to the observability namespace so the MCO placementrule
+# controller can discover both clusters and deploy the observability addon.
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: gpuaas-clusterset
+  namespace: open-cluster-management-observability
+spec:
+  clusterSet: gpuaas-clusterset

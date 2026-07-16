@@ -1,0 +1,47 @@
+# Device Plugin ConfigMap — different config keys per cluster GPU layout
+#
+# Cluster A (Dell 750 #1):
+#   GPU 0: MIG all-1g.6gb  → node-gpu0-mig-1g6gb
+#   GPU 1: Full GPU (no MIG) → node-gpu1-full
+#
+# Cluster B (Dell 750 #2):
+#   GPU 0: MIG all-1g.6gb  → node-gpu0-mig-1g6gb  (same as Cluster A)
+#   GPU 1: MIG-mixed        → node-gpu1-mig-mixed
+#
+# Node labels (set by node-labels-multinode.sh) determine which config key applies:
+#   demo/gpu-gpu0-mode=mig-1g6gb  → uses node-gpu0-mig-1g6gb key
+#   demo/gpu-gpu1-mode=full       → uses node-gpu1-full key       (Cluster A only)
+#   demo/gpu-gpu1-mode=mig-mixed  → uses node-gpu1-mig-mixed key  (Cluster B only)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: device-plugin-config
+  namespace: nvidia-gpu-operator
+data:
+  # GPU 0 on both clusters: 4× 1g.6gb MIG slices
+  node-gpu0-mig-1g6gb: |-
+    version: v1
+    flags:
+      migStrategy: single
+    sharing:
+      timeSlicing:
+        resources:
+          - name: nvidia.com/mig-1g.6gb
+            replicas: 1
+
+  # GPU 1 on Cluster A: full A30, no MIG — exposes nvidia.com/gpu for DRA
+  node-gpu1-full: |-
+    version: v1
+    flags:
+      migStrategy: none
+    sharing:
+      timeSlicing:
+        resources:
+          - name: nvidia.com/gpu
+            replicas: 1
+
+  # GPU 1 on Cluster B: MIG-mixed — 1× 2g.12gb + 2× 1g.6gb
+  node-gpu1-mig-mixed: |-
+    version: v1
+    flags:
+      migStrategy: mixed

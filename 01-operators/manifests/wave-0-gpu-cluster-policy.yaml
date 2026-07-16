@@ -1,0 +1,89 @@
+apiVersion: nvidia.com/v1
+kind: ClusterPolicy
+metadata:
+  name: gpu-cluster-policy
+spec:
+  operator:
+    defaultRuntime: crio
+    initContainer: {}
+    runtimeClass: nvidia
+    useOpenShiftDriverToolkit: true
+  dcgm:
+    enabled: true
+  dcgmExporter:
+    config:
+      name: ""
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  devicePlugin:
+    enabled: true
+    mps:
+      root: /run/nvidia/mps
+  driver:
+    certConfig:
+      name: ""
+    enabled: true
+    kernelModuleConfig:
+      name: ""
+    licensingConfig:
+      configMapName: ""
+      nlsEnabled: false
+    repoConfig:
+      configMapName: ""
+    upgradePolicy:
+      autoUpgrade: true
+      drain:
+        deleteEmptyDir: false
+        enable: false
+        force: false
+        timeoutSeconds: 300
+      maxParallelUpgrades: 1
+      maxUnavailable: 25%
+      podDeletion:
+        deleteEmptyDir: false
+        force: false
+        timeoutSeconds: 300
+      waitForCompletion:
+        podSelector: ""
+        timeoutSeconds: 0
+    virtualTopology:
+      config: ""
+  gfd:
+    enabled: true
+  migManager:
+    config:
+      default: all-disabled
+      name: mig-parted-config
+    enabled: true
+  mig:
+    strategy: mixed
+  nodeStatusExporter:
+    enabled: true
+  psp:
+    enabled: false
+  sandboxDevicePlugin:
+    enabled: true
+  sandboxWorkloads:
+    defaultWorkload: container
+    enabled: false
+  toolkit:
+    enabled: true
+    installDir: /usr/local/nvidia
+  # CDI is required for the NVIDIA DRA driver to inject GPU devices into containers
+  # via DRA-allocated ResourceClaims. Without this, DRA pods cannot access GPUs.
+  cdi:
+    enabled: true
+    default: true
+
+  daemonsets:
+    tolerations:
+      - key: "demo/gpu-mode"
+        operator: "Exists"
+        effect: "NoSchedule"
+
+  validator:
+    plugin:
+      env:
+        - name: WITH_WORKLOAD
+          value: "false"    # bare metal — no pre-existing GPU workload to validate against

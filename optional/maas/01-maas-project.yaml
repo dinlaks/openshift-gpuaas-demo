@@ -1,0 +1,84 @@
+# MaaS Project — central model serving namespace
+# The admin deploys Granite 3.1 2B here. Users access via API token — no per-user GPU.
+# GPU: Cluster A GPU 1 (full A30, 24GB) via hardware profile gpu-a30-full
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: maas-project
+  labels:
+    opendatahub.io/dashboard: "true"
+    modelmesh-enabled: "false"
+  annotations:
+    openshift.io/display-name: "Model as a Service"
+    openshift.io/description: "Centrally hosted LLM endpoint. Users access via API token — no per-user GPU."
+---
+# gpuaas-admin deploys and manages the model
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gpuaas-admin-maas
+  namespace: maas-project
+subjects:
+  - kind: User
+    name: gpuaas-admin
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# alice, bob, charlie — view access (can see the endpoint, retrieve their tokens)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: users-view-maas
+  namespace: maas-project
+subjects:
+  - kind: User
+    name: alice
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: bob
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: charlie
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+# Hardware profile — scoped to maas-project, targets GPU 1 (full A30, non-MIG)
+apiVersion: infrastructure.opendatahub.io/v1
+kind: HardwareProfile
+metadata:
+  name: gpu-a30-full-maas
+  namespace: maas-project
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    demo/description: "Full A30 GPU (GPU 1, Cluster A) — for centrally hosted model serving"
+spec:
+  displayName: "A30 GPU — Full (MaaS)"
+  identifiers:
+    - identifier: nvidia.com/gpu
+      displayName: NVIDIA A30 GPU
+      minCount: 1
+      maxCount: 1
+      defaultCount: 1
+    - identifier: cpu
+      displayName: CPU
+      minCount: 4
+      maxCount: 8
+      defaultCount: 4
+    - identifier: memory
+      displayName: Memory
+      minCount: 16Gi
+      maxCount: 32Gi
+      defaultCount: 16Gi
+  scheduling:
+    type: Node
+    node:
+      nodeSelector:
+        demo/gpu-gpu1-mode: full

@@ -1,0 +1,39 @@
+# Kueue WorkloadPriorityClasses — UC5: Workload Priority
+# Higher value = higher priority. Kueue admits high-priority workloads ahead of lower ones.
+# Combined with preemption policy, high-priority workloads can displace lower-priority ones.
+#
+# v1beta2 API: value and description are top-level fields (not under spec:)
+#
+# Demo story:
+#   1. Fill queue with medium-priority DS jobs (quota exhausted)
+#   2. Submit high-priority inference job
+#   3. Watch Kueue preempt a medium-priority job to admit the high-priority one
+#   4. Lower-priority job goes back to pending — admitted when capacity frees up
+
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: WorkloadPriorityClass
+metadata:
+  name: high-priority
+value: 1000
+description: "Production inference workloads with SLA requirements — preempts lower priority"
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: WorkloadPriorityClass
+metadata:
+  name: medium-priority
+value: 500
+description: "Data science development and model fine-tuning workloads"
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: WorkloadPriorityClass
+metadata:
+  name: low-priority
+value: 100
+description: "Research and experimental workloads — can be preempted"
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: WorkloadPriorityClass
+metadata:
+  name: best-effort
+value: 0
+description: "Best-effort batch workloads — lowest priority, always preemptible"

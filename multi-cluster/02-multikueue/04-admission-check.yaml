@@ -1,0 +1,13 @@
+# AdmissionCheck of type multikueue — attached to global-gpu-queue ClusterQueue
+# When a workload lands in global-gpu-queue, Kueue runs this check to determine
+# which cluster (A or B) has available capacity and dispatches the job there.
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: AdmissionCheck
+metadata:
+  name: multikueue-check
+spec:
+  controllerName: kueue.x-k8s.io/multikueue
+  parameters:
+    apiGroup: kueue.x-k8s.io
+    kind: MultiKueueConfig
+    name: gpuaas-multikueue

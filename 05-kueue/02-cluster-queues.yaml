@@ -1,0 +1,154 @@
+# Kueue ClusterQueues — one per tenant (UC3: Multi-tenant Quotas).
+# Template: ${MIG_SMALL_FLAVOR}, ${MIG_LARGE_FLAVOR}, ${MIG_SMALL_RESOURCE} etc.
+# substituted by deploy-kueue.sh via envsubst. Do not oc apply directly.
+#
+# All queues share cohort "gpuaas-cohort" — enables borrowing unused quota.
+# Adjust nominalQuota values to match your actual GPU slice counts.
+
+# ── Inference Team (alice) — large MIG weekdays, small MIG weekends (UC9) ────
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: inference-cluster-queue
+  annotations:
+    description: "Inference Team — large MIG slice weekdays, small MIG weekends"
+spec:
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: inference-team-project
+  cohortName: gpuaas-cohort
+  queueingStrategy: BestEffortFIFO
+  preemption:
+    reclaimWithinCohort: LowerPriority
+    borrowWithinCohort:
+      policy: LowerPriority
+      maxPriorityThreshold: 100
+    withinClusterQueue: LowerPriority
+  resourceGroups:
+    - coveredResources: ["${MIG_LARGE_RESOURCE}"]
+      flavors:
+        - name: ${MIG_LARGE_FLAVOR}
+          resources:
+            - name: "${MIG_LARGE_RESOURCE}"
+              nominalQuota: "1"
+              borrowingLimit: "0"
+    - coveredResources: ["${FULL_GPU_RESOURCE}"]
+      flavors:
+        - name: ${FULL_GPU_FLAVOR}
+          resources:
+            - name: "${FULL_GPU_RESOURCE}"
+              nominalQuota: "1"
+              borrowingLimit: "0"
+    - coveredResources: ["${MIG_SMALL_RESOURCE}"]
+      flavors:
+        - name: ${MIG_SMALL_FLAVOR}
+          resources:
+            - name: "${MIG_SMALL_RESOURCE}"
+              nominalQuota: "1"
+              borrowingLimit: "0"
+---
+# ── Data Science Team (bob) — shared small MIG slices ────────────────────────
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: ds-cluster-queue
+  annotations:
+    description: "Data Science Team — shared small MIG slices for development"
+spec:
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: ds-team-project
+  cohortName: gpuaas-cohort
+  queueingStrategy: BestEffortFIFO
+  preemption:
+    reclaimWithinCohort: Never
+    withinClusterQueue: LowerPriority
+  resourceGroups:
+    - coveredResources: ["${MIG_SMALL_RESOURCE}"]
+      flavors:
+        - name: ${MIG_SMALL_FLAVOR}
+          resources:
+            - name: "${MIG_SMALL_RESOURCE}"
+              nominalQuota: "2"
+              borrowingLimit: "2"
+---
+# ── Research Team (charlie) — small MIG, borrows heavily when idle ────────────
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: research-cluster-queue
+  annotations:
+    description: "Research Team — small MIG slices, borrows idle quota"
+spec:
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: research-team-project
+  cohortName: gpuaas-cohort
+  queueingStrategy: BestEffortFIFO
+  preemption:
+    reclaimWithinCohort: Never
+    withinClusterQueue: LowerPriority
+  resourceGroups:
+    - coveredResources: ["${MIG_SMALL_RESOURCE}"]
+      flavors:
+        - name: ${MIG_SMALL_FLAVOR}
+          resources:
+            - name: "${MIG_SMALL_RESOURCE}"
+              nominalQuota: "1"
+              borrowingLimit: "3"
+---
+# ── Fine-tuning Team (diana) — large MIG, borrows when inference is idle ──────
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: finetune-cluster-queue
+  annotations:
+    description: "Fine-tuning Team — large MIG slice for LLM fine-tuning"
+spec:
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: finetune-team-project
+  cohortName: gpuaas-cohort
+  queueingStrategy: StrictFIFO
+  preemption:
+    reclaimWithinCohort: LowerPriority
+    withinClusterQueue: Never
+  resourceGroups:
+    - coveredResources: ["${MIG_LARGE_RESOURCE}"]
+      flavors:
+        - name: ${MIG_LARGE_FLAVOR}
+          resources:
+            - name: "${MIG_LARGE_RESOURCE}"
+              nominalQuota: "0"
+              borrowingLimit: "1"
+    - coveredResources: ["${MIG_SMALL_RESOURCE}"]
+      flavors:
+        - name: ${MIG_SMALL_FLAVOR}
+          resources:
+            - name: "${MIG_SMALL_RESOURCE}"
+              nominalQuota: "1"
+              borrowingLimit: "2"
+---
+# ── Analytics Team (eve) — CPU only, zero GPU quota ───────────────────────────
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: analytics-cluster-queue
+  annotations:
+    description: "Analytics Team — CPU only, GPU access blocked by zero quota"
+spec:
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: analytics-project
+  cohortName: gpuaas-cohort
+  queueingStrategy: BestEffortFIFO
+  preemption:
+    reclaimWithinCohort: Never
+    withinClusterQueue: Never
+  resourceGroups:
+    - coveredResources: ["cpu"]
+      flavors:
+        - name: ${MIG_SMALL_FLAVOR}
+          resources:
+            - name: cpu
+              nominalQuota: "32"

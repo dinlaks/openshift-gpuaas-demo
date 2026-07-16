@@ -1,0 +1,41 @@
+# RHOAI HardwareProfile — full GPU tier (no MIG partitioning).
+# Template: ${FULL_GPU_RESOURCE}, ${GPU_TYPE} substituted by deploy script.
+
+apiVersion: infrastructure.opendatahub.io/v1
+kind: HardwareProfile
+metadata:
+  name: gpu-full
+  namespace: inference-team-project
+  annotations:
+    opendatahub.io/display-name: "${GPU_TYPE} — Full GPU"
+    opendatahub.io/disabled: "false"
+spec:
+  displayName: "${GPU_TYPE} — Full GPU (${FULL_GPU_RESOURCE})"
+  description: "Dedicated full GPU. Ideal for large model inference and full-GPU training."
+  enabled: true
+  identifiers:
+    - displayName: "CPU"
+      identifier: "cpu"
+      minCount: "4"
+      maxCount: "16"
+      defaultCount: "8"
+    - displayName: "Memory"
+      identifier: "memory"
+      minCount: "16Gi"
+      maxCount: "64Gi"
+      defaultCount: "32Gi"
+    - displayName: "GPU (full)"
+      identifier: "${FULL_GPU_RESOURCE}"
+      minCount: "1"
+      maxCount: "1"
+      defaultCount: "1"
+  scheduling:
+    type: Node
+    node:
+      nodeSelector:
+        demo/gpu-type: ${GPU_TYPE}
+        demo/gpu-gpu1-mode: full
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule

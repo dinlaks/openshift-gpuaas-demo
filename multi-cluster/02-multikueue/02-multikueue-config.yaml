@@ -1,0 +1,7 @@
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: MultiKueueConfig
+metadata:
+  name: gpuaas-multikueue
+spec:
+  clusters:
+    - cluster-b   # Cluster B (Dell 750 #2) is the only spoke

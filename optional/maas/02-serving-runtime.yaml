@@ -1,0 +1,36 @@
+# vLLM ServingRuntime for MaaS — validated for A30 (CUDA 12.x driver 580.x)
+# Uses vllm/vllm-openai:v0.7.3 for broad CUDA compatibility
+# Granite 3.1 2B (~5GB) fits easily in A30 24GB — no max-model-len constraint needed
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: vllm-maas-runtime
+  namespace: maas-project
+  labels:
+    opendatahub.io/dashboard: "true"
+  annotations:
+    openshift.io/display-name: "vLLM Runtime (A30 compatible)"
+    opendatahub.io/runtime-version: "v0.7.3"
+    opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
+spec:
+  multiModel: false
+  supportedModelFormats:
+    - name: vLLM
+      autoSelect: true
+  containers:
+    - name: kserve-container
+      image: vllm/vllm-openai:v0.7.3
+      command:
+        - python3
+        - -m
+        - vllm.entrypoints.openai.api_server
+      args:
+        - --port=8080
+        - --model=/mnt/models
+        - --served-model-name={{.Name}}
+      env:
+        - name: HF_HOME
+          value: /tmp/hf_home
+      ports:
+        - containerPort: 8080
+          protocol: TCP

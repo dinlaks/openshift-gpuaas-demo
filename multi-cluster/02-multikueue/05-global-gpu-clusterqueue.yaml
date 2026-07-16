@@ -1,0 +1,44 @@
+# global-gpu-queue — UC7: Global GPU Pools Across Clusters
+# This is the ONLY ClusterQueue with MultiKueue enabled.
+# All other queues (UC1-UC6, UC8, UC9) use local Kueue on Cluster A.
+#
+# Quotas reflect COMBINED capacity across both clusters:
+#   Cluster A: 4× 1g.6gb (GPU 0 only) + 0× 2g.12gb (GPU 1 = full A30, no MIG)
+#   Cluster B: 6× 1g.6gb (GPU 0: 4× + GPU 1: 2×) + 1× 2g.12gb (GPU 1 MIG-mixed)
+#   Total:    10× 1g.6gb + 1× 2g.12gb
+#
+# Demo story (UC7):
+#   1. Submit inference job to global-gpu-queue (requests 2g.12gb)
+#   2. Cluster A's 2g.12gb is already occupied
+#   3. MultiKueue sees Cluster B has free 2g.12gb capacity
+#   4. Kueue dispatches job to Cluster B automatically
+#   5. User submitted once — platform chose the cluster
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: global-gpu-queue
+  annotations:
+    description: "UC7: Global GPU pool — MultiKueue dispatches to Cluster A or B based on capacity"
+spec:
+  namespaceSelector: {}   # open to all namespaces for UC7 demo
+  cohortName: gpuaas-global-cohort
+  queueingStrategy: BestEffortFIFO
+  admissionChecksStrategy:           # v1beta2 field (replaces v1beta1 admissionChecks)
+    admissionChecks:
+      - name: multikueue-check       # activates cross-cluster dispatch
+  preemption:
+    reclaimWithinCohort: LowerPriority
+    withinClusterQueue: LowerPriority
+  resourceGroups:
+    - coveredResources: ["nvidia.com/mig-2g.12gb"]
+      flavors:
+        - name: a30-mig-2g12gb
+          resources:
+            - name: nvidia.com/mig-2g.12gb
+              nominalQuota: "1"   # Cluster B GPU 1 only (1× 2g.12gb); Cluster A GPU 1 is full A30 non-MIG
+    - coveredResources: ["nvidia.com/mig-1g.6gb"]
+      flavors:
+        - name: a30-mig-1g6gb
+          resources:
+            - name: nvidia.com/mig-1g.6gb
+              nominalQuota: "10"  # Cluster A: 4× (GPU 0) + Cluster B: 6× (GPU 0: 4× + GPU 1: 2×)

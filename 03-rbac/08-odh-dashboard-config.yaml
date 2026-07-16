@@ -1,0 +1,27 @@
+apiVersion: opendatahub.io/v1alpha
+kind: OdhDashboardConfig
+metadata:
+  name: odh-dashboard-config
+  namespace: redhat-ods-applications
+spec:
+  groupsConfig:
+    adminGroups: "gpuaas-platform-admins"
+    allowedGroups: "gpu-inference-users,gpu-standard-users,gpu-research-users,gpu-finetune-users,cpu-only-users"
+  notebookController:
+    enabled: true
+    notebookNamespace: rhods-notebooks
+    notebookTolerationSettings:
+      enabled: false
+  dashboardConfig:
+    enablement: true
+    disableInfo: false
+    disableSupport: false
+    disableClusterManager: false
+    disableTrackingEvents: true
+    enabledUserProjects: true
+    disableBYONImageStream: false
+    disableISVBadges: false
+    disableAppLauncher: false
+    disableUserManagement: false
+    modelMetricsNamespace: ""
+    genAiStudio: true

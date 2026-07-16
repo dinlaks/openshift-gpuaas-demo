@@ -1,0 +1,83 @@
+# RHOAI HardwareProfile — small MIG slice tier.
+# Template: ${MIG_SMALL_RESOURCE}, ${MIG_SMALL_FLAVOR}, ${GPU_TYPE} substituted
+# by deploy-hardware-profiles.sh via envsubst. Do not oc apply directly.
+#
+# Shown to users in RHOAI Dashboard when creating a Workbench.
+
+apiVersion: infrastructure.opendatahub.io/v1
+kind: HardwareProfile
+metadata:
+  name: gpu-mig-small
+  namespace: ds-team-project
+  annotations:
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Small Slice"
+    opendatahub.io/disabled: "false"
+spec:
+  displayName: "${GPU_TYPE} MIG — Small Slice (${MIG_SMALL_RESOURCE})"
+  description: "Small MIG partition. Ideal for development, experiments, and lightweight inference."
+  enabled: true
+  identifiers:
+    - displayName: "CPU"
+      identifier: "cpu"
+      minCount: "1"
+      maxCount: "4"
+      defaultCount: "2"
+    - displayName: "Memory"
+      identifier: "memory"
+      minCount: "2Gi"
+      maxCount: "16Gi"
+      defaultCount: "4Gi"
+    - displayName: "GPU (MIG small)"
+      identifier: "${MIG_SMALL_RESOURCE}"
+      minCount: "1"
+      maxCount: "1"
+      defaultCount: "1"
+  scheduling:
+    type: Node
+    node:
+      nodeSelector:
+        demo/gpu-mode: mig-mixed
+        demo/gpu-type: ${GPU_TYPE}
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+---
+apiVersion: infrastructure.opendatahub.io/v1
+kind: HardwareProfile
+metadata:
+  name: gpu-mig-small
+  namespace: research-team-project
+  annotations:
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Small Slice"
+    opendatahub.io/disabled: "false"
+spec:
+  displayName: "${GPU_TYPE} MIG — Small Slice (${MIG_SMALL_RESOURCE})"
+  description: "Small MIG partition. Ideal for research experiments and model evaluation."
+  enabled: true
+  identifiers:
+    - displayName: "CPU"
+      identifier: "cpu"
+      minCount: "1"
+      maxCount: "4"
+      defaultCount: "2"
+    - displayName: "Memory"
+      identifier: "memory"
+      minCount: "2Gi"
+      maxCount: "16Gi"
+      defaultCount: "4Gi"
+    - displayName: "GPU (MIG small)"
+      identifier: "${MIG_SMALL_RESOURCE}"
+      minCount: "1"
+      maxCount: "1"
+      defaultCount: "1"
+  scheduling:
+    type: Node
+    node:
+      nodeSelector:
+        demo/gpu-mode: mig-mixed
+        demo/gpu-type: ${GPU_TYPE}
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
