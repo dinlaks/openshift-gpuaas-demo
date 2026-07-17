@@ -44,7 +44,7 @@ header "Step 2: Label GPU nodes and configure MIG"
 bash "${SCRIPT_DIR}/02-gpu-setup/01-node-labels.sh"
 
 if [[ "${MIG_ENABLED:-true}" == "true" ]]; then
-  bash "${SCRIPT_DIR}/02-gpu-setup/02-mig/configure-mig.sh" "${MIG_PROFILE:-mixed-a30}"
+  bash "${SCRIPT_DIR}/02-gpu-setup/02-mig/configure-mig.sh"
 else
   warn "MIG_ENABLED=false — skipping MIG configuration"
   info "For timeslicing, see: 02-gpu-setup/03-timeslicing/configure-timeslicing.sh"

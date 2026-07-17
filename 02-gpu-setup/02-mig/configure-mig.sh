@@ -5,23 +5,26 @@
 # Nodes must have nvidia.com/gpu.present=true from NFD before running this.
 #
 # Usage:
-#   bash configure-mig.sh <profile>
-#   bash configure-mig.sh mixed-a30      # A30: 1x2g.12gb + 2x1g.6gb (default)
-#   bash configure-mig.sh all-1g.6gb    # A30/A100: all smallest slices
-#   bash configure-mig.sh all-2g.10gb   # A100: all medium slices
+#   bash configure-mig.sh               # uses MIG_PROFILE default for GPU_TYPE in env.sh
+#   bash configure-mig.sh <profile>     # override with a specific profile name
 #
-# Profile names are defined in the mig-parted-config ConfigMap.
-# See: https://github.com/NVIDIA/mig-parted for available profiles per GPU.
+# Profile names must exist in 02-mig/mig-parted-config.yaml.
+# GPU_TYPE in env.sh determines the default profile automatically:
+#   a30       → mixed-a30      a100-40gb → all-1g.5gb
+#   a100-80gb → all-1g.10gb   h100-80gb → all-1g.10gb
+#   h100-nvl  → all-1g.12gb   h200      → all-1g.18gb
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
+resolve_gpu_config   # sets MIG_PROFILE default from GPU_TYPE in env.sh
 require_oc_login
 
-MIG_PROFILE="${1:-${MIG_PROFILE:-mixed-a30}}"
+# $1 overrides the env.sh/GPU_TYPE default if explicitly passed
+MIG_PROFILE="${1:-${MIG_PROFILE}}"
 
-header "Configuring MIG: profile=${MIG_PROFILE}"
+header "Configuring MIG: GPU_TYPE=${GPU_TYPE}, profile=${MIG_PROFILE}"
 
 apply_cr "${SCRIPT_DIR}/mig-parted-config.yaml"
 
