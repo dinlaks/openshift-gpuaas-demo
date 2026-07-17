@@ -1,10 +1,13 @@
-# Multi-Cluster Add-On — MultiKueue + ACM (UC7)
+# Multi-Cluster Add-On — ACM + MultiKueue + Observability
 
-This add-on extends the single-cluster setup with cross-cluster GPU scheduling via
-**MultiKueue** and **Red Hat Advanced Cluster Management (ACM)**.
+This add-on extends the single-cluster setup with three capabilities:
 
-Users submit jobs to a single global queue. MultiKueue transparently dispatches them
-to whichever cluster has capacity — the user never chooses a cluster.
+| Folder | What it does |
+|---|---|
+| `01-acm-setup/` | Install ACM Hub, import Cluster B, enforce GPU policy across clusters |
+| `02-multikueue/` | Cross-cluster GPU job dispatch — users submit once, platform picks the cluster |
+| `03-acm-observability/` | Unified GPU metrics from all clusters in one Grafana dashboard |
+| `uc7-global-gpu-pool/` | UC7 demo — global GPU pool via MultiKueue |
 
 ## What you need
 
@@ -12,6 +15,7 @@ to whichever cluster has capacity — the user never chooses a cluster.
 - ACM hub installed on Cluster A (`01-acm-setup/`)
 - Cluster B imported into ACM as a ManagedCluster
 - Both clusters running Kueue (already done by `setup.sh`)
+- MinIO or S3-compatible storage for ACM Observability (`optional/storage/deploy-storage.sh --minio`)
 
 ## Additional env.sh variables
 
@@ -29,21 +33,31 @@ CLUSTER_B_USERNAME=gpuaas-admin
 CLUSTER_B_PASSWORD=<password>
 CLUSTER_B_NAME=cluster-b
 CLUSTER_B_KUBECONFIG=<path>
+
+MINIO_ENDPOINT=http://minio.minio.svc.cluster.local:9000
+MINIO_ACCESS_KEY=minio
+MINIO_SECRET_KEY=minio123
 ```
 
 ## Setup order
 
 ```bash
-# 1. Install ACM hub on Cluster A
+# 1. Install ACM Hub on Cluster A
 bash 01-acm-setup/01-install-hub.sh
 
-# 2. Import Cluster B into ACM
+# 2. Import Cluster B + apply GPU policy across both clusters
 bash 01-acm-setup/03-import-cluster-b.sh
+oc apply -f 01-acm-setup/08-acm-gpu-policy.yaml
+oc apply -f 01-acm-setup/09-acm-policy-binding.yaml
 
 # 3. Configure MultiKueue (generates kubeconfig secret for Cluster B)
 bash 02-multikueue/01-multikueue-setup.sh
 
-# 4. Run UC7 demo
+# 4. Enable ACM Observability (unified GPU metrics)
+oc apply -f 03-acm-observability/10-acm-observability.yaml
+# Then import grafana-dcgm-mig-dashboard.json — see 03-acm-observability/README.md
+
+# 5. Run UC7 demo
 cd uc7-global-gpu-pool && bash run-demo.sh
 ```
 
@@ -53,7 +67,6 @@ Submit one job to the global queue. MultiKueue dispatches it to whichever cluste
 has available GPU capacity — automatically, transparently.
 
 ```bash
-# Watch dispatch:
 oc get workloads -n inference-team-project -w
 oc get jobs -n inference-team-project      # shadow job appears on winning cluster
 ```
