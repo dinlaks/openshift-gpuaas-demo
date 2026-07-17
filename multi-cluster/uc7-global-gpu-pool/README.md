@@ -2,11 +2,11 @@
 
 ## Story
 
-Two Dell 750 servers, four NVIDIA A30 GPUs, two OpenShift clusters — managed as a single platform. ACM governs the fleet: identical GPU configuration, identical Kueue flavors, identical policy on both clusters. When Cluster A's premium GPU slice fills up, Kueue's MultiKueue automatically dispatches to Cluster B — without the user specifying a cluster, without resubmitting, without manual intervention. The platform finds the capacity.
+Two OpenShift clusters — managed as a single platform. ACM governs the fleet: identical GPU configuration, identical Kueue flavors, identical policy on both clusters. When Cluster A's premium GPU slice fills up, Kueue's MultiKueue automatically dispatches to Cluster B — without the user specifying a cluster, without resubmitting, without manual intervention. The platform finds the capacity.
 
 ## What You're Showing
 
-- ACM policy enforcing identical GPU configuration across both Dell 750s (fleet governance)
+- ACM policy enforcing identical GPU configuration across both clusters (fleet governance)
 - ACM Observability surfacing unified DCGM GPU metrics from both clusters
 - MultiKueue automatically dispatching to Cluster B when Cluster A's 2g.12gb quota is exhausted
 - The user submits to one queue — the platform picks the cluster
@@ -43,7 +43,7 @@ oc delete jobs -n inference-team-project -l demo/uc=uc7-multi-cluster --ignore-n
 
 #### Step 1: Show Both Clusters Under ACM Management
 
-What to say: "This is the hub. ACM manages both Dell 750s from here. Let's look at the fleet."
+What to say: "This is the hub. ACM manages both clusters from here. Let's look at the fleet."
 
 ```bash
 oc get managedcluster -o wide
@@ -92,13 +92,13 @@ Expected output showing both clusters Compliant:
 ]
 ```
 
-What to say: "Both clusters are Compliant. ACM verified that GPU Operator is installed, MIG is configured identically, and Kueue ResourceFlavors match — on both Dell 750s. If cluster-b drifted, ACM would auto-remediate it within 60 seconds."
+What to say: "Both clusters are Compliant. ACM verified that GPU Operator is installed, MIG is configured identically, and Kueue ResourceFlavors match — on both clusters. If cluster-b drifted, ACM would auto-remediate it within 60 seconds."
 
 ---
 
 ### Act 2 (2 min): ACM Observability — Unified GPU Metrics
 
-What to say: "ACM Observability aggregates DCGM metrics from both clusters into a single view. We can see GPU utilization across all four A30s from one dashboard."
+What to say: "ACM Observability aggregates DCGM metrics from both clusters into a single view. We can see GPU utilization across all GPUs from one dashboard."
 
 Open the ACM Observability console (Grafana):
 - Navigate to: ACM Console → Observe → Grafana → GPU Utilization dashboard
@@ -162,7 +162,7 @@ oc get clusterqueue inference-cluster-queue \
 Expected — `inUse: 1`, `nominalQuota: 1` for `a30-mig-2g12gb`:
 
 ```json
-[{"name": "a30-mig-2g12gb", "resources": [{"borrowed": "0", "inUse": "1", "name": "nvidia.com/mig-2g.12gb"}]}]
+[{"name": "${MIG_LARGE_FLAVOR}", "resources": [{"borrowed": "0", "inUse": "1", "name": "nvidia.com/mig-2g.12gb"}]}]
 ```
 
 #### Step 4: Submit to the Global Queue — MultiKueue Picks Cluster B
@@ -211,13 +211,13 @@ Expected:
 UC7: GLOBAL GPU POOL — CROSS-CLUSTER DISPATCH
 ============================================================
 Running on node : cluster-b-node-1
-GPU             : NVIDIA A30
+GPU             : (your GPU type)
 GPU Memory      : 11.9 GB  (2g.12gb MIG slice)
 Cluster A full  : Job dispatched to Cluster B by MultiKueue
 ============================================================
 ```
 
-What to say: "Same GPU, different Dell server. The user never specified a cluster. Kueue found the capacity and placed the job. This is what a global GPU pool looks like."
+What to say: "Same GPU, different cluster. The user never specified a cluster. Kueue found the capacity and placed the job. This is what a global GPU pool looks like."
 
 ## Watch Commands
 

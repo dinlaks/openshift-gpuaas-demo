@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install ACM Hub on Cluster A (Dell 750 #1) — run ONCE after deploy-prereqs.sh.
+# Install ACM Hub on Cluster A (Cluster A) — run ONCE after deploy-prereqs.sh.
 # ACM operator is installed first; MultiClusterHub then pulls in MCE automatically.
 set -euo pipefail
 

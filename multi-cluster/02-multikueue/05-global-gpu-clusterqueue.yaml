@@ -32,13 +32,13 @@ spec:
   resourceGroups:
     - coveredResources: ["nvidia.com/mig-2g.12gb"]
       flavors:
-        - name: a30-mig-2g12gb
+        - name: ${MIG_LARGE_FLAVOR}
           resources:
             - name: nvidia.com/mig-2g.12gb
-              nominalQuota: "1"   # Cluster B GPU 1 only (1× 2g.12gb); Cluster A GPU 1 is full A30 non-MIG
+              nominalQuota: "1"   # Cluster B — large MIG slice; Cluster A GPU 1 may be full GPU (non-MIG)
     - coveredResources: ["nvidia.com/mig-1g.6gb"]
       flavors:
-        - name: a30-mig-1g6gb
+        - name: ${MIG_SMALL_FLAVOR}
           resources:
             - name: nvidia.com/mig-1g.6gb
               nominalQuota: "10"  # Cluster A: 4× (GPU 0) + Cluster B: 6× (GPU 0: 4× + GPU 1: 2×)

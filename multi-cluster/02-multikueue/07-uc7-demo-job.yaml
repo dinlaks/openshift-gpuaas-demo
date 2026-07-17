@@ -18,7 +18,7 @@
 #   oc get workloads -n inference-team-project -w         # hub — watch RESERVED IN column
 #   oc get jobs -n inference-team-project --context cluster-b  # spoke confirmation
 #
-# Key message: "Submit once to global-queue. Platform picked Dell 750 #2 automatically."
+# Key message: "Submit once to global-queue. Platform picked Cluster B automatically."
 #
 # NOTE: kueue.x-k8s.io/queue-name in Job labels (for batch/job integration on hub)
 #       AND in Pod template labels (for spoke pod routing via Pod integration on spoke).

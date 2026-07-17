@@ -71,7 +71,7 @@ spec:
                   sourceNamespace: openshift-marketplace
 
     # ── 2. MIG config — different per cluster ─────────────────────────────────
-    # cluster-a-profile: GPU 0 = 4× 1g.6gb, GPU 1 = NO MIG (full A30 for DRA)
+    # cluster-a-profile: GPU 0 = small MIG slices, GPU 1 = non-MIG (full GPU for DRA)
     # cluster-b-profile: GPU 0 = 4× 1g.6gb, GPU 1 = MIG-mixed (1× 2g.12gb + 2× 1g.6gb)
     # ACM enforces the ConfigMap exists; nodes are labelled separately with
     # nvidia.com/mig.config=cluster-a-profile or cluster-b-profile to activate.
@@ -95,7 +95,7 @@ spec:
                   config.yaml: |
                     version: v1
                     mig-configs:
-                      # Cluster A: GPU 0 = 4× 1g.6gb, GPU 1 = full A30 (no MIG)
+                      # Cluster A: GPU 0 = small MIG slices, GPU 1 = full GPU (no MIG)
                       cluster-a-profile:
                         - devices: [0]
                           mig-enabled: true
@@ -130,7 +130,7 @@ spec:
                 apiVersion: kueue.x-k8s.io/v1beta2
                 kind: ResourceFlavor
                 metadata:
-                  name: a30-mig-1g6gb
+                  name: ${MIG_SMALL_FLAVOR}
                 spec:
                   nodeLabels:
                     demo/gpu-type: a30
@@ -154,7 +154,7 @@ spec:
                 apiVersion: kueue.x-k8s.io/v1beta2
                 kind: ResourceFlavor
                 metadata:
-                  name: a30-mig-2g12gb
+                  name: ${MIG_LARGE_FLAVOR}
                 spec:
                   nodeLabels:
                     demo/gpu-type: a30

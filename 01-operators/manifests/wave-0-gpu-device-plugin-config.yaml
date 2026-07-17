@@ -1,10 +1,10 @@
 # Device Plugin ConfigMap — different config keys per cluster GPU layout
 #
-# Cluster A (Dell 750 #1):
+# Cluster A (Cluster A):
 #   GPU 0: MIG all-1g.6gb  → node-gpu0-mig-1g6gb
 #   GPU 1: Full GPU (no MIG) → node-gpu1-full
 #
-# Cluster B (Dell 750 #2):
+# Cluster B (Cluster B):
 #   GPU 0: MIG all-1g.6gb  → node-gpu0-mig-1g6gb  (same as Cluster A)
 #   GPU 1: MIG-mixed        → node-gpu1-mig-mixed
 #
@@ -29,7 +29,7 @@ data:
           - name: nvidia.com/mig-1g.6gb
             replicas: 1
 
-  # GPU 1 on Cluster A: full A30, no MIG — exposes nvidia.com/gpu for DRA
+  # GPU 1 on Cluster A: full GPU, non-MIG mode — exposes nvidia.com/gpu for DRA
   node-gpu1-full: |-
     version: v1
     flags:

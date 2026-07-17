@@ -1,8 +1,8 @@
 # UC6: Model-Specific Placement — two jobs targeting different GPU tiers
 #
-# alice-large-model-inference → inference-team-project → full A30 (GPU 1, nvidia.com/gpu)
+# alice-large-model-inference → inference-team-project → full GPU (nvidia.com/gpu)
 #   nodeSelector: demo/gpu-gpu1-mode: full
-#   Shows: ~23.7GB VRAM — full A30, no MIG partitioning
+#   Shows: full GPU VRAM — no MIG partitioning
 #
 # charlie-small-model-dev → research-team-project → 1g.6gb MIG slice (GPU 0)
 #   nodeSelector: demo/gpu-mode: mig-mixed
@@ -50,7 +50,7 @@ spec:
               node = socket.gethostname()
               gpu = torch.cuda.get_device_name(0)
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
-              print(f"[alice] Node: {node} | GPU: {gpu} | VRAM: {mem:.1f}GB (full A30, no MIG)")
+              print(f"[alice] Node: {node} | GPU: {gpu} | VRAM: {mem:.1f}GB (full GPU, no MIG)")
               print("[alice] Large model inference — 24GB GPU tier selected via hardware profile")
               time.sleep(1800)
           resources:

@@ -9,7 +9,7 @@ metadata:
     kubernetes.io/metadata.name: inference-team-project
   annotations:
     openshift.io/display-name: "Inference Team — Production GPU"
-    openshift.io/description: "Production inference workloads. Full A30 dedicated GPU access. High-priority queue."
+    openshift.io/description: "Production inference workloads. Full GPU access. High-priority queue."
 ---
 apiVersion: v1
 kind: Namespace
@@ -20,7 +20,7 @@ metadata:
     kubernetes.io/metadata.name: ds-team-project
   annotations:
     openshift.io/display-name: "Data Science Team — Shared GPU"
-    openshift.io/description: "Model development and experimentation. Time-sliced A30. Medium-priority queue."
+    openshift.io/description: "Model development and experimentation. Time-sliced GPU. Medium-priority queue."
 ---
 apiVersion: v1
 kind: Namespace
@@ -31,7 +31,7 @@ metadata:
     kubernetes.io/metadata.name: research-team-project
   annotations:
     openshift.io/display-name: "Research Team — MIG Small Slices"
-    openshift.io/description: "Research experiments using A30 MIG 1g.6gb or 2g.12gb slices. Low-priority queue."
+    openshift.io/description: "Research experiments using MIG GPU slices. Low-priority queue."
 ---
 apiVersion: v1
 kind: Namespace
@@ -42,7 +42,7 @@ metadata:
     kubernetes.io/metadata.name: finetune-team-project
   annotations:
     openshift.io/display-name: "Fine-tuning Team — Large MIG Slice"
-    openshift.io/description: "LLM fine-tuning jobs using A30 MIG 4g.24gb (full A30 in MIG mode). Medium-priority queue."
+    openshift.io/description: "LLM fine-tuning jobs using MIG GPU slices. Medium-priority queue."
 ---
 apiVersion: v1
 kind: Namespace

@@ -1,4 +1,4 @@
-# ManagedCluster — registers Dell 750 #2 (Cluster B) into ACM Hub
+# ManagedCluster — registers Cluster B into ACM Hub
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedCluster
 metadata:
@@ -8,9 +8,9 @@ metadata:
     vendor: OpenShift              # required by MCO placementrule_controller to enable observability
     cloud: Other                   # required by MCO placementrule_controller
     demo/gpu-type: a30
-    demo/gpu-count: "2"          # 2× A30 per Dell 750
+    demo/gpu-count: "2"
     demo/role: spoke
-    demo/server: dell750
+    demo/server: cluster-b
     environment: gpuaas-demo
 spec:
   hubAcceptsClient: true

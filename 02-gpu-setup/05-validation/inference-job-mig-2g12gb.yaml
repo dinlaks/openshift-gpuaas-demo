@@ -1,4 +1,4 @@
-# Validation job — confirms 2g.12gb MIG slices are working on A30
+# Validation job — confirms large MIG slices are working
 apiVersion: batch/v1
 kind: Job
 metadata:

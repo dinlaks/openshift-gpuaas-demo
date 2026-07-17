@@ -1,5 +1,5 @@
-# GPU Time-Slicing Configuration for A30 GPU 1
-# Enables 4 virtual GPUs from the single full A30 (GPU 1, non-MIG)
+# GPU Time-Slicing Configuration
+# Enables 4 virtual GPUs from a full (non-MIG) GPU
 # GPU 0 remains in MIG mode — time-slicing only applies to GPU 1 (nvidia.com/gpu)
 #
 # Time-slicing vs MIG:

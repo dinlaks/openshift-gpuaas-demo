@@ -1,6 +1,6 @@
 # MaaS Project — central model serving namespace
 # The admin deploys Granite 3.1 2B here. Users access via API token — no per-user GPU.
-# GPU: Cluster A GPU 1 (full A30, 24GB) via hardware profile gpu-a30-full
+# GPU: full GPU (non-MIG) via hardware profile gpu-full
 ---
 apiVersion: v1
 kind: Namespace
@@ -49,21 +49,21 @@ roleRef:
   name: view
   apiGroup: rbac.authorization.k8s.io
 ---
-# Hardware profile — scoped to maas-project, targets GPU 1 (full A30, non-MIG)
+# Hardware profile — scoped to maas-project, targets full GPU (non-MIG)
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
 metadata:
-  name: gpu-a30-full-maas
+  name: gpu-full-maas
   namespace: maas-project
   labels:
     opendatahub.io/dashboard: "true"
   annotations:
-    demo/description: "Full A30 GPU (GPU 1, Cluster A) — for centrally hosted model serving"
+    demo/description: "Full GPU (non-MIG) — for centrally hosted model serving"
 spec:
-  displayName: "A30 GPU — Full (MaaS)"
+  displayName: "Full GPU (MaaS)"
   identifiers:
     - identifier: nvidia.com/gpu
-      displayName: NVIDIA A30 GPU
+      displayName: NVIDIA Full GPU
       minCount: 1
       maxCount: 1
       defaultCount: 1

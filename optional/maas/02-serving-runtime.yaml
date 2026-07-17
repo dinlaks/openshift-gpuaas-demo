@@ -1,6 +1,6 @@
-# vLLM ServingRuntime for MaaS — validated for A30 (CUDA 12.x driver 580.x)
+# vLLM ServingRuntime for MaaS — validated for NVIDIA GPUs (CUDA 12.x)
 # Uses vllm/vllm-openai:v0.7.3 for broad CUDA compatibility
-# Granite 3.1 2B (~5GB) fits easily in A30 24GB — no max-model-len constraint needed
+# Granite 3.1 2B (~5GB) — adjust max-model-len for your GPU memory
 apiVersion: serving.kserve.io/v1alpha1
 kind: ServingRuntime
 metadata:
@@ -9,7 +9,7 @@ metadata:
   labels:
     opendatahub.io/dashboard: "true"
   annotations:
-    openshift.io/display-name: "vLLM Runtime (A30 compatible)"
+    openshift.io/display-name: "vLLM Runtime (NVIDIA GPU)"
     opendatahub.io/runtime-version: "v0.7.3"
     opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
 spec:

@@ -6,7 +6,7 @@ metadata:
 users:
   - gpuaas-admin
 ---
-# Full GPU (dedicated A30 or large MIG slice) — Alice: inference team
+# Full GPU (dedicated or large MIG slice) — Alice: inference team
 apiVersion: user.openshift.io/v1
 kind: Group
 metadata:
@@ -14,7 +14,7 @@ metadata:
 users:
   - alice
 ---
-# MIG small slice (1g.6gb A30) — Bob: data science team
+# MIG small slice — Bob: data science team
 apiVersion: user.openshift.io/v1
 kind: Group
 metadata:
@@ -22,7 +22,7 @@ metadata:
 users:
   - bob
 ---
-# MIG small slice (1g.6gb or 2g.12gb A30) — Charlie: research team
+# MIG small slice — Charlie: research team
 apiVersion: user.openshift.io/v1
 kind: Group
 metadata:
@@ -30,7 +30,7 @@ metadata:
 users:
   - charlie
 ---
-# Large MIG slice (4g.24gb A30) — Diana: fine-tuning team
+# Large MIG slice — Diana: fine-tuning team
 apiVersion: user.openshift.io/v1
 kind: Group
 metadata:

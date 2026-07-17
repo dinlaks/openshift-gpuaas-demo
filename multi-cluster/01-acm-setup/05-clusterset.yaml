@@ -1,4 +1,4 @@
-# ManagedClusterSet — logical group of both Dell 750 clusters
+# ManagedClusterSet — logical group of both clusters
 # MultiKueue (UC7), ACM Placement, and ACM Observability use this ClusterSet.
 #
 # After applying, move local-cluster into this set (it defaults to "default"):

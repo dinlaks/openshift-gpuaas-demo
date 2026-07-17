@@ -1,4 +1,7 @@
-# UC2: DRA DeviceClasses for NVIDIA A30 — full GPU and MIG slice allocation
+# UC2: DRA DeviceClasses — full GPU and MIG slice allocation
+# NOTE: The CEL selectors below filter by productName for the GPU used during
+# development (A30). Update the productName filter for your GPU model.
+# Run: oc get resourceslice -o json | jq '.[].spec.devices[].basic.attributes."gpu.nvidia.com".productName'
 #
 # DRA scope: Cluster A only (Cluster B stays device-plugin for UC7 MultiKueue)
 #   Full GPU via DRA    : ✅ End-to-end working (GPU 1, Cluster A)

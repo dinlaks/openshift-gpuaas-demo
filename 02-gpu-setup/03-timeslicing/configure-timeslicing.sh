@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Enable GPU time-slicing on Cluster A GPU 1 (full A30, non-MIG).
+# Enable GPU time-slicing on Cluster A full GPU (non-MIG mode).
 # Creates 4 virtual GPUs from 1 physical GPU.
 #
 # NOTE: GPU 0 stays in MIG mode — time-slicing applies to nvidia.com/gpu (GPU 1) only.

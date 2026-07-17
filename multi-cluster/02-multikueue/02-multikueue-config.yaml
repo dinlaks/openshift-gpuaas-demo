@@ -4,4 +4,4 @@ metadata:
   name: gpuaas-multikueue
 spec:
   clusters:
-    - cluster-b   # Cluster B (Dell 750 #2) is the only spoke
+    - cluster-b   # Cluster B (Cluster B) is the only spoke

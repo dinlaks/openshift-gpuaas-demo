@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# MaaS Setup — IBM Granite 3.1 2B on Cluster A GPU 1 (full A30, 24GB)
+# MaaS Setup — IBM Granite 3.1 2B on full GPU (non-MIG)
 #
 # Deploys a centrally hosted LLM endpoint. alice, bob, charlie access via
 # individual API tokens — one GPU serves all three.
 #
 # Pre-req:
-#   - GPU 1 on Cluster A must be in non-MIG mode (full A30)
+#   - GPU must be in non-MIG mode (full GPU)
 #   - DRA must NOT be active (teardown-dra.sh first if running)
 #   - RHOAI 3.3 deployed and healthy
 #
 # Recommended: Deploy Granite from RHOAI Dashboard → Model Catalog → maas-project
-#   Hardware profile: gpu-a30-full-maas
+#   Hardware profile: gpu-full-maas
 #   Token auth: ✅ (service accounts: alice-token, bob-token, charlie-token)
 # Then run this script to generate tokens and test the endpoint.
 #

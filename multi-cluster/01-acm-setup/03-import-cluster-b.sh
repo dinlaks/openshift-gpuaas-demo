@@ -80,7 +80,7 @@ wait_for "Cluster B joined ACM Hub" \
   "oc get managedcluster cluster-b -o jsonpath='{.status.conditions}' 2>/dev/null | grep -q ManagedClusterJoined" \
   300 15
 
-success "Cluster B (Dell 750 #2) is now managed by ACM Hub on Cluster A!"
+success "Cluster B (Cluster B) is now managed by ACM Hub on Cluster A!"
 echo ""
 oc get managedcluster -o wide
 echo ""

@@ -1,4 +1,4 @@
-# Validation job — confirms 1g.6gb MIG slices are working on A30
+# Validation job — confirms small MIG slices are working
 # Run after MIG configuration to verify GPU slices are properly partitioned
 # Can also be used as a live UC1/UC3 demo workload
 apiVersion: batch/v1

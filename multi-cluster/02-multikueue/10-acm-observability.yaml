@@ -1,4 +1,4 @@
-# ACM Observability — unified GPU metrics from BOTH Dell 750s
+# ACM Observability — unified GPU metrics from BOTH both clusters
 #
 # Enables the ACM Observability stack (Thanos + Grafana on Hub).
 # Each managed cluster sends its Prometheus metrics (including DCGM GPU metrics)
@@ -6,7 +6,7 @@
 #
 # What you get in the demo:
 #   - Single Grafana dashboard on Cluster A showing GPU utilization, memory,
-#     temperature, and power from BOTH Dell 750s simultaneously
+#     temperature, and power from BOTH both clusters simultaneously
 #   - See which tenant is using which GPU slice across both clusters
 #   - Real-time DCGM metrics: DCGM_FI_DEV_GPU_UTIL, DCGM_FI_DEV_MEM_COPY_UTIL,
 #     DCGM_FI_DEV_FB_USED, DCGM_FI_DEV_POWER_USAGE
