@@ -1,0 +1,23 @@
+# Authors
+
+## Creator and maintainer
+
+**Dinesh Lakshmanan**
+- GitHub: https://github.com/dinlaks
+- Role: Principal architect, implementation, and validation
+
+## Acknowledgements
+
+This project was validated on OpenShift 4.21 with NVIDIA A30 GPUs.
+It builds on the following open source projects:
+
+- [Kueue](https://kueue.sigs.k8s.io/) — Kubernetes-native job queueing (CNCF)
+- [Red Hat OpenShift AI](https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai) — AI/ML platform on OpenShift
+- [NVIDIA GPU Operator](https://github.com/NVIDIA/gpu-operator) — GPU lifecycle management for Kubernetes
+- [Red Hat Advanced Cluster Management](https://www.redhat.com/en/technologies/management/advanced-cluster-management) — Multi-cluster fleet management
+
+## Contributing
+
+Contributions are welcome. If you validate this on a GPU type not listed in
+PREREQUISITES.md, please open a pull request updating `lib/common.sh` and
+`PREREQUISITES.md` with your findings.

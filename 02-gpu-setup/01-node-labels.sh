@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Label GPU nodes for Kueue ResourceFlavor matching and MIG configuration.
 #
 # Uses GPU_TYPE and MIG_STRATEGY from env.sh to set the correct node labels.

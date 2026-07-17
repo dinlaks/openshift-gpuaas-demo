@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Deploy all required operators for the GPUaaS demo.
 # Run this once per cluster before any other setup steps.
 #

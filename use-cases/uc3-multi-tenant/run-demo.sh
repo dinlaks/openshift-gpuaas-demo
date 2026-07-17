@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC3: Multi-Tenant Quota Enforcement
 # Charlie borrows idle quota from alice and bob's queues (cohort borrowing).
 set -euo pipefail

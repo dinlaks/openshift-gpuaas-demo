@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # GPU-as-a-Service on OpenShift — Single-cluster setup orchestrator
 #
 # Runs all setup steps in order on the cluster specified in env.sh.

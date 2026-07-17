@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC2: Enable DRA for demo — toggles device plugin off, installs DRA driver via Helm.
 #
 # Prerequisites (must be done before running):

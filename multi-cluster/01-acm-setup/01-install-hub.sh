@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Install ACM Hub on Cluster A (Cluster A) — run ONCE after deploy-prereqs.sh.
 # ACM operator is installed first; MultiClusterHub then pulls in MCE automatically.
 set -euo pipefail

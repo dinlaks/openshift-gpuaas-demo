@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Import Cluster B into ACM Hub using API token — entirely from Cluster A.
 # No kubeconfig file, no context switching, no manual steps on Cluster B.
 #

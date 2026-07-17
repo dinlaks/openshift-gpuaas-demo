@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Enable GPU time-slicing on Cluster A full GPU (non-MIG mode).
 # Creates 4 virtual GPUs from 1 physical GPU.
 #

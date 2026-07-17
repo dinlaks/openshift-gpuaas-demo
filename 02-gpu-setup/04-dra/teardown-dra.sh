@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC2: Restore device plugin after DRA demo — run after UC2 is complete.
 #
 # What this script does:

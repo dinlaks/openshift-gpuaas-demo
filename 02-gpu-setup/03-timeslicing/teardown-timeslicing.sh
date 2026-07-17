@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Teardown time-slicing — restores GPU 1 to single nvidia.com/gpu (non-sliced).
 # Usage: bash 03-gpu-management/05-timeslicing/teardown-timeslicing.sh
 set -euo pipefail

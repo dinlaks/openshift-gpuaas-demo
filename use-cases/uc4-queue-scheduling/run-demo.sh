@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC4: Queue-Based Scheduling
 # Step 1: fill all GPU slots. Step 2: submit overflow job → goes Inadmissible.
 # Step 3: delete one running job → Kueue auto-admits the queued job.

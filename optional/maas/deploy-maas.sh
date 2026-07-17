@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # MaaS Setup — IBM Granite 3.1 2B on full GPU (non-MIG)
 #
 # Deploys a centrally hosted LLM endpoint. alice, bob, charlie access via

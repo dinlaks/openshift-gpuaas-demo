@@ -162,3 +162,11 @@ bash cleanup.sh all --hard   # also remove Kueue queues and hardware profiles
 ## Contributing
 
 Issues and PRs welcome. If you validate this on a GPU type not listed, please open a PR updating `lib/common.sh` and `PREREQUISITES.md` with your findings.
+
+---
+
+## License
+
+Copyright 2026 Dinesh Lakshmanan
+
+Licensed under the [Apache License, Version 2.0](LICENSE).

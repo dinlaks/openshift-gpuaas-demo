@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Teardown MaaS — removes InferenceService, ServingRuntime, and maas-project.
 # GPU 1 returns to pool after InferenceService pod is deleted.
 # Usage: bash 08-maas/teardown-maas.sh

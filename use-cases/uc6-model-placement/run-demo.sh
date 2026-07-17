@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC6: Hardware-Profile-Driven GPU Placement
 # Two jobs — full GPU for large model inference, small MIG for dev workload.
 set -euo pipefail

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Apply MIG configuration to GPU nodes labelled demo/gpu-mode=mig-mixed.
 # Nodes must have nvidia.com/gpu.present=true from NFD before running this.
 #

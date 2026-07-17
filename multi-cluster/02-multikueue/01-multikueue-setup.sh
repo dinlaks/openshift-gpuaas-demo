@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Configure MultiKueue using ACM ManagedServiceAccount — fully ACM-managed.
 # No manual token generation, no context switching, no kubeconfig files.
 #

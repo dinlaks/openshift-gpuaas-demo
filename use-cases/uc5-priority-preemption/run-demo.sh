@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC5: Workload Priority & Preemption
 # Medium-priority dev job fills alice's slot, then high-priority production job preempts it.
 set -euo pipefail

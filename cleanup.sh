@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # GPUaaS Demo Cleanup — remove demo workloads between use cases or for a full reset
 #
 # Usage:

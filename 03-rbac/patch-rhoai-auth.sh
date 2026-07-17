@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Apply RHOAI Auth CR — sets gpuaas-platform-admins as RHOAI dashboard admin group.
 #
 # In RHOAI 3.3+, the Auth CR (services.platform.opendatahub.io/v1alpha1) controls

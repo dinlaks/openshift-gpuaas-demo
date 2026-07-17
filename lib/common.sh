@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # Shared functions for all GPUaaS demo scripts — source this file, never duplicate functions.
 set -euo pipefail
 

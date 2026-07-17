@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC8: Gang Scheduling — All GPUs Must Start Together
 # Fillers occupy 3 of 4 MIG slots; gang job waits. Delete fillers → all 4 start at once.
 set -euo pipefail

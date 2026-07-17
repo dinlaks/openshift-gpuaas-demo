@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Dinesh Lakshmanan
 # UC9: Time-Based GPU Policy
 # CronJobs auto-switch between large-slice weekday and small-slice weekend mode.
 # Run manually to demo the policy switch without waiting for the schedule.
