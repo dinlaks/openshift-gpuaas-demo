@@ -56,6 +56,32 @@
 - Red Hat Advanced Cluster Management (ACM) 2.10+ on the hub cluster
 - Network connectivity between clusters (API server reachable)
 
+## Storage
+
+RHOAI workbenches, pipelines, and model storage require PVCs. The setup scripts
+assume a default StorageClass already exists on your cluster.
+
+**Check first:**
+```bash
+oc get storageclass
+```
+
+If a `(default)` StorageClass is listed — no action needed, proceed with `setup.sh`.
+
+If no default StorageClass exists (common on bare-metal OCP installs), use the
+optional storage setup before running `setup.sh`:
+
+| Component | When needed | Script |
+|---|---|---|
+| LVM Operator | Bare-metal OCP with local disks, no existing StorageClass | `bash optional/storage/deploy-storage.sh --lvm` |
+| MinIO | ACM Observability for multi-cluster add-on (UC7) | `bash optional/storage/deploy-storage.sh --minio` |
+
+Configure `LVM_DISK_PATH`, `LVM_STORAGE_CLASS`, and `LVM_CHANNEL` in `env.sh`
+before deploying LVM. See `optional/storage/README.md` for full guidance.
+
+> **Cloud-hosted OCP users:** AWS, Azure, and GCP clusters have a default StorageClass
+> pre-configured. Skip this section entirely.
+
 ## Cluster sizing
 
 Single-cluster minimum for running all use cases:

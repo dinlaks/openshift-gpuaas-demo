@@ -1,0 +1,121 @@
+# MinIO — S3-compatible object storage for ACM Observability (Thanos metrics).
+# Only needed for the multi-cluster add-on (UC7 + ACM Observability).
+#
+# MINIO_ACCESS_KEY, MINIO_SECRET_KEY, and LVM_STORAGE_CLASS are substituted
+# from env.sh by deploy-storage.sh (via envsubst).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-credentials
+  namespace: minio
+stringData:
+  rootUser: ${MINIO_ACCESS_KEY}
+  rootPassword: ${MINIO_SECRET_KEY}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:latest
+          args: [server, /data, --console-address, ":9001"]
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootUser
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootPassword
+          ports:
+            - containerPort: 9000   # S3 API
+            - containerPort: 9001   # console
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+        # Sidecar: creates required buckets on every pod start, idempotently.
+        - name: bucket-init
+          image: quay.io/minio/mc:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              until mc alias set minio http://localhost:9000 \
+                    "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" 2>/dev/null; do
+                echo "Waiting for MinIO..."
+                sleep 5
+              done
+              mc mb minio/thanos --ignore-existing
+              echo "Bucket 'thanos' ready"
+              sleep infinity
+          env:
+            - name: MC_CONFIG_DIR
+              value: /tmp/.mc
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootUser
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: rootPassword
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: minio
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ${LVM_STORAGE_CLASS}
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001

@@ -1,0 +1,27 @@
+# LVMCluster — configures which local disk LVM Operator provisions from.
+# Apply AFTER the lvms-operator CSV reaches Succeeded.
+#
+# LVM_DISK_PATH and LVM_STORAGE_CLASS are substituted from env.sh by deploy-storage.sh.
+#
+# Before applying, identify an available unused block device on your node:
+#   lsblk -d -o NAME,SIZE,TYPE,MOUNTPOINT
+#
+# WARNING: The disk at LVM_DISK_PATH will be wiped and claimed by LVM.
+#          Do not point this at a disk with data or an OS partition.
+apiVersion: lvm.topolvm.io/v1alpha1
+kind: LVMCluster
+metadata:
+  name: gpuaas-lvmcluster
+  namespace: openshift-storage
+spec:
+  storage:
+    deviceClasses:
+      - name: vg1
+        thinPoolConfig:
+          name: thin-pool-1
+          sizePercent: 90
+          overprovisionRatio: 10
+        deviceSelector:
+          paths:
+            - ${LVM_DISK_PATH}
+        default: true

@@ -1,0 +1,34 @@
+# LVM Storage Operator — provides a StorageClass backed by local disks.
+# Required on bare-metal OCP clusters with no existing StorageClass.
+# Apply wave-0-lvm-cluster.yaml AFTER this operator reaches Succeeded.
+#
+# LVM_CHANNEL is substituted from env.sh by deploy-storage.sh (via envsubst).
+# Set LVM_CHANNEL to match your OCP version: stable-4.17 | stable-4.18 | stable-4.21 etc.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-storage
+  labels:
+    openshift.io/cluster-monitoring: "true"
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-storage-operatorgroup
+  namespace: openshift-storage
+spec:
+  targetNamespaces:
+    - openshift-storage
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: lvms-operator
+  namespace: openshift-storage
+spec:
+  channel: ${LVM_CHANNEL}
+  installPlanApproval: Automatic
+  name: lvms-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
