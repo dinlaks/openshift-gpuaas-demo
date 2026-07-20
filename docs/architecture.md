@@ -154,6 +154,6 @@ Choose one mode per node. Set in `env.sh` before running setup.
 
 | Mode | env.sh setting | Best for |
 |---|---|---|
-| MIG (recommended) | `MIG_ENABLED=true` | Hard memory isolation between teams |
-| Timeslicing | `MIG_ENABLED=false` + configure `03-timeslicing/` | Older GPUs without MIG support |
-| Full GPU | `MIG_ENABLED=false` | Large model inference, DRA demos |
+| MIG (recommended) | `MIG_STRATEGY=small (or mixed, full-combo)` | Hard memory isolation between teams |
+| Timeslicing | `MIG_STRATEGY=dedicated` + configure `03-timeslicing/` | Older GPUs without MIG support |
+| Full GPU | `MIG_STRATEGY=dedicated` | Large model inference, DRA demos |

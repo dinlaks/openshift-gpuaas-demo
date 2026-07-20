@@ -16,8 +16,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/../lib/common.sh"
+source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
+resolve_gpu_config   # needed for apply_template on global ClusterQueue
 
 OCP_API_URL="${CLUSTER_A_API_URL}"
 OCP_USERNAME="${CLUSTER_A_USERNAME}"
@@ -110,18 +111,18 @@ EOF
 
 # ── Step 4: Apply MultiKueue resources ────────────────────────────────────────
 info "Applying MultiKueue config, cluster, admission check, and global queue..."
-oc apply -f "${SCRIPT_DIR}/02-multikueue-config.yaml"
-oc apply -f "${SCRIPT_DIR}/03-multikueue-cluster.yaml"
-oc apply -f "${SCRIPT_DIR}/04-admission-check.yaml"
-oc apply -f "${SCRIPT_DIR}/05-global-gpu-clusterqueue.yaml"
-oc apply -f "${SCRIPT_DIR}/06-global-gpu-localqueues.yaml"
+apply_cr      "${SCRIPT_DIR}/02-multikueue-config.yaml"
+apply_cr      "${SCRIPT_DIR}/03-multikueue-cluster.yaml"
+apply_cr      "${SCRIPT_DIR}/04-admission-check.yaml"
+apply_template "${SCRIPT_DIR}/05-global-gpu-clusterqueue.yaml"   # contains ${MIG_*} vars
+apply_cr      "${SCRIPT_DIR}/06-global-gpu-localqueues.yaml"
 
 # ── Step 5: Apply ACM GPU Policy and binding ───────────────────────────────────
 # Enforces GPU Operator subscription, MIG config, and Kueue ResourceFlavors
 # across all managed clusters in the fleet. Applied on Hub, propagated to spokes.
 info "Applying ACM GPU fleet governance policy..."
-oc apply -f "${SCRIPT_DIR}/08-acm-gpu-policy.yaml"
-oc apply -f "${SCRIPT_DIR}/09-acm-policy-binding.yaml"
+apply_template "${SCRIPT_DIR}/../01-acm-setup/08-acm-gpu-policy.yaml"
+apply_cr      "${SCRIPT_DIR}/../01-acm-setup/09-acm-policy-binding.yaml"
 success "ACM GPU policy applied — fleet governance active"
 
 # When a policy is re-applied (common in demo re-runs), ACM propagates the update to
@@ -158,15 +159,15 @@ wait_for "Policy compliant on cluster-b" \
 # Enables Thanos + Grafana on Hub to collect DCGM GPU metrics from both clusters.
 # Requires MinIO to be running (deployed in wave-0 of deploy-prereqs.sh).
 info "Applying ACM Observability (Thanos + Grafana → MinIO) ..."
-oc apply -f "${SCRIPT_DIR}/10-acm-observability.yaml"
+apply_cr "${SCRIPT_DIR}/../03-acm-observability/10-acm-observability.yaml"
 success "ACM Observability applied"
 
 # Deploy DCGM MIG GPU dashboard — ACM Grafana auto-discovers ConfigMaps with grafana-dashboard- prefix
 info "Deploying DCGM MIG GPU Grafana dashboard..."
-if [[ -f "${SCRIPT_DIR}/grafana-dcgm-mig-dashboard.json" ]]; then
+if [[ -f "${SCRIPT_DIR}/../03-acm-observability/grafana-dcgm-mig-dashboard.json" ]]; then
   oc create configmap grafana-dashboard-dcgm-mig-gpu \
     -n open-cluster-management-observability \
-    --from-file=dcgm-mig-dashboard.json="${SCRIPT_DIR}/grafana-dcgm-mig-dashboard.json" \
+    --from-file=dcgm-mig-dashboard.json="${SCRIPT_DIR}/../03-acm-observability/grafana-dcgm-mig-dashboard.json" \
     --dry-run=client -o yaml | oc apply -f - 2>/dev/null
   success "DCGM MIG GPU dashboard deployed — visible in Grafana → Dashboards → Browse"
 else

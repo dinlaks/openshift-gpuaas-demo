@@ -24,7 +24,7 @@
 | H200 SXM5 | 141 GB | Yes | `h200` | Expected to work |
 | Other | any | varies | `custom` | Manual config required |
 
-> **Note:** MIG is optional. Set `MIG_ENABLED=false` in `env.sh` to use timeslicing
+> **Note:** MIG is optional. Set `MIG_STRATEGY=dedicated` in `env.sh` to use full GPU or timeslicing
 > or full-GPU mode instead. See `02-gpu-setup/03-timeslicing/` for timeslicing setup.
 
 ## Operators (installed by `01-operators/deploy-operators.sh`)

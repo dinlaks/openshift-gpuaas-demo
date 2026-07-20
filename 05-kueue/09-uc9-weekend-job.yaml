@@ -45,6 +45,6 @@ spec:
               value: "1800"
           resources:
             requests:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
             limits:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"

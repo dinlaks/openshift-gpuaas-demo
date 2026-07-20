@@ -170,7 +170,7 @@ Expected — `inUse: 1`, `nominalQuota: 1` for `a30-mig-2g12gb`:
 What to say: "Cluster A is full. Now I submit a second inference job to the global-gpu-queue — this is the MultiKueue-enabled queue. Watch what happens."
 
 ```bash
-oc apply -f 07-acm/07-uc7-demo-job.yaml
+oc apply -f multi-cluster/02-multikueue/07-uc7-demo-job.yaml
 ```
 
 ```bash

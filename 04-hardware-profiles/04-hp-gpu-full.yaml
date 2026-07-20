@@ -33,6 +33,7 @@ spec:
     type: Node
     node:
       nodeSelector:
+        demo/gpu-type: ${GPU_TYPE}
         demo/gpu-has-full: "true"
       tolerations:
         - key: nvidia.com/gpu

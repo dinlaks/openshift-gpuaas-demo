@@ -43,11 +43,11 @@ fi
 header "Step 2: Label GPU nodes and configure MIG"
 bash "${SCRIPT_DIR}/02-gpu-setup/01-node-labels.sh"
 
-if [[ "${MIG_ENABLED:-true}" == "true" ]]; then
-  bash "${SCRIPT_DIR}/02-gpu-setup/02-mig/configure-mig.sh"
+if [[ "${MIG_STRATEGY:-small}" == "dedicated" ]]; then
+  info "MIG_STRATEGY=dedicated — skipping MIG partitioning (full GPU mode)"
+  info "For timeslicing on dedicated nodes, see: 02-gpu-setup/03-timeslicing/"
 else
-  warn "MIG_ENABLED=false — skipping MIG configuration"
-  info "For timeslicing, see: 02-gpu-setup/03-timeslicing/configure-timeslicing.sh"
+  bash "${SCRIPT_DIR}/02-gpu-setup/02-mig/configure-mig.sh"
 fi
 
 # ── Step 3: RBAC ─────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ bash "${SCRIPT_DIR}/05-kueue/deploy-kueue.sh"
 success "Single-cluster setup complete!"
 echo ""
 info "Next steps:"
-echo "  • Validate GPU resources:  bash 02-gpu-setup/05-validation/validate-gpus.sh"
+echo "  • Validate GPU resources:  bash 02-gpu-setup/05-validation/validate-nodes.sh"
 echo "  • Run a use case:          cd use-cases/uc3-multi-tenant && bash run-demo.sh"
 echo "  • Clean up between UCs:    bash cleanup.sh uc3"
 echo "  • Multi-cluster add-on:    see multi-cluster/README.md"

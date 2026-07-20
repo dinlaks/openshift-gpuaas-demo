@@ -33,9 +33,9 @@ spec:
           command: [python, -u, -c, "import time; print('[filler-1] Holding Cluster A mig-1g.6gb slot 1/4'); time.sleep(3600)"]
           resources:
             requests:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
             limits:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -63,9 +63,9 @@ spec:
           command: [python, -u, -c, "import time; print('[filler-2] Holding Cluster A mig-1g.6gb slot 2/4'); time.sleep(3600)"]
           resources:
             requests:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
             limits:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -93,9 +93,9 @@ spec:
           command: [python, -u, -c, "import time; print('[filler-3] Holding Cluster A mig-1g.6gb slot 3/4'); time.sleep(3600)"]
           resources:
             requests:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
             limits:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
 ---
 apiVersion: batch/v1
 kind: Job
@@ -123,6 +123,6 @@ spec:
           command: [python, -u, -c, "import time; print('[filler-4] Holding Cluster A mig-1g.6gb slot 4/4'); time.sleep(3600)"]
           resources:
             requests:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"
             limits:
-              nvidia.com/mig-1g.6gb: "1"
+              ${MIG_SMALL_RESOURCE}: "1"

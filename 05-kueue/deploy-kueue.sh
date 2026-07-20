@@ -25,8 +25,8 @@ apply_template "${SCRIPT_DIR}/02-cluster-queues.yaml"
 apply_cr "${SCRIPT_DIR}/03-local-queues.yaml"
 apply_cr "${SCRIPT_DIR}/04-workload-priority-classes.yaml"
 
-# UC9 time-based policy (CronJobs + RBAC for quota switching)
-apply_cr "${SCRIPT_DIR}/09-time-based-policy.yaml"
+# UC9 time-based policy — contains ${MIG_SMALL_RESOURCE} in ConfigMap template
+apply_template "${SCRIPT_DIR}/09-time-based-policy.yaml"
 
 # Label project namespaces for Kueue management.
 # NOTE: Labels are added here (not at project creation) because RHOAI shows a
