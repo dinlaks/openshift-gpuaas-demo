@@ -115,7 +115,7 @@ openshift-gpuaas-demo/
 │
 └── docs/
     ├── architecture.md     # Architecture diagrams and component overview
-    ├── hardware-guide.md   # GPU sizing and MIG profile guidance
+    ├── hardware-guide.md   # GPU types, node roles, MIG profiles (all 30 combinations)
     └── grafana/            # DCGM Grafana dashboard JSON
 ```
 
@@ -141,7 +141,10 @@ GPU_TYPE=h100-80gb
 | `h200` | 141 GB | `nvidia.com/mig-1g.18gb` | `nvidia.com/mig-2g.35gb` |
 | `custom` | any | set manually in env.sh | set manually in env.sh |
 
-MIG profiles per role are resolved automatically based on `GPU_TYPE` and `MIG_STRATEGY`. See `env.sh.example` for the full role reference.
+MIG profiles per role are resolved automatically based on `GPU_TYPE` and `MIG_STRATEGY`.
+
+For the full reference — all 5 roles, 30 MIG profiles, and a multi-topology example:
+**[docs/hardware-guide.md](docs/hardware-guide.md)**
 
 ---
 
