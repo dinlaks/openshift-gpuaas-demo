@@ -42,9 +42,13 @@ OCP_USERNAME=gpuaas-admin
 OCP_PASSWORD=<your-password>
 
 GPU_TYPE=a30          # a30 | a100-40gb | a100-80gb | h100-80gb | h100-nvl | h200 | custom
-MIG_ENABLED=true
-MIG_STRATEGY=small
+MIG_STRATEGY=small    # small | large | dedicated | mixed | full-combo
+                      # See docs/hardware-guide.md for the full role reference
 ```
+
+> **No default StorageClass?** If `oc get storageclass` shows no `(default)` entry (common
+> on bare-metal OCP), run `bash optional/storage/deploy-storage.sh --lvm` before setup.
+> See [optional/storage/README.md](optional/storage/README.md).
 
 ### 2. Run setup
 
@@ -61,8 +65,11 @@ bash setup.sh --skip-operators
 ### 3. Validate GPU resources
 
 ```bash
-oc describe node <gpu-node> | grep nvidia.com/mig
+bash 02-gpu-setup/05-validation/validate-nodes.sh
 ```
+
+This shows a table of all GPU nodes with their configured roles, capability labels,
+and the exact GPU product name reported by the hardware.
 
 ### 4. Run a use case
 
@@ -105,19 +112,23 @@ openshift-gpuaas-demo/
 │   ├── uc8-gang-scheduling/
 │   └── uc9-time-based-policy/
 │
-├── multi-cluster/          # Add-on: ACM + MultiKueue (UC7 global GPU pool)
-│   ├── 01-acm-setup/
-│   ├── 02-multikueue/
+├── multi-cluster/          # Add-on: ACM + MultiKueue + Observability (UC7)
+│   ├── 01-acm-setup/       # ACM Hub install, cluster import, GPU policy enforcement
+│   ├── 02-multikueue/      # Cross-cluster job dispatch
+│   ├── 03-acm-observability/ # Unified GPU metrics + Grafana dashboard JSON
 │   └── uc7-global-gpu-pool/
 │
 ├── optional/
+│   ├── storage/            # LVM Operator + MinIO (bare-metal / ACM Observability)
 │   └── maas/               # Model-as-a-Service (RHOAI model serving)
 │
 └── docs/
-    ├── architecture.md     # Architecture diagrams and component overview
-    ├── hardware-guide.md   # GPU types, node roles, MIG profiles (all 30 combinations)
-    └── grafana/            # DCGM Grafana dashboard JSON
+    ├── architecture.md     # Architecture diagrams and component stack
+    └── hardware-guide.md   # GPU types, node roles, MIG profiles (all 30 combinations)
 ```
+
+For architecture diagrams, component stack, and the Kueue quota model:
+**[docs/architecture.md](docs/architecture.md)**
 
 ---
 
