@@ -37,4 +37,4 @@ spec:
           cpu: "8"
           memory: 32Gi
     nodeSelector:
-      demo/gpu-gpu1-mode: full
+      demo/gpu-has-full: "true"

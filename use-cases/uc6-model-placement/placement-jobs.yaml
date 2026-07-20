@@ -1,11 +1,11 @@
 # UC6: Model-Specific Placement — two jobs targeting different GPU tiers
 #
 # alice-large-model-inference → inference-team-project → full GPU (nvidia.com/gpu)
-#   nodeSelector: demo/gpu-gpu1-mode: full
+#   nodeSelector: demo/gpu-has-full: "true"
 #   Shows: full GPU VRAM — no MIG partitioning
 #
 # charlie-small-model-dev → research-team-project → 1g.6gb MIG slice (GPU 0)
-#   nodeSelector: demo/gpu-mode: mig-mixed
+#   nodeSelector: demo/gpu-has-small-mig: "true"
 #   Shows: ~5.8GB VRAM — silicon-enforced memory boundary
 #
 # Key demo point: same cluster, different nodeSelectors embedded in HardwareProfiles —
@@ -38,7 +38,7 @@ spec:
     spec:
       restartPolicy: Never
       nodeSelector:
-        demo/gpu-gpu1-mode: full
+        demo/gpu-has-full: "true"
         demo/gpu-type: a30
       containers:
         - name: large-model
@@ -82,7 +82,7 @@ spec:
     spec:
       restartPolicy: Never
       nodeSelector:
-        demo/gpu-mode: mig-mixed
+        demo/gpu-has-small-mig: "true"
       containers:
         - name: small-model
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime

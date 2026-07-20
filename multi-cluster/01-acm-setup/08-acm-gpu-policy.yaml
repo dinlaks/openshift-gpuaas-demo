@@ -133,8 +133,8 @@ spec:
                   name: ${MIG_SMALL_FLAVOR}
                 spec:
                   nodeLabels:
-                    demo/gpu-type: a30
-                    demo/gpu-mode: mig-mixed
+                    demo/gpu-type: ${GPU_TYPE}
+                    demo/gpu-has-small-mig: "true"
                   tolerations:
                     - key: nvidia.com/gpu
                       operator: Exists
@@ -157,8 +157,8 @@ spec:
                   name: ${MIG_LARGE_FLAVOR}
                 spec:
                   nodeLabels:
-                    demo/gpu-type: a30
-                    demo/gpu-gpu1-mode: mig-mixed
+                    demo/gpu-type: ${GPU_TYPE}
+                    demo/gpu-has-large-mig: "true"
                   tolerations:
                     - key: nvidia.com/gpu
                       operator: Exists

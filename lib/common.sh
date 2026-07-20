@@ -129,20 +129,26 @@ wait_for() {
 }
 
 # ── GPU config resolution ─────────────────────────────────────────────────────
-# Call after load_env. Sets MIG_SMALL_RESOURCE, MIG_LARGE_RESOURCE,
-# MIG_SMALL_FLAVOR, MIG_LARGE_FLAVOR, and MIG_PROFILE based on GPU_TYPE.
-# These vars are consumed by envsubst when applying YAML templates.
+# Call after load_env. Resolves all GPU resource names, Kueue flavor names,
+# MIG profiles per role, and informational labels from GPU_TYPE.
 #
 # Supported GPU_TYPE values (memory variant must be explicit):
-#   a30        — 24 GB  | mig-1g.6gb  / mig-2g.12gb
-#   a100-40gb  — 40 GB  | mig-1g.5gb  / mig-2g.10gb
-#   a100-80gb  — 80 GB  | mig-1g.10gb / mig-2g.20gb
-#   h100-80gb  — 80 GB  | mig-1g.10gb / mig-3g.40gb
-#   h100-nvl   — 94 GB  | mig-1g.12gb / mig-3g.47gb
-#   h200       — 141 GB | mig-1g.18gb / mig-2g.35gb
-#   custom     — you set MIG_SMALL_RESOURCE, MIG_LARGE_RESOURCE etc. in env.sh
+#   a30        — 24 GB  | mig-1g.6gb  / mig-2g.12gb | arch: ampere
+#   a100-40gb  — 40 GB  | mig-1g.5gb  / mig-2g.10gb | arch: ampere
+#   a100-80gb  — 80 GB  | mig-1g.10gb / mig-2g.20gb | arch: ampere
+#   h100-80gb  — 80 GB  | mig-1g.10gb / mig-3g.40gb | arch: hopper
+#   h100-nvl   — 94 GB  | mig-1g.12gb / mig-3g.47gb | arch: hopper
+#   h200       — 141 GB | mig-1g.18gb / mig-2g.35gb | arch: hopper
+#   custom     — set all vars manually in env.sh
 #
-# Run: oc describe node <gpu-node> | grep nvidia.com/mig   to verify your values.
+# Node roles (used by NODE_ROLES and MIG_STRATEGY):
+#   small       — all GPUs: uniform small MIG slices (works with 1+ GPUs)
+#   large       — all GPUs: uniform large MIG slices (works with 1+ GPUs)
+#   dedicated   — all GPUs: full GPU, no MIG (works with 1+ GPUs)
+#   mixed       — GPU 0: small MIG, GPU 1: small+large MIG (requires 2+ GPUs)
+#   full-combo  — GPU 0: small MIG, GPU 1: full non-MIG GPU (requires 2+ GPUs)
+#
+# Run: bash 02-gpu-setup/05-validation/validate-nodes.sh  to inspect labels.
 resolve_gpu_config() {
   local gpu="${GPU_TYPE:-a30}"
   case "${gpu}" in
@@ -153,7 +159,12 @@ resolve_gpu_config() {
       MIG_LARGE_FLAVOR="a30-mig-2g12gb"
       FULL_GPU_RESOURCE="nvidia.com/gpu"
       FULL_GPU_FLAVOR="a30-full"
-      MIG_PROFILE="${MIG_PROFILE:-mixed-a30}"
+      MIG_PROFILE_SMALL="all-1g.6gb"
+      MIG_PROFILE_LARGE="all-2g.12gb"
+      MIG_PROFILE_MIXED="mixed-a30"
+      MIG_PROFILE_FULL_COMBO="full-combo-a30"
+      GPU_MEMORY="24gb"
+      GPU_ARCH="ampere"
       ;;
     a100-40gb)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.5gb"
@@ -162,7 +173,12 @@ resolve_gpu_config() {
       MIG_LARGE_FLAVOR="a100-40gb-mig-2g10gb"
       FULL_GPU_RESOURCE="nvidia.com/gpu"
       FULL_GPU_FLAVOR="a100-40gb-full"
-      MIG_PROFILE="${MIG_PROFILE:-all-1g.5gb}"
+      MIG_PROFILE_SMALL="all-1g.5gb"
+      MIG_PROFILE_LARGE="all-2g.10gb"
+      MIG_PROFILE_MIXED="mixed-a100-40gb"
+      MIG_PROFILE_FULL_COMBO="full-combo-a100-40gb"
+      GPU_MEMORY="40gb"
+      GPU_ARCH="ampere"
       ;;
     a100-80gb)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.10gb"
@@ -171,7 +187,12 @@ resolve_gpu_config() {
       MIG_LARGE_FLAVOR="a100-80gb-mig-2g20gb"
       FULL_GPU_RESOURCE="nvidia.com/gpu"
       FULL_GPU_FLAVOR="a100-80gb-full"
-      MIG_PROFILE="${MIG_PROFILE:-all-1g.10gb}"
+      MIG_PROFILE_SMALL="all-1g.10gb"
+      MIG_PROFILE_LARGE="all-2g.20gb"
+      MIG_PROFILE_MIXED="mixed-a100-80gb"
+      MIG_PROFILE_FULL_COMBO="full-combo-a100-80gb"
+      GPU_MEMORY="80gb"
+      GPU_ARCH="ampere"
       ;;
     h100-80gb)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.10gb"
@@ -180,7 +201,12 @@ resolve_gpu_config() {
       MIG_LARGE_FLAVOR="h100-80gb-mig-3g40gb"
       FULL_GPU_RESOURCE="nvidia.com/gpu"
       FULL_GPU_FLAVOR="h100-80gb-full"
-      MIG_PROFILE="${MIG_PROFILE:-all-1g.10gb}"
+      MIG_PROFILE_SMALL="all-1g.10gb"
+      MIG_PROFILE_LARGE="all-3g.40gb"
+      MIG_PROFILE_MIXED="mixed-h100-80gb"
+      MIG_PROFILE_FULL_COMBO="full-combo-h100-80gb"
+      GPU_MEMORY="80gb"
+      GPU_ARCH="hopper"
       ;;
     h100-nvl)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.12gb"
@@ -189,7 +215,12 @@ resolve_gpu_config() {
       MIG_LARGE_FLAVOR="h100-nvl-mig-3g47gb"
       FULL_GPU_RESOURCE="nvidia.com/gpu"
       FULL_GPU_FLAVOR="h100-nvl-full"
-      MIG_PROFILE="${MIG_PROFILE:-all-1g.12gb}"
+      MIG_PROFILE_SMALL="all-1g.12gb"
+      MIG_PROFILE_LARGE="all-3g.47gb"
+      MIG_PROFILE_MIXED="mixed-h100-nvl"
+      MIG_PROFILE_FULL_COMBO="full-combo-h100-nvl"
+      GPU_MEMORY="94gb"
+      GPU_ARCH="hopper"
       ;;
     h200)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.18gb"
@@ -198,13 +229,19 @@ resolve_gpu_config() {
       MIG_LARGE_FLAVOR="h200-mig-2g35gb"
       FULL_GPU_RESOURCE="nvidia.com/gpu"
       FULL_GPU_FLAVOR="h200-full"
-      MIG_PROFILE="${MIG_PROFILE:-all-1g.18gb}"
+      MIG_PROFILE_SMALL="all-1g.18gb"
+      MIG_PROFILE_LARGE="all-2g.35gb"
+      MIG_PROFILE_MIXED="mixed-h200"
+      MIG_PROFILE_FULL_COMBO="full-combo-h200"
+      GPU_MEMORY="141gb"
+      GPU_ARCH="hopper"
       ;;
     custom)
-      # Validate that the user has set all required variables manually in env.sh
       local missing=()
       for v in MIG_SMALL_RESOURCE MIG_LARGE_RESOURCE MIG_SMALL_FLAVOR MIG_LARGE_FLAVOR \
-                FULL_GPU_RESOURCE FULL_GPU_FLAVOR MIG_PROFILE; do
+                FULL_GPU_RESOURCE FULL_GPU_FLAVOR \
+                MIG_PROFILE_SMALL MIG_PROFILE_LARGE MIG_PROFILE_MIXED MIG_PROFILE_FULL_COMBO \
+                GPU_MEMORY GPU_ARCH; do
         [[ -z "${!v:-}" ]] && missing+=("${v}")
       done
       if [[ ${#missing[@]} -gt 0 ]]; then
@@ -222,12 +259,65 @@ resolve_gpu_config() {
       ;;
   esac
   export MIG_SMALL_RESOURCE MIG_LARGE_RESOURCE MIG_SMALL_FLAVOR MIG_LARGE_FLAVOR \
-         FULL_GPU_RESOURCE FULL_GPU_FLAVOR MIG_PROFILE GPU_TYPE
-  info "GPU config resolved: GPU_TYPE=${GPU_TYPE}"
-  info "  small slice : ${MIG_SMALL_RESOURCE} (flavor: ${MIG_SMALL_FLAVOR})"
-  info "  large slice : ${MIG_LARGE_RESOURCE} (flavor: ${MIG_LARGE_FLAVOR})"
-  info "  full GPU    : ${FULL_GPU_RESOURCE} (flavor: ${FULL_GPU_FLAVOR})"
-  info "  MIG profile : ${MIG_PROFILE}"
+         FULL_GPU_RESOURCE FULL_GPU_FLAVOR GPU_TYPE \
+         MIG_PROFILE_SMALL MIG_PROFILE_LARGE MIG_PROFILE_MIXED MIG_PROFILE_FULL_COMBO \
+         GPU_MEMORY GPU_ARCH
+  info "GPU config resolved: GPU_TYPE=${GPU_TYPE} (${GPU_MEMORY}, arch=${GPU_ARCH})"
+  info "  small : ${MIG_SMALL_RESOURCE}  large : ${MIG_LARGE_RESOURCE}  full : ${FULL_GPU_RESOURCE}"
+}
+
+# Return the mig-parted profile name for a given node role.
+# Usage: profile=$(get_profile_for_role "small")
+get_profile_for_role() {
+  local role="$1"
+  case "${role}" in
+    small)      echo "${MIG_PROFILE_SMALL}" ;;
+    large)      echo "${MIG_PROFILE_LARGE}" ;;
+    mixed)      echo "${MIG_PROFILE_MIXED}" ;;
+    full-combo) echo "${MIG_PROFILE_FULL_COMBO}" ;;
+    dedicated)  echo "" ;;   # no MIG — mig-enabled: false on all GPUs
+    *)
+      error "Unknown node role: '${role}'"
+      error "Valid roles: small | large | dedicated | mixed | full-combo"
+      exit 1
+      ;;
+  esac
+}
+
+# Apply capability labels to a node for a given role.
+# Sets demo/gpu-has-small-mig, demo/gpu-has-large-mig, demo/gpu-has-full as appropriate.
+# Usage: label_node_capabilities "worker-gpu-0" "mixed"
+label_node_capabilities() {
+  local node="$1" role="$2"
+
+  # Clear all capability labels first so stale labels don't remain
+  oc label node "${node}" \
+    demo/gpu-type="${GPU_TYPE}" \
+    demo/gpu-memory="${GPU_MEMORY}" \
+    demo/gpu-arch="${GPU_ARCH}" \
+    demo/gpu-role="${role}" \
+    demo/gpu-has-small-mig- \
+    demo/gpu-has-large-mig- \
+    demo/gpu-has-full- \
+    --overwrite 2>/dev/null || true
+
+  case "${role}" in
+    small)
+      oc label node "${node}" demo/gpu-has-small-mig=true --overwrite ;;
+    large)
+      oc label node "${node}" demo/gpu-has-large-mig=true --overwrite ;;
+    dedicated)
+      oc label node "${node}" demo/gpu-has-full=true --overwrite ;;
+    mixed)
+      oc label node "${node}" \
+        demo/gpu-has-small-mig=true \
+        demo/gpu-has-large-mig=true --overwrite ;;
+    full-combo)
+      oc label node "${node}" \
+        demo/gpu-has-small-mig=true \
+        demo/gpu-has-full=true --overwrite ;;
+  esac
+  success "Labelled ${node}: role=${role} (gpu-type=${GPU_TYPE}, memory=${GPU_MEMORY})"
 }
 
 # Apply a YAML template — substitutes GPU resource vars before applying.

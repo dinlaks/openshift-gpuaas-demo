@@ -43,7 +43,7 @@ OCP_PASSWORD=<your-password>
 
 GPU_TYPE=a30          # a30 | a100-40gb | a100-80gb | h100-80gb | h100-nvl | h200 | custom
 MIG_ENABLED=true
-MIG_STRATEGY=mixed
+MIG_STRATEGY=small
 ```
 
 ### 2. Run setup
@@ -129,17 +129,19 @@ Set one variable in `env.sh` — the entire stack adapts:
 GPU_TYPE=h100-80gb
 ```
 
-`resolve_gpu_config()` in `lib/common.sh` maps this to the correct resource names, Kueue flavor names, hardware profile requests, and MIG profile — all substituted into YAML templates at deploy time via `envsubst`.
+`resolve_gpu_config()` in `lib/common.sh` maps this to the correct resource names, Kueue flavor names, hardware profile requests, and MIG profiles per role — all substituted into YAML templates at deploy time via `envsubst`.
 
-| GPU_TYPE | Small MIG resource | Large MIG resource | Default MIG profile |
+| GPU_TYPE | Memory | Small MIG resource | Large MIG resource |
 |---|---|---|---|
-| `a30` | `nvidia.com/mig-1g.6gb` | `nvidia.com/mig-2g.12gb` | `mixed-a30` |
-| `a100-40gb` | `nvidia.com/mig-1g.5gb` | `nvidia.com/mig-2g.10gb` | `all-1g.5gb` |
-| `a100-80gb` | `nvidia.com/mig-1g.10gb` | `nvidia.com/mig-2g.20gb` | `all-1g.10gb` |
-| `h100-80gb` | `nvidia.com/mig-1g.10gb` | `nvidia.com/mig-3g.40gb` | `all-1g.10gb` |
-| `h100-nvl` | `nvidia.com/mig-1g.12gb` | `nvidia.com/mig-3g.47gb` | `all-1g.12gb` |
-| `h200` | `nvidia.com/mig-1g.18gb` | `nvidia.com/mig-2g.35gb` | `all-1g.18gb` |
-| `custom` | set manually in env.sh | set manually in env.sh | set manually in env.sh |
+| `a30` | 24 GB | `nvidia.com/mig-1g.6gb` | `nvidia.com/mig-2g.12gb` |
+| `a100-40gb` | 40 GB | `nvidia.com/mig-1g.5gb` | `nvidia.com/mig-2g.10gb` |
+| `a100-80gb` | 80 GB | `nvidia.com/mig-1g.10gb` | `nvidia.com/mig-2g.20gb` |
+| `h100-80gb` | 80 GB | `nvidia.com/mig-1g.10gb` | `nvidia.com/mig-3g.40gb` |
+| `h100-nvl` | 94 GB | `nvidia.com/mig-1g.12gb` | `nvidia.com/mig-3g.47gb` |
+| `h200` | 141 GB | `nvidia.com/mig-1g.18gb` | `nvidia.com/mig-2g.35gb` |
+| `custom` | any | set manually in env.sh | set manually in env.sh |
+
+MIG profiles per role are resolved automatically based on `GPU_TYPE` and `MIG_STRATEGY`. See `env.sh.example` for the full role reference.
 
 ---
 

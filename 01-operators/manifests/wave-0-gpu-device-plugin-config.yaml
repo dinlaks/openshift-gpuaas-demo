@@ -9,9 +9,9 @@
 #   GPU 1: MIG-mixed        → node-gpu1-mig-mixed
 #
 # Node labels (set by node-labels-multinode.sh) determine which config key applies:
-#   demo/gpu-gpu0-mode=mig-1g6gb  → uses node-gpu0-mig-1g6gb key
-#   demo/gpu-gpu1-mode=full       → uses node-gpu1-full key       (Cluster A only)
-#   demo/gpu-gpu1-mode=mig-mixed  → uses node-gpu1-mig-mixed key  (Cluster B only)
+#   demo/gpu-has-small-mig=true  → small MIG slices (role: small, mixed, full-combo)
+#   demo/gpu-has-full=true        → full GPU (role: dedicated, full-combo)
+#   demo/gpu-has-large-mig=true   → large MIG slices (role: large, mixed)
 apiVersion: v1
 kind: ConfigMap
 metadata:

@@ -29,7 +29,7 @@ spec:
     spec:
       restartPolicy: Never
       nodeSelector:
-        demo/gpu-gpu1-mode: full
+        demo/gpu-has-full: "true"
       containers:
         - name: inference
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime

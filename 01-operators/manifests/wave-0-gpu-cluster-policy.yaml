@@ -77,10 +77,7 @@ spec:
     default: true
 
   daemonsets:
-    tolerations:
-      - key: "demo/gpu-mode"
-        operator: "Exists"
-        effect: "NoSchedule"
+    tolerations: []
 
   validator:
     plugin:

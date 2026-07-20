@@ -23,7 +23,7 @@ oc get hardwareprofile -n research-team-project
 Verify GPU nodes are labeled correctly:
 
 ```bash
-oc get nodes -l demo/gpu-type=a30 -o custom-columns='NAME:.metadata.name,GPU1-MODE:.metadata.labels.demo/gpu-gpu1-mode,GPU-MODE:.metadata.labels.demo/gpu-mode'
+oc get nodes -l nvidia.com/gpu.present=true -o custom-columns='NAME:.metadata.name,HAS-FULL:.metadata.labels["demo/gpu-has-full"],HAS-SMALL:.metadata.labels["demo/gpu-has-small-mig"]'
 ```
 
 Expected: Cluster A node shows `gpu-gpu1-mode=full` and `gpu-mode=mig-mixed`.
@@ -49,7 +49,7 @@ Point out the `scheduling.nodeSelector`:
 ```yaml
 scheduling:
   nodeSelector:
-    demo/gpu-gpu1-mode: full
+    demo/gpu-has-full: "true"
     demo/gpu-type: a30
 ```
 
@@ -62,7 +62,7 @@ Point out the contrast:
 ```yaml
 scheduling:
   nodeSelector:
-    demo/gpu-mode: mig-mixed
+    demo/gpu-has-small-mig: "true"
 ```
 
 ### Step 2: Submit a Job Targeting the Full A30
@@ -92,7 +92,7 @@ spec:
     spec:
       restartPolicy: Never
       nodeSelector:
-        demo/gpu-gpu1-mode: full
+        demo/gpu-has-full: "true"
         demo/gpu-type: a30
       tolerations:
         - key: nvidia.com/gpu
@@ -173,7 +173,7 @@ spec:
     spec:
       restartPolicy: Never
       nodeSelector:
-        demo/gpu-mode: mig-mixed
+        demo/gpu-has-small-mig: "true"
       tolerations:
         - key: nvidia.com/gpu
           operator: Exists
@@ -247,8 +247,8 @@ watch -n2 'echo "=== Full A30 (inference-team-project) ===" && \
 
 ```bash
 # Show node GPU labels to confirm hardware topology
-oc get nodes -l demo/gpu-type=a30 \
-  -o custom-columns='NODE:.metadata.name,GPU1-MODE:.metadata.labels.demo/gpu-gpu1-mode,GPU-MODE:.metadata.labels.demo/gpu-mode'
+oc get nodes -l nvidia.com/gpu.present=true \
+  -o custom-columns='NODE:.metadata.name,HAS-FULL:.metadata.labels["demo/gpu-has-full"],HAS-SMALL:.metadata.labels["demo/gpu-has-small-mig"]'
 ```
 
 ## Key Message

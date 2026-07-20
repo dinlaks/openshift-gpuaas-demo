@@ -33,7 +33,7 @@ spec:
     type: Node
     node:
       nodeSelector:
-        demo/gpu-mode: mig-mixed
+        demo/gpu-has-large-mig: "true"
         demo/gpu-type: ${GPU_TYPE}
       tolerations:
         - key: nvidia.com/gpu
@@ -72,7 +72,7 @@ spec:
     type: Node
     node:
       nodeSelector:
-        demo/gpu-mode: mig-mixed
+        demo/gpu-has-large-mig: "true"
         demo/gpu-type: ${GPU_TYPE}
       tolerations:
         - key: nvidia.com/gpu

@@ -5,7 +5,7 @@
 #
 # Prerequisites (must be done before running):
 #   1. GPU Operator v25.10.1 installed (wave-0-gpu-operator-subscription.yaml — channel v25.10)
-#   2. node-labels-multinode.sh --cluster a  (sets demo/gpu-gpu1-mode=full)
+#   2. node-labels-multinode.sh --cluster a  (sets demo/gpu-has-full=true)
 #   3. helm available on PATH
 #
 # What this script does:
@@ -67,8 +67,8 @@ fi
 # ── 1. Prerequisites ───────────────────────────────────────────────────────────
 info "Checking prerequisites ..."
 
-if ! oc get nodes -l "demo/gpu-gpu1-mode=full" --no-headers | grep -q .; then
-  error "Node label demo/gpu-gpu1-mode=full not found."
+if ! oc get nodes -l "demo/gpu-has-full=true" --no-headers | grep -q .; then
+  error "Node label demo/gpu-has-full=true not found."
   error "Run first: bash 03-gpu-management/01-node-setup/node-labels-multinode.sh --cluster a"
   exit 1
 fi

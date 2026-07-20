@@ -81,4 +81,4 @@ spec:
     type: Node
     node:
       nodeSelector:
-        demo/gpu-gpu1-mode: full
+        demo/gpu-has-full: "true"
