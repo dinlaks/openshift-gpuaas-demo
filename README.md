@@ -2,7 +2,7 @@
 
 A full working demo of GPU sharing governance on OpenShift using **Kueue**, **RHOAI**, and **ACM** — nine use cases showing how platform teams can enforce fair GPU sharing across multiple tenant teams without manual intervention.
 
-> **Validated on:** NVIDIA A30 GPUs, OCP 4.21, RHOAI 3.3, Kueue stable-v1.3.
+> **Validated on:** NVIDIA A30 GPUs, OCP 4.22, RHOAI 3.4, Kueue stable-v1.4.
 > Expected to work on A100, H100, H200 — set `GPU_TYPE` in `env.sh` accordingly.
 > See [PREREQUISITES.md](PREREQUISITES.md) for full hardware and software requirements.
 
