@@ -110,7 +110,7 @@ header "5. GPU nodes"
 if [[ "${CLUSTER_OK}" == "true" ]]; then
   GPU_NODE_COUNT=$(oc get nodes -l nvidia.com/gpu.present=true --no-headers 2>/dev/null | wc -l | tr -d ' ')
   if (( GPU_NODE_COUNT == 0 )); then
-    fail "No GPU nodes found (nvidia.com/gpu.present=true) — check NFD and GPU Operator"
+    warn_pre "No GPU nodes found (nvidia.com/gpu.present=true) — expected on fresh install before NFD and GPU Operator are deployed"
   else
     pass "${GPU_NODE_COUNT} GPU node(s) found:"
     oc get nodes -l nvidia.com/gpu.present=true \
