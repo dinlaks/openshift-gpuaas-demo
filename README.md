@@ -38,7 +38,7 @@ Edit `env.sh` — minimum required:
 
 ```bash
 OCP_API_URL=https://api.your-cluster.example.com:6443
-OCP_USERNAME=gpuaas-admin
+OCP_USERNAME=kubeadmin        # your real cluster admin — not gpuaas-admin (created later by deploy-rbac.sh)
 OCP_PASSWORD=<your-password>
 
 GPU_TYPE=a30          # a30 | a100-40gb | a100-80gb | h100-80gb | h100-nvl | h200 | custom
@@ -46,11 +46,21 @@ MIG_STRATEGY=small    # small | large | dedicated | mixed | full-combo
                       # See docs/hardware-guide.md for the full role reference
 ```
 
-> **No default StorageClass?** If `oc get storageclass` shows no `(default)` entry (common
-> on bare-metal OCP), run `bash optional/storage/deploy-storage.sh --lvm` before setup.
-> See [optional/storage/README.md](optional/storage/README.md).
+### 2. Deploy storage (bare-metal only)
 
-### 2. Run setup
+Skip this step if `oc get storageclass` shows a `(default)` entry — common on AWS, Azure, and GCP.
+
+On bare-metal OCP with no default StorageClass, RHOAI PVCs will fail without one.
+Deploy LVM storage **before** running `setup.sh`:
+
+```bash
+# Set LVM_DISK_PATH in env.sh first (run lsblk on the node to find your disk)
+bash optional/storage/deploy-storage.sh --lvm
+```
+
+See [optional/storage/README.md](optional/storage/README.md) for full guidance.
+
+### 3. Run setup
 
 ```bash
 bash setup.sh
