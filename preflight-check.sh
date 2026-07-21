@@ -167,8 +167,8 @@ if [[ "${CLUSTER_OK}" == "true" ]]; then
     fi
   }
 
-  check_channel_pre "rhods"                    "${RHOAI_CHANNEL:-stable-3.3}"
-  check_channel_pre "openshift-kueue-operator" "${KUEUE_CHANNEL:-stable-v1.3}"
+  check_channel_pre "rhods-operator"  "${RHOAI_CHANNEL:-stable-3.4}"
+  check_channel_pre "kueue-operator"  "${KUEUE_CHANNEL:-stable-v1.4}"
   check_channel_pre "gpu-operator-certified"   "v24.9"
   check_channel_pre "nfd"                      "stable"
   check_channel_pre "openshift-cert-manager-operator" "stable-v1"

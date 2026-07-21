@@ -62,8 +62,8 @@ verify_channel "gpu-operator-certified"          "${GPU_OPERATOR_CHANNEL}"
 verify_channel "servicemeshoperator3"            "stable"
 verify_channel "serverless-operator"             "stable"
 verify_channel "web-terminal"                    "stable"
-verify_channel "openshift-kueue-operator"        "${KUEUE_CHANNEL}"
-verify_channel "rhods"                           "${RHOAI_CHANNEL}"
+verify_channel "kueue-operator"   "${KUEUE_CHANNEL}"
+verify_channel "rhods-operator"   "${RHOAI_CHANNEL}"
 
 # ── cert-manager ──────────────────────────────────────────────────────────────
 header "cert-manager (required by RHOAI 3.x)"
