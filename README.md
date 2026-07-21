@@ -51,10 +51,18 @@ MIG_STRATEGY=small    # small | large | dedicated | mixed | full-combo
 Skip this step if `oc get storageclass` shows a `(default)` entry — common on AWS, Azure, and GCP.
 
 On bare-metal OCP with no default StorageClass, RHOAI PVCs will fail without one.
-Deploy LVM storage **before** running `setup.sh`:
+Deploy LVM storage **before** running `setup.sh`.
+
+**First, update `env.sh` with your LVM settings:**
 
 ```bash
-# Set LVM_DISK_PATH in env.sh first (run lsblk on the node to find your disk)
+LVM_DISK_PATH=/dev/sdb    # unused block device — run: oc debug node/<node> -- chroot /host lsblk
+LVM_STORAGE_CLASS=lvms-vg1  # StorageClass name to create (default: lvms-vg1)
+```
+
+Then deploy:
+
+```bash
 bash optional/storage/deploy-storage.sh --lvm
 ```
 
