@@ -91,7 +91,5 @@ if [[ "${DEPLOY_MINIO}" == "true" ]]; then
     "oc get pods -n minio -l app=minio --field-selector=status.phase=Running \
       --no-headers 2>/dev/null | grep -q ." 180
 
-  MINIO_ROUTE=$(oc get svc minio -n minio -o jsonpath='{.spec.clusterIP}' 2>/dev/null)
-  success "MinIO deployed — S3 endpoint: http://${MINIO_ROUTE}:9000"
-  info "Set in env.sh:  MINIO_ENDPOINT=http://minio.minio.svc.cluster.local:9000"
+  success "MinIO deployed — S3 endpoint: http://minio.minio.svc.cluster.local:9000"
 fi
