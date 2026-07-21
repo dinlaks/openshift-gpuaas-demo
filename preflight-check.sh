@@ -124,9 +124,9 @@ fi
 # ── 6. NODE_ROLES node name validation ────────────────────────────────────────
 header "6. NODE_ROLES validation"
 
-if [[ "${CLUSTER_OK}" == "true" && ${#NODE_ROLES[@]:-0} -gt 0 ]]; then
+if [[ "${CLUSTER_OK}" == "true" && ${#NODE_ROLES[@]} -gt 0 ]]; then
   VALID_ROLES="small large dedicated mixed full-combo"
-  for entry in "${NODE_ROLES[@]:-}"; do
+  for entry in "${NODE_ROLES[@]}"; do
     [[ -z "${entry}" ]] && continue
     node="${entry%%:*}"
     role="${entry##*:}"
