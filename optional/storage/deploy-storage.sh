@@ -11,7 +11,7 @@
 # Configure in env.sh before running:
 #   LVM_DISK_PATH      — block device for LVM (e.g. /dev/sdb). Run: lsblk
 #   LVM_STORAGE_CLASS  — StorageClass name to create (e.g. lvms-vg1)
-#   LVM_CHANNEL        — OCP version channel (e.g. stable-4.21)
+#   LVM_CHANNEL        — OCP version channel (e.g. stable-4.22); auto-detected if unset
 #   MINIO_ACCESS_KEY   — MinIO root user
 #   MINIO_SECRET_KEY   — MinIO root password
 set -euo pipefail
@@ -42,7 +42,7 @@ require_oc_login
 
 LVM_DISK_PATH="${LVM_DISK_PATH:-}"
 LVM_STORAGE_CLASS="${LVM_STORAGE_CLASS:-lvms-vg1}"
-LVM_CHANNEL="${LVM_CHANNEL:-stable-4.21}"
+LVM_CHANNEL=$(resolve_channel "LVM_CHANNEL" "lvms-operator" "ocp-version")
 MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-minio}"
 MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-minio123}"
 
