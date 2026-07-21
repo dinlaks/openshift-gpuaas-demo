@@ -15,7 +15,7 @@ metadata:
   name: rhods-operator
   namespace: redhat-ods-operator
 spec:
-  channel: stable-3.3
+  channel: ${RHOAI_CHANNEL}
   installPlanApproval: Automatic
   name: rhods-operator
   source: redhat-operators

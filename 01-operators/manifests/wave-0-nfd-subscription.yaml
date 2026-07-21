@@ -20,7 +20,7 @@ metadata:
   name: nfd
   namespace: openshift-nfd
 spec:
-  channel: stable
+  channel: ${NFD_CHANNEL}
   installPlanApproval: Automatic
   name: nfd
   source: redhat-operators

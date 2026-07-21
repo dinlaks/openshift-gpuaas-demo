@@ -29,6 +29,42 @@ require_oc_login
 
 MANIFESTS="${SCRIPT_DIR}/manifests"
 
+# ── Resolve operator channels (auto-detect if not set in env.sh) ──────────────
+header "Resolving operator channels"
+
+RHOAI_CHANNEL="${RHOAI_CHANNEL:-stable-3.4}"
+KUEUE_CHANNEL="${KUEUE_CHANNEL:-stable-v1.4}"
+
+# GPU Operator: versioned channel (v26.x etc.) — auto-detect if not set
+if [[ -z "${GPU_OPERATOR_CHANNEL:-}" ]]; then
+  GPU_OPERATOR_CHANNEL=$(resolve_channel "GPU_OPERATOR_CHANNEL" "gpu-operator-certified")
+  [[ -z "${GPU_OPERATOR_CHANNEL}" ]] && error "Cannot detect GPU Operator channel. Set GPU_OPERATOR_CHANNEL in env.sh." && exit 1
+fi
+
+# NFD: OCP version-specific channel (4.22 etc.) — auto-detect from cluster
+if [[ -z "${NFD_CHANNEL:-}" ]]; then
+  NFD_CHANNEL=$(resolve_channel "NFD_CHANNEL" "nfd" "ocp-version")
+  [[ -z "${NFD_CHANNEL}" ]] && NFD_CHANNEL="stable"  # fallback
+fi
+
+export RHOAI_CHANNEL KUEUE_CHANNEL GPU_OPERATOR_CHANNEL NFD_CHANNEL
+
+info "RHOAI_CHANNEL          = ${RHOAI_CHANNEL}"
+info "KUEUE_CHANNEL          = ${KUEUE_CHANNEL}"
+info "GPU_OPERATOR_CHANNEL   = ${GPU_OPERATOR_CHANNEL}"
+info "NFD_CHANNEL            = ${NFD_CHANNEL}"
+
+# ── Verify all channels exist before installing anything ──────────────────────
+header "Verifying operator channels"
+verify_channel "openshift-cert-manager-operator" "stable-v1"
+verify_channel "nfd"                             "${NFD_CHANNEL}"
+verify_channel "gpu-operator-certified"          "${GPU_OPERATOR_CHANNEL}"
+verify_channel "servicemeshoperator3"            "stable"
+verify_channel "serverless-operator"             "stable"
+verify_channel "web-terminal"                    "stable"
+verify_channel "openshift-kueue-operator"        "${KUEUE_CHANNEL}"
+verify_channel "rhods"                           "${RHOAI_CHANNEL}"
+
 # ── cert-manager ──────────────────────────────────────────────────────────────
 header "cert-manager (required by RHOAI 3.x)"
 ensure_operator openshift-cert-manager-operator cert-manager-operator \
@@ -39,7 +75,7 @@ wait_for "cert-manager pods running" \
 
 # ── Node Feature Discovery ────────────────────────────────────────────────────
 header "Node Feature Discovery"
-ensure_operator nfd openshift-nfd "${MANIFESTS}/wave-0-nfd-subscription.yaml"
+ensure_operator_template nfd openshift-nfd "${MANIFESTS}/wave-0-nfd-subscription.yaml"
 wait_operator nfd openshift-nfd 300
 wait_for "NodeFeatureDiscovery CRD registered" \
   "oc get crd nodefeaturediscoveries.nfd.openshift.io &>/dev/null" 60 5
@@ -53,7 +89,7 @@ wait_for "NFD pods running" \
 
 # ── NVIDIA GPU Operator ────────────────────────────────────────────────────────
 header "NVIDIA GPU Operator"
-ensure_operator gpu-operator-certified nvidia-gpu-operator \
+ensure_operator_template gpu-operator-certified nvidia-gpu-operator \
   "${MANIFESTS}/wave-0-gpu-operator-subscription.yaml"
 wait_operator gpu-operator-certified nvidia-gpu-operator 300
 wait_for "ClusterPolicy CRD registered" \
@@ -88,13 +124,13 @@ wait_operator serverless-operator openshift-serverless 300
 
 # ── Red Hat build of Kueue ────────────────────────────────────────────────────
 header "Red Hat build of Kueue"
-ensure_operator openshift-kueue-operator openshift-kueue-operator \
+ensure_operator_template openshift-kueue-operator openshift-kueue-operator \
   "${MANIFESTS}/wave-1-kueue-subscription.yaml"
 wait_operator openshift-kueue-operator openshift-kueue-operator 300
 
 # ── Red Hat OpenShift AI ──────────────────────────────────────────────────────
 header "Red Hat OpenShift AI (RHOAI)"
-ensure_operator rhods-operator redhat-ods-operator \
+ensure_operator_template rhods-operator redhat-ods-operator \
   "${MANIFESTS}/wave-1-rhoai-subscription.yaml"
 wait_operator rhods-operator redhat-ods-operator 300
 wait_for "DSCInitialization CRD registered" \

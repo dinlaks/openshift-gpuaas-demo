@@ -58,6 +58,112 @@ require_oc_login() {
   success "Logged in as $(oc whoami) → $(oc whoami --show-server)"
 }
 
+# ── Cluster context switching (multi-cluster only) ────────────────────────────
+# Switches active cluster context cleanly — sets OCP_API_URL, credentials,
+# and kubeconfig, then logs in. Use in multi-cluster scripts instead of
+# raw `oc login` calls so all switching goes through one place.
+#
+# Usage: switch_cluster a    (switch to Cluster A / hub)
+#        switch_cluster b    (switch to Cluster B / spoke)
+switch_cluster() {
+  local target="${1,,}"
+  case "${target}" in
+    a)
+      [[ -z "${CLUSTER_A_API_URL:-}" ]] && error "CLUSTER_A_API_URL not set in env.sh" && exit 1
+      OCP_API_URL="${CLUSTER_A_API_URL}"
+      OCP_USERNAME="${CLUSTER_A_USERNAME}"
+      OCP_PASSWORD="${CLUSTER_A_PASSWORD}"
+      [[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
+      ;;
+    b)
+      [[ -z "${CLUSTER_B_API_URL:-}" ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+      OCP_API_URL="${CLUSTER_B_API_URL}"
+      OCP_USERNAME="${CLUSTER_B_USERNAME}"
+      OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+      [[ -n "${CLUSTER_B_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_B_KUBECONFIG}"
+      ;;
+    *)
+      error "switch_cluster: unknown target '${target}'. Use 'a' or 'b'."
+      exit 1
+      ;;
+  esac
+  export OCP_API_URL OCP_USERNAME OCP_PASSWORD
+  require_oc_login
+}
+
+# ── Operator channel helpers ──────────────────────────────────────────────────
+
+# Auto-detect the default channel for an operator from the marketplace.
+# Returns the channel name, or empty string if not found.
+# Usage: channel=$(get_default_channel "gpu-operator-certified")
+get_default_channel() {
+  local pkg="$1" ns="${2:-openshift-marketplace}"
+  oc get packagemanifest "${pkg}" -n "${ns}" \
+    -o jsonpath='{.status.defaultChannel}' 2>/dev/null || echo ""
+}
+
+# Auto-detect the OCP minor version channel (e.g. "4.22") from the live cluster.
+# Used for NFD and LVM which use OCP-version-specific channels.
+get_ocp_version_channel() {
+  local version
+  version=$(oc version -o json 2>/dev/null | python3 -c \
+    "import sys,json; v=json.load(sys.stdin).get('openshiftVersion',''); \
+     parts=v.split('.'); print('.'.join(parts[:2]) if len(parts)>=2 else '')" \
+    2>/dev/null || echo "")
+  echo "${version}"
+}
+
+# Resolve operator channel — uses env var if set, otherwise auto-detects.
+# Usage: channel=$(resolve_channel "GPU_OPERATOR_CHANNEL" "gpu-operator-certified")
+#        channel=$(resolve_channel "NFD_CHANNEL" "nfd" "ocp-version")
+resolve_channel() {
+  local env_var="$1" pkg="$2" mode="${3:-default}"
+  local channel="${!env_var:-}"
+
+  if [[ -n "${channel}" ]]; then
+    echo "${channel}"
+    return
+  fi
+
+  if [[ "${mode}" == "ocp-version" ]]; then
+    channel=$(get_ocp_version_channel)
+    if [[ -z "${channel}" ]]; then
+      channel=$(get_default_channel "${pkg}")
+    fi
+  else
+    channel=$(get_default_channel "${pkg}")
+  fi
+
+  if [[ -n "${channel}" ]]; then
+    info "Auto-detected channel for ${pkg}: ${channel}"
+    echo "${channel}"
+  else
+    echo ""
+  fi
+}
+
+# Verify an operator channel exists in the marketplace.
+# Fails with the list of available channels if the configured one is wrong.
+# Usage: verify_channel <packagemanifest-name> <channel> [namespace]
+verify_channel() {
+  local pkg="$1" channel="$2" ns="${3:-openshift-marketplace}"
+  local available
+  available=$(oc get packagemanifest "${pkg}" -n "${ns}" \
+    -o jsonpath='{.status.channels[*].name}' 2>/dev/null | tr ' ' '\n' | sort | tr '\n' ' ')
+  if [[ -z "${available}" ]]; then
+    error "PackageManifest '${pkg}' not found in ${ns}."
+    error "Check that OperatorHub is configured and the operator source is available."
+    exit 1
+  fi
+  if ! echo "${available}" | tr ' ' '\n' | grep -q "^${channel}$"; then
+    error "Channel '${channel}' not found for '${pkg}'."
+    error "Available channels: ${available}"
+    error "Update the channel in env.sh and re-run."
+    exit 1
+  fi
+  success "Channel '${channel}' verified for ${pkg}"
+}
+
 # ── Operator helpers ──────────────────────────────────────────────────────────
 ensure_operator() {
   local name="$1" namespace="$2" manifest="$3"
@@ -67,6 +173,18 @@ ensure_operator() {
   fi
   info "Installing operator: ${name}"
   apply_cr "${manifest}"
+}
+
+# Like ensure_operator but runs the manifest through envsubst first.
+# Use for subscription YAMLs that contain ${CHANNEL_VAR} placeholders.
+ensure_operator_template() {
+  local name="$1" namespace="$2" manifest="$3"
+  if oc get subscription "${name}" -n "${namespace}" &>/dev/null; then
+    info "Subscription ${name} already exists — skipping"
+    return 0
+  fi
+  info "Installing operator: ${name}"
+  apply_template "${manifest}"
 }
 
 wait_operator() {

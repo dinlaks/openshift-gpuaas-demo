@@ -29,6 +29,14 @@ done
 export DRY_RUN
 
 load_env
+
+# ── Pre-flight validation ─────────────────────────────────────────────────────
+header "Pre-flight checks"
+bash "${SCRIPT_DIR}/preflight-check.sh" || {
+  error "Fix the issues above before running setup."
+  exit 1
+}
+
 require_oc_login
 
 # ── Step 1: Operators ─────────────────────────────────────────────────────────

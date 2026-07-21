@@ -2,10 +2,13 @@
 
 ## OpenShift
 
-| Component | Minimum version | Notes |
-|---|---|---|
-| OpenShift Container Platform | 4.17+ | 4.21 recommended (DRA GA, no feature gate needed) |
-| Kubernetes | 1.30+ | |
+| Component | Minimum version | Recommended | Notes |
+|---|---|---|---|
+| OpenShift Container Platform | 4.17+ | **4.22** | EUS release, K8s 1.35, DRA GA |
+| Kubernetes | 1.30+ | 1.35 | Bundled with OCP 4.22 |
+
+> OCP 4.22 is an **EUS (Extended Update Support)** release — preferred for stability.
+> DRA (UC2) requires OCP 4.21+. All other use cases work on 4.17+.
 
 ## NVIDIA GPUs
 
@@ -29,15 +32,49 @@
 
 ## Operators (installed by `01-operators/deploy-operators.sh`)
 
-| Operator | Channel | Namespace |
-|---|---|---|
-| Node Feature Discovery | stable | openshift-nfd |
-| NVIDIA GPU Operator | v24.x or later | nvidia-gpu-operator |
-| Red Hat build of Kueue | stable-v1.3 | openshift-kueue-operator |
-| Red Hat OpenShift AI | stable-3.3+ (3.3 recommended) | redhat-ods-operator |
-| Red Hat cert-manager | stable-v1 | cert-manager-operator |
-| OpenShift Service Mesh 3 | stable | openshift-operators |
-| OpenShift Serverless | stable | openshift-serverless |
+### Step 1 — Verify channels for your OCP + RHOAI version
+
+The table below is validated for **OCP 4.22 + RHOAI 3.4 (July 2026)**. If you are on a
+different OCP version or a newer RHOAI release, verify available channels on your
+cluster **before** filling in `env.sh` — channels change with every OCP minor release.
+
+**Check all operator channels at once:**
+
+```bash
+for pkg in rhods openshift-kueue-operator gpu-operator-certified nfd \
+           openshift-cert-manager-operator servicemeshoperator3 \
+           serverless-operator web-terminal lvms-operator; do
+  echo -n "${pkg}: "
+  oc get packagemanifest "${pkg}" -n openshift-marketplace \
+    -o jsonpath='{.status.channels[*].name}' 2>/dev/null || echo "not found"
+done
+```
+
+### Step 2 — Channel reference by OCP version
+
+| Operator | Package name | OCP 4.21 | OCP 4.22 ✅ | Notes |
+|---|---|---|---|---|
+| Red Hat OpenShift AI | `rhods` | `stable-3.3` | `stable-3.4` | Set `RHOAI_CHANNEL` |
+| Red Hat build of Kueue | `openshift-kueue-operator` | `stable-v1.3` | `stable-v1.4` | Set `KUEUE_CHANNEL` |
+| NVIDIA GPU Operator | `gpu-operator-certified` | `v25.x` | `v26.x` | **Auto-detect** — changes every release |
+| Node Feature Discovery | `nfd` | `4.21` | `4.22` | **Auto-detect** — OCP version-specific |
+| Red Hat cert-manager | `openshift-cert-manager-operator` | `stable-v1` | `stable-v1` | Fixed — no change needed |
+| OpenShift Service Mesh 3 | `servicemeshoperator3` | `stable` | `stable` | Fixed — no change needed |
+| OpenShift Serverless | `serverless-operator` | `stable` | `stable` | Fixed — no change needed |
+| Web Terminal | `web-terminal` | `stable` | `stable` | Fixed — no change needed |
+| LVM Operator *(optional)* | `lvms-operator` | `stable-4.21` | `stable-4.22` | **Auto-detect** — OCP version-specific |
+| ACM Hub *(multi-cluster)* | `advanced-cluster-management` | `release-2.14` | `release-2.16` or `release-2.17` | Set `ACM_CHANNEL` |
+
+**Auto-detect** channels (GPU Operator, NFD, LVM) are resolved at install time when left
+blank in `env.sh`. Override by setting the variable explicitly if auto-detection fails.
+
+### Step 3 — Set in env.sh and validate
+
+After verifying, update `env.sh` with the channels for your OCP + RHOAI version, then:
+
+```bash
+bash preflight-check.sh   # validates all channels exist before any installation
+```
 
 > **Important:** RHOAI's built-in Kueue must be set to `Unmanaged` (already configured
 > in `wave-1-rhoai-datasciencecluster.yaml`). Do not change it to `Managed` — it
