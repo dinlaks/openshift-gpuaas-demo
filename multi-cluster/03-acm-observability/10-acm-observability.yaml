@@ -112,3 +112,13 @@ data:
 #   -n open-cluster-management-observability
 #   --from-file=dcgm-mig-dashboard.json=grafana-dcgm-mig-dashboard.json
 # (Cannot embed 59KB JSON in YAML — apply separately via the command above)
+---
+# Bind gpuaas-clusterset to the observability namespace so MCO PlacementRule
+# can discover both clusters and deploy the observability addon.
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: gpuaas-clusterset
+  namespace: open-cluster-management-observability
+spec:
+  clusterSet: gpuaas-clusterset

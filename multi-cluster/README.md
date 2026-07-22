@@ -47,10 +47,8 @@ MINIO_SECRET_KEY=minio123
 # 1. Install ACM Hub on Cluster A
 bash multi-cluster/01-acm-setup/01-install-hub.sh
 
-# 2. Import Cluster B + apply GPU policy across both clusters
+# 2. Import Cluster B (also applies GPU policy across both clusters)
 bash multi-cluster/01-acm-setup/03-import-cluster-b.sh
-oc apply -f multi-cluster/01-acm-setup/08-acm-gpu-policy.yaml
-oc apply -f multi-cluster/01-acm-setup/09-acm-policy-binding.yaml
 
 # 3. Configure MultiKueue (generates kubeconfig secret for Cluster B)
 bash multi-cluster/02-multikueue/01-multikueue-setup.sh

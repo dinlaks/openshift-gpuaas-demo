@@ -12,10 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
 
-[[ -z "${CLUSTER_B_API_URL:-}"           ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
-[[ -z "${CLUSTER_B_API_URL_INTERNAL:-}"  ]] && error "CLUSTER_B_API_URL_INTERNAL not set in env.sh" && exit 1
-[[ -z "${CLUSTER_B_USERNAME:-}"          ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
-[[ -z "${CLUSTER_B_PASSWORD:-}"          ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
+[[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+[[ -z "${CLUSTER_B_USERNAME:-}" ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
+[[ -z "${CLUSTER_B_PASSWORD:-}" ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
 [[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
 
 # ── Step 1: Stay on Cluster A (Hub) throughout ────────────────────────────────
@@ -67,7 +66,7 @@ EOF
 info "Creating auto-import-secret (server URL + token only)..."
 oc create secret generic auto-import-secret \
   --from-literal=autoImportRetry=5 \
-  --from-literal=server="${CLUSTER_B_API_URL_INTERNAL}" \
+  --from-literal=server="${CLUSTER_B_API_URL}" \
   --from-literal=token="${CLUSTER_B_TOKEN}" \
   -n cluster-b \
   --dry-run=client -o yaml | oc apply -f -
@@ -81,9 +80,16 @@ wait_for "Cluster B joined ACM Hub" \
   "oc get managedcluster cluster-b -o jsonpath='{.status.conditions}' 2>/dev/null | grep -q ManagedClusterJoined" \
   300 15
 
-success "Cluster B (Cluster B) is now managed by ACM Hub on Cluster A!"
+success "Cluster B is now managed by ACM Hub on Cluster A!"
 echo ""
 oc get managedcluster -o wide
 echo ""
-info "Next: Deploy GPU config to Cluster B"
-echo "  bash 00-prereqs/acm/06-deploy-spoke-config.sh"
+
+# ── Step 6: Apply GPU policy and binding across both clusters ─────────────────
+header "Applying ACM GPU policy to both clusters"
+apply_template "${SCRIPT_DIR}/08-acm-gpu-policy.yaml"
+apply_cr       "${SCRIPT_DIR}/09-acm-policy-binding.yaml"
+success "GPU policy enforced across both clusters"
+
+info "Next: Configure MultiKueue"
+echo "  bash multi-cluster/02-multikueue/01-multikueue-setup.sh"

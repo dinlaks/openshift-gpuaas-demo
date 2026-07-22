@@ -10,13 +10,3 @@ metadata:
   name: gpuaas-clusterset
   labels:
     demo/purpose: gpuaas-gpu-pool
----
-# Bind gpuaas-clusterset to the observability namespace so the MCO placementrule
-# controller can discover both clusters and deploy the observability addon.
-apiVersion: cluster.open-cluster-management.io/v1beta2
-kind: ManagedClusterSetBinding
-metadata:
-  name: gpuaas-clusterset
-  namespace: open-cluster-management-observability
-spec:
-  clusterSet: gpuaas-clusterset
