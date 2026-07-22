@@ -47,12 +47,17 @@ if [[ -z "${NFD_CHANNEL:-}" ]]; then
   [[ -z "${NFD_CHANNEL}" ]] && NFD_CHANNEL="stable"  # fallback
 fi
 
-export RHOAI_CHANNEL KUEUE_CHANNEL GPU_OPERATOR_CHANNEL NFD_CHANNEL
+# Web Terminal: channel varies by cluster — auto-detect marketplace default
+WEB_TERMINAL_CHANNEL=$(resolve_channel "WEB_TERMINAL_CHANNEL" "web-terminal")
+[[ -z "${WEB_TERMINAL_CHANNEL}" ]] && WEB_TERMINAL_CHANNEL="fast"  # fallback
+
+export RHOAI_CHANNEL KUEUE_CHANNEL GPU_OPERATOR_CHANNEL NFD_CHANNEL WEB_TERMINAL_CHANNEL
 
 info "RHOAI_CHANNEL          = ${RHOAI_CHANNEL}"
 info "KUEUE_CHANNEL          = ${KUEUE_CHANNEL}"
 info "GPU_OPERATOR_CHANNEL   = ${GPU_OPERATOR_CHANNEL}"
 info "NFD_CHANNEL            = ${NFD_CHANNEL}"
+info "WEB_TERMINAL_CHANNEL   = ${WEB_TERMINAL_CHANNEL}"
 
 # ── Verify all channels exist before installing anything ──────────────────────
 header "Verifying operator channels"
@@ -61,15 +66,15 @@ verify_channel "nfd"                             "${NFD_CHANNEL}"
 verify_channel "gpu-operator-certified"          "${GPU_OPERATOR_CHANNEL}"
 verify_channel "servicemeshoperator3"            "stable"
 verify_channel "serverless-operator"             "stable"
-verify_channel "web-terminal"                    "stable"
-verify_channel "kueue-operator"   "${KUEUE_CHANNEL}"
-verify_channel "rhods-operator"   "${RHOAI_CHANNEL}"
+verify_channel "web-terminal"                    "${WEB_TERMINAL_CHANNEL}"
+verify_channel "kueue-operator"                  "${KUEUE_CHANNEL}"
+verify_channel "rhods-operator"                  "${RHOAI_CHANNEL}"
 
 # ── cert-manager ──────────────────────────────────────────────────────────────
 header "cert-manager (required by RHOAI 3.x)"
 ensure_operator openshift-cert-manager-operator cert-manager-operator \
   "${MANIFESTS}/wave-1-cert-manager.yaml"
-wait_operator openshift-cert-manager-operator cert-manager-operator 300
+wait_operator cert-manager-operator cert-manager-operator 600
 wait_for "cert-manager pods running" \
   "oc get pods -n cert-manager --no-headers 2>/dev/null | grep -q Running" 180
 
@@ -99,6 +104,12 @@ if oc get configmap device-plugin-config -n nvidia-gpu-operator &>/dev/null; the
 else
   apply_cr "${MANIFESTS}/wave-0-gpu-device-plugin-config.yaml"
 fi
+# mig-parted-config must exist before ClusterPolicy so mig-manager can start cleanly
+if oc get configmap mig-parted-config -n nvidia-gpu-operator &>/dev/null; then
+  info "ConfigMap mig-parted-config already exists — skipping"
+else
+  apply_cr "${SCRIPT_DIR}/../02-gpu-setup/02-mig/mig-parted-config.yaml"
+fi
 apply_cr "${MANIFESTS}/wave-0-gpu-cluster-policy.yaml"
 if oc get podmonitor nvidia-dcgm-exporter -n gpu-monitoring &>/dev/null 2>&1; then
   info "PodMonitor nvidia-dcgm-exporter already exists — skipping"
@@ -122,11 +133,17 @@ ensure_operator serverless-operator openshift-serverless \
 wait_operator servicemeshoperator3 openshift-operators 300
 wait_operator serverless-operator openshift-serverless 300
 
+# ── Web Terminal ──────────────────────────────────────────────────────────────
+header "Web Terminal"
+ensure_operator_template web-terminal openshift-operators \
+  "${MANIFESTS}/wave-1-webterminal-subscription.yaml"
+wait_operator web-terminal openshift-operators 300
+
 # ── Red Hat build of Kueue ────────────────────────────────────────────────────
 header "Red Hat build of Kueue"
 ensure_operator_template openshift-kueue-operator openshift-kueue-operator \
   "${MANIFESTS}/wave-1-kueue-subscription.yaml"
-wait_operator openshift-kueue-operator openshift-kueue-operator 300
+wait_operator kueue-operator openshift-kueue-operator 300
 
 # ── Red Hat OpenShift AI ──────────────────────────────────────────────────────
 header "Red Hat OpenShift AI (RHOAI)"

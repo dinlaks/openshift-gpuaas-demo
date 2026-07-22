@@ -126,16 +126,24 @@ resolve_channel() {
   fi
 
   if [[ "${mode}" == "ocp-version" ]]; then
-    channel=$(get_ocp_version_channel)
-    if [[ -z "${channel}" ]]; then
-      channel=$(get_default_channel "${pkg}")
+    local version available
+    version=$(get_ocp_version_channel)
+    if [[ -n "${version}" ]]; then
+      available=$(oc get packagemanifest "${pkg}" -n openshift-marketplace \
+        -o jsonpath='{.status.channels[*].name}' 2>/dev/null | tr ' ' '\n')
+      if echo "${available}" | grep -qx "stable-${version}"; then
+        channel="stable-${version}"
+      elif echo "${available}" | grep -qx "${version}"; then
+        channel="${version}"
+      fi
     fi
+    [[ -z "${channel}" ]] && channel=$(get_default_channel "${pkg}")
   else
     channel=$(get_default_channel "${pkg}")
   fi
 
   if [[ -n "${channel}" ]]; then
-    info "Auto-detected channel for ${pkg}: ${channel}"
+    info "Auto-detected channel for ${pkg}: ${channel}" >&2
     echo "${channel}"
   else
     echo ""
@@ -442,7 +450,7 @@ label_node_capabilities() {
 # Use for any YAML that contains ${MIG_SMALL_RESOURCE} etc.
 apply_template() {
   local file="$1"
-  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}'
+  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}'
   if [[ "${DRY_RUN}" == "true" ]]; then
     info "[DRY-RUN] Would apply template: ${file}"
     envsubst "${vars}" < "${file}" | oc apply -f - --dry-run=client

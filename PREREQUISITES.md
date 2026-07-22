@@ -61,7 +61,7 @@ done
 | Red Hat cert-manager | `openshift-cert-manager-operator` | `stable-v1` | `stable-v1` | Fixed — no change needed |
 | OpenShift Service Mesh 3 | `servicemeshoperator3` | `stable` | `stable` | Fixed — no change needed |
 | OpenShift Serverless | `serverless-operator` | `stable` | `stable` | Fixed — no change needed |
-| Web Terminal | `web-terminal` | `stable` | `stable` | Fixed — no change needed |
+| Web Terminal | `web-terminal` | `fast` | `fast` | **Auto-detect** — channel varies by cluster |
 | LVM Operator *(optional)* | `lvms-operator` | `stable-4.21` | `stable-4.22` | **Auto-detect** — OCP version-specific |
 | ACM Hub *(multi-cluster)* | `advanced-cluster-management` | `release-2.14` | `release-2.16` or `release-2.17` | Set `ACM_CHANNEL` |
 
