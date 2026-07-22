@@ -19,22 +19,31 @@ This add-on extends the single-cluster setup with three capabilities:
 - Both clusters running Kueue (already done by `setup.sh`)
 - MinIO or S3-compatible storage for ACM Observability (`optional/storage/deploy-storage.sh --minio`)
 
+## Cluster roles
+
+| Role | Description |
+|---|---|
+| **Cluster A (Hub)** | Primary cluster. Runs ACM, MultiKueue control plane, and Grafana. This is the same cluster you point `OCP_API_URL` at in `env.sh`. |
+| **Cluster B (Spoke)** | Second cluster. Receives jobs dispatched by MultiKueue from the hub. |
+
 ## Additional env.sh variables
 
-Uncomment the multi-cluster section in `env.sh`:
+Uncomment and fill in the multi-cluster section in `env.sh`:
 
 ```bash
-CLUSTER_A_API_URL=https://api.cluster-a.example.com:6443
+# Cluster A — hub (same cluster as OCP_API_URL / OCP_USERNAME / OCP_PASSWORD)
+CLUSTER_A_API_URL=https://api.your-hub-cluster.example.com:6443
 CLUSTER_A_USERNAME=kubeadmin
 CLUSTER_A_PASSWORD=<password>
 CLUSTER_A_NAME=cluster-a
-CLUSTER_A_KUBECONFIG=<path>
+# CLUSTER_A_KUBECONFIG=<path>   # [optional] alternative to username/password
 
-CLUSTER_B_API_URL=https://api.cluster-b.example.com:6443
+# Cluster B — spoke (second cluster for UC7)
+CLUSTER_B_API_URL=https://api.your-spoke-cluster.example.com:6443
 CLUSTER_B_USERNAME=kubeadmin
 CLUSTER_B_PASSWORD=<password>
 CLUSTER_B_NAME=cluster-b
-CLUSTER_B_KUBECONFIG=<path>
+# CLUSTER_B_KUBECONFIG=<path>   # [optional] alternative to username/password
 
 MINIO_ENDPOINT=http://minio.minio.svc.cluster.local:9000
 MINIO_ACCESS_KEY=minio
