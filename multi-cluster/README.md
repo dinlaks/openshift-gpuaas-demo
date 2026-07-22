@@ -11,13 +11,17 @@ This add-on extends the single-cluster setup with three capabilities:
 
 ## What you need
 
-- Two OCP clusters, both with the single-cluster setup complete:
-    - Cluster A: `bash optional/storage/deploy-storage.sh --lvm` then `bash setup.sh`
-  - Cluster B: `bash optional/storage/deploy-storage.sh --lvm --cluster b` then `bash setup.sh --cluster b`
-- ACM hub installed on Cluster A (`01-acm-setup/`)
-- Cluster B imported into ACM as a ManagedCluster
-- Both clusters running Kueue (already done by `setup.sh`)
-- MinIO or S3-compatible storage for ACM Observability (`optional/storage/deploy-storage.sh --minio`)
+- **Two OCP clusters** — any topology (SNO, 3-node compact, or full multi-node)
+- **A default StorageClass on each cluster** — required for RHOAI PVCs:
+  - Cloud-hosted or ODF clusters: already have one — no action needed
+  - Bare-metal SNO: `bash optional/storage/deploy-storage.sh --lvm` (see `optional/storage/README.md`)
+  - 3-node compact or multi-node without storage: deploy ODF before running `setup.sh`
+  - Verify: `oc get storageclass` — a `(default)` entry means you're good
+- **Single-cluster setup complete on both clusters:**
+  - Cluster A: `bash setup.sh`
+  - Cluster B: `bash setup.sh --cluster b`
+- Both clusters running Kueue (handled by `setup.sh`)
+- MinIO for ACM Observability: `bash optional/storage/deploy-storage.sh --minio`
 
 ## Cluster roles
 
