@@ -12,12 +12,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
 
-[[ -z "${CLUSTER_A_KUBECONFIG:-}"        ]] && error "CLUSTER_A_KUBECONFIG not set in env.sh" && exit 1
 [[ -z "${CLUSTER_B_API_URL:-}"           ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
 [[ -z "${CLUSTER_B_API_URL_INTERNAL:-}"  ]] && error "CLUSTER_B_API_URL_INTERNAL not set in env.sh" && exit 1
 [[ -z "${CLUSTER_B_USERNAME:-}"          ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
 [[ -z "${CLUSTER_B_PASSWORD:-}"          ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
-export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
+[[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
 
 # ── Step 1: Stay on Cluster A (Hub) throughout ────────────────────────────────
 OCP_API_URL="${CLUSTER_A_API_URL}"

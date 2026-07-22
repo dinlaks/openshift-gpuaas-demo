@@ -9,8 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
 
-[[ -z "${CLUSTER_A_KUBECONFIG:-}" ]] && error "CLUSTER_A_KUBECONFIG not set in env.sh" && exit 1
-export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
+[[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
 
 OCP_API_URL="${CLUSTER_A_API_URL}"
 OCP_USERNAME="${CLUSTER_A_USERNAME}"
@@ -47,7 +46,7 @@ metadata:
   name: advanced-cluster-management
   namespace: open-cluster-management
 spec:
-  channel: release-2.16
+  channel: ${ACM_CHANNEL:-release-2.17}
   installPlanApproval: Automatic
   name: advanced-cluster-management
   source: redhat-operators
@@ -74,4 +73,4 @@ wait_for "MultiClusterHub running (MCE installs in background — up to 10 min)"
 success "ACM Hub deployed on Cluster A"
 echo ""
 info "Next: Register Cluster B as a spoke"
-echo "  bash 00-prereqs/acm/03-import-cluster-b.sh"
+echo "  bash multi-cluster/01-acm-setup/03-import-cluster-b.sh"
