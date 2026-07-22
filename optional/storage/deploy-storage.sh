@@ -4,12 +4,13 @@
 # Deploy optional storage components.
 #
 # Usage:
-#   bash deploy-storage.sh --lvm           # LVM Operator only (bare-metal local disk)
-#   bash deploy-storage.sh --minio         # MinIO only (ACM Observability)
-#   bash deploy-storage.sh --lvm --minio   # both (bare-metal + ACM Observability)
+#   bash deploy-storage.sh --lvm                    # LVM on Cluster A
+#   bash deploy-storage.sh --lvm --cluster b        # LVM on Cluster B (UC7)
+#   bash deploy-storage.sh --minio                  # MinIO only (ACM Observability)
+#   bash deploy-storage.sh --lvm --minio            # both
 #
 # Configure in env.sh before running:
-#   LVM_DISK_PATH      — block device for LVM (e.g. /dev/sdb). Run: lsblk
+#   LVM_DISK_PATH      — block device for LVM (run: lsblk on the node to identify yours)
 #   LVM_STORAGE_CLASS  — StorageClass name to create (e.g. lvms-vg1)
 #   LVM_CHANNEL        — OCP version channel (e.g. stable-4.22); auto-detected if unset
 #   MINIO_ACCESS_KEY   — MinIO root user
@@ -21,23 +22,42 @@ source "${SCRIPT_DIR}/../../lib/common.sh"
 
 DEPLOY_LVM=false
 DEPLOY_MINIO=false
+TARGET_CLUSTER=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --lvm)   DEPLOY_LVM=true ;;
-    --minio) DEPLOY_MINIO=true ;;
-    *) error "Unknown argument: $1. Use --lvm and/or --minio"; exit 1 ;;
+    --lvm)     DEPLOY_LVM=true ;;
+    --minio)   DEPLOY_MINIO=true ;;
+    --cluster) shift; TARGET_CLUSTER="${1:-}" ;;
+    *) error "Unknown argument: $1. Use --lvm and/or --minio [--cluster b]"; exit 1 ;;
   esac
   shift
 done
 
 if [[ "${DEPLOY_LVM}" == "false" && "${DEPLOY_MINIO}" == "false" ]]; then
   error "Specify at least one option: --lvm and/or --minio"
-  echo "Usage: bash deploy-storage.sh --lvm --minio"
+  echo "Usage: bash deploy-storage.sh --lvm --minio [--cluster b]"
   exit 1
 fi
 
 load_env
+
+if [[ "${TARGET_CLUSTER}" == "b" ]]; then
+  [[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+  [[ -z "${CLUSTER_B_USERNAME:-}" ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
+  [[ -z "${CLUSTER_B_PASSWORD:-}" ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
+  export GPUAAS_OCP_API_URL="${CLUSTER_B_API_URL}"
+  export GPUAAS_OCP_USERNAME="${CLUSTER_B_USERNAME}"
+  export GPUAAS_OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  OCP_API_URL="${CLUSTER_B_API_URL}"
+  OCP_USERNAME="${CLUSTER_B_USERNAME}"
+  OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  info "Targeting Cluster B: ${OCP_API_URL}"
+elif [[ -n "${TARGET_CLUSTER}" ]]; then
+  error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."
+  exit 1
+fi
+
 require_oc_login
 
 LVM_DISK_PATH="${LVM_DISK_PATH:-}"

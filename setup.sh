@@ -7,7 +7,8 @@
 # For multi-cluster (MultiKueue + ACM) see multi-cluster/README.md
 #
 # Usage:
-#   bash setup.sh                  # full setup
+#   bash setup.sh                  # full setup on Cluster A (OCP_API_URL in env.sh)
+#   bash setup.sh --cluster b      # setup on Cluster B (uses CLUSTER_B_* vars — UC7 only)
 #   bash setup.sh --dry-run        # print changes, no apply
 #   bash setup.sh --skip-operators # skip operator install (already installed)
 set -euo pipefail
@@ -17,18 +18,37 @@ source "${SCRIPT_DIR}/lib/common.sh"
 
 DRY_RUN=false
 SKIP_OPERATORS=false
+TARGET_CLUSTER=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)        DRY_RUN=true ;;
     --skip-operators) SKIP_OPERATORS=true ;;
-    *) error "Unknown argument: $1"; exit 1 ;;
+    --cluster)        shift; TARGET_CLUSTER="${1:-}" ;;
+    *) error "Unknown argument: $1. Usage: bash setup.sh [--cluster b] [--dry-run] [--skip-operators]"; exit 1 ;;
   esac
   shift
 done
 export DRY_RUN
 
 load_env
+
+# ── Multi-cluster: override OCP_* with CLUSTER_B_* when --cluster b is given ──
+if [[ "${TARGET_CLUSTER}" == "b" ]]; then
+  [[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+  [[ -z "${CLUSTER_B_USERNAME:-}" ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
+  [[ -z "${CLUSTER_B_PASSWORD:-}" ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
+  export GPUAAS_OCP_API_URL="${CLUSTER_B_API_URL}"
+  export GPUAAS_OCP_USERNAME="${CLUSTER_B_USERNAME}"
+  export GPUAAS_OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  OCP_API_URL="${CLUSTER_B_API_URL}"
+  OCP_USERNAME="${CLUSTER_B_USERNAME}"
+  OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  info "Targeting Cluster B: ${OCP_API_URL}"
+elif [[ -n "${TARGET_CLUSTER}" ]]; then
+  error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."
+  exit 1
+fi
 
 # ── Pre-flight validation ─────────────────────────────────────────────────────
 header "Pre-flight checks"
@@ -77,4 +97,4 @@ info "Next steps:"
 echo "  • Validate GPU resources:  bash 02-gpu-setup/05-validation/validate-nodes.sh"
 echo "  • Run a use case:          cd use-cases/uc3-multi-tenant && bash run-demo.sh"
 echo "  • Clean up between UCs:    bash cleanup.sh uc3"
-echo "  • Multi-cluster add-on:    see multi-cluster/README.md"
+echo "  • Multi-cluster add-on:    bash setup.sh --cluster b  (then see multi-cluster/README.md)"

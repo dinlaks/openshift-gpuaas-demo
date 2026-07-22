@@ -56,7 +56,7 @@ Deploy LVM storage **before** running `setup.sh`.
 **First, update `env.sh` with your LVM settings:**
 
 ```bash
-LVM_DISK_PATH=/dev/sdb    # unused block device — run: oc debug node/<node> -- chroot /host lsblk
+LVM_DISK_PATH=/dev/sdX    # unused block device — run: oc debug node/<node> -- chroot /host lsblk
 LVM_STORAGE_CLASS=lvms-vg1  # StorageClass name to create (default: lvms-vg1)
 ```
 

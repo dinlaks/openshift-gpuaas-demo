@@ -11,7 +11,9 @@ This add-on extends the single-cluster setup with three capabilities:
 
 ## What you need
 
-- Two OCP clusters, both with the single-cluster setup complete (`setup.sh` run on each)
+- Two OCP clusters, both with the single-cluster setup complete:
+    - Cluster A: `bash optional/storage/deploy-storage.sh --lvm` then `bash setup.sh`
+  - Cluster B: `bash optional/storage/deploy-storage.sh --lvm --cluster b` then `bash setup.sh --cluster b`
 - ACM hub installed on Cluster A (`01-acm-setup/`)
 - Cluster B imported into ACM as a ManagedCluster
 - Both clusters running Kueue (already done by `setup.sh`)

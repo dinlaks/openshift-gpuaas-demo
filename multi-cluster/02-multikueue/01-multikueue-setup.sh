@@ -125,25 +125,28 @@ apply_template "${SCRIPT_DIR}/../01-acm-setup/08-acm-gpu-policy.yaml"
 apply_cr      "${SCRIPT_DIR}/../01-acm-setup/09-acm-policy-binding.yaml"
 success "ACM GPU policy applied — fleet governance active"
 
-# When a policy is re-applied (common in demo re-runs), ACM propagates the update to
-# cluster-b which causes policy-template-sync to briefly delete/recreate ConfigurationPolicies.
-# During that window policy-status-sync loses the compliance events and never re-syncs.
-# Fix: wait for propagation, then restart governance-policy-framework on cluster-b to
-# force a clean status re-sync.
+# On re-runs, restart governance-policy-framework on cluster-b if present to force
+# a clean status re-sync after policy propagation.
 info "Waiting 20s for policy propagation to cluster-b..."
 sleep 20
 
-info "Restarting governance-policy-framework on cluster-b to force status sync..."
 oc login "${CLUSTER_B_REAL_URL:-${CLUSTER_B_API_URL}}" \
   -u "${CLUSTER_B_USERNAME}" -p "${CLUSTER_B_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
-oc delete pod -n open-cluster-management-agent-addon \
-  -l app=governance-policy-framework --ignore-not-found
-wait_for "governance-policy-framework restarted" \
-  "oc get pods -n open-cluster-management-agent-addon -l app=governance-policy-framework \
-   --no-headers 2>/dev/null | grep -q Running" \
-  60 5
-success "governance-policy-framework restarted"
+GOV_PODS=$(oc get pods -n open-cluster-management-agent-addon \
+  -l app=governance-policy-framework --no-headers 2>/dev/null | wc -l | tr -d ' ')
+if (( GOV_PODS > 0 )); then
+  info "Restarting governance-policy-framework on cluster-b..."
+  oc delete pod -n open-cluster-management-agent-addon \
+    -l app=governance-policy-framework --ignore-not-found
+  wait_for "governance-policy-framework restarted" \
+    "oc get pods -n open-cluster-management-agent-addon -l app=governance-policy-framework \
+     --no-headers 2>/dev/null | grep -q Running" \
+    60 5 || warn "governance-policy-framework restart timed out — continuing"
+  success "governance-policy-framework restarted"
+else
+  info "governance-policy-framework not present on cluster-b — skipping restart"
+fi
 
 # Switch back to cluster-a hub
 oc login "${CLUSTER_A_API_URL}" \

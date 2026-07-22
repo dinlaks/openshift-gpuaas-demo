@@ -30,6 +30,12 @@ load_env() {
   source "${env_file}"
   info "Loaded env from ${env_file}"
 
+  # Apply cluster overrides if set by a parent script (e.g. setup.sh --cluster b).
+  # These survive re-sourcing of env.sh across sub-script load_env calls.
+  [[ -n "${GPUAAS_OCP_API_URL:-}"  ]] && OCP_API_URL="${GPUAAS_OCP_API_URL}"
+  [[ -n "${GPUAAS_OCP_USERNAME:-}" ]] && OCP_USERNAME="${GPUAAS_OCP_USERNAME}"
+  [[ -n "${GPUAAS_OCP_PASSWORD:-}" ]] && OCP_PASSWORD="${GPUAAS_OCP_PASSWORD}"
+
   for var in OCP_API_URL OCP_USERNAME OCP_PASSWORD; do
     if [[ -z "${!var:-}" ]]; then
       error "Required variable ${var} is not set in env.sh"
