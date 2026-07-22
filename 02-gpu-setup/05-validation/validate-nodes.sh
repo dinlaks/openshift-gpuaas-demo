@@ -5,17 +5,46 @@
 # nvidia.com/gpu.* labels set automatically by NFD + GPU Operator.
 #
 # Usage:
-#   bash validate-nodes.sh          # show all GPU nodes
-#   bash validate-nodes.sh --wide   # include MIG config state
+#   bash validate-nodes.sh                    # validate Cluster A (OCP_API_URL)
+#   bash validate-nodes.sh --cluster b        # validate Cluster B (CLUSTER_B_* vars)
+#   bash validate-nodes.sh --wide             # include MIG config state
+#   bash validate-nodes.sh --cluster b --wide # both
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/common.sh"
-load_env
-require_oc_login
 
 WIDE=false
-[[ "${1:-}" == "--wide" ]] && WIDE=true
+TARGET_CLUSTER=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --wide)    WIDE=true ;;
+    --cluster) shift; TARGET_CLUSTER="${1:-}" ;;
+    *) error "Unknown argument: $1"; exit 1 ;;
+  esac
+  shift
+done
+
+load_env
+
+if [[ "${TARGET_CLUSTER}" == "b" ]]; then
+  [[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+  [[ -z "${CLUSTER_B_USERNAME:-}" ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
+  [[ -z "${CLUSTER_B_PASSWORD:-}" ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
+  export GPUAAS_OCP_API_URL="${CLUSTER_B_API_URL}"
+  export GPUAAS_OCP_USERNAME="${CLUSTER_B_USERNAME}"
+  export GPUAAS_OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  OCP_API_URL="${CLUSTER_B_API_URL}"
+  OCP_USERNAME="${CLUSTER_B_USERNAME}"
+  OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  info "Targeting Cluster B: ${OCP_API_URL}"
+elif [[ -n "${TARGET_CLUSTER}" ]]; then
+  error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."
+  exit 1
+fi
+
+require_oc_login
 
 GPU_NODES=($(oc get nodes -l nvidia.com/gpu.present=true -o name 2>/dev/null | sed 's|node/||'))
 
