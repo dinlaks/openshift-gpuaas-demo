@@ -41,8 +41,8 @@ OCP_API_URL=https://api.your-cluster.example.com:6443
 OCP_USERNAME=kubeadmin        # your real cluster admin — not gpuaas-admin (created later by deploy-rbac.sh)
 OCP_PASSWORD=<your-password>
 
-GPU_TYPE=a30          # a30 | a100-40gb | a100-80gb | h100-80gb | h100-nvl | h200 | custom
-MIG_STRATEGY=small    # small | large | dedicated | mixed | full-combo
+GPU_TYPE=<your-gpu>   # a30 | a100-40gb | a100-80gb | h100-80gb | h100-nvl | h200 | custom
+MIG_STRATEGY=<role>   # small | large | dedicated | mixed | full-combo
                       # See docs/hardware-guide.md for the full role reference
 ```
 
