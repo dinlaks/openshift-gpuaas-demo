@@ -84,12 +84,5 @@ success "Cluster B is now managed by ACM Hub on Cluster A!"
 echo ""
 oc get managedcluster -o wide
 echo ""
-
-# ── Step 6: Apply GPU policy and binding across both clusters ─────────────────
-header "Applying ACM GPU policy to both clusters"
-apply_template "${SCRIPT_DIR}/08-acm-gpu-policy.yaml"
-apply_cr       "${SCRIPT_DIR}/09-acm-policy-binding.yaml"
-success "GPU policy enforced across both clusters"
-
-info "Next: Configure MultiKueue"
+info "Next: Configure MultiKueue, GPU policy, and ACM Observability"
 echo "  bash multi-cluster/02-multikueue/01-multikueue-setup.sh"

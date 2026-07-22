@@ -50,14 +50,10 @@ bash multi-cluster/01-acm-setup/01-install-hub.sh
 # 2. Import Cluster B (also applies GPU policy across both clusters)
 bash multi-cluster/01-acm-setup/03-import-cluster-b.sh
 
-# 3. Configure MultiKueue (generates kubeconfig secret for Cluster B)
+# 3. Configure MultiKueue, GPU policy, ACM Observability, and Grafana dashboard
 bash multi-cluster/02-multikueue/01-multikueue-setup.sh
 
-# 4. Enable ACM Observability (unified GPU metrics)
-oc apply -f multi-cluster/03-acm-observability/10-acm-observability.yaml
-# Then import grafana-dcgm-mig-dashboard.json — see multi-cluster/03-acm-observability/README.md
-
-# 5. Run UC7 demo
+# 4. Run UC7 demo
 bash multi-cluster/uc7-global-gpu-pool/run-demo.sh
 ```
 
