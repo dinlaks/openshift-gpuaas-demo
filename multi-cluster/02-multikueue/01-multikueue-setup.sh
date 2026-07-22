@@ -160,7 +160,8 @@ wait_for "Policy compliant on cluster-b" \
 
 # ── Step 6: Apply ACM Observability ───────────────────────────────────────────
 # Enables Thanos + Grafana on Hub to collect DCGM GPU metrics from both clusters.
-# Requires MinIO to be running (deployed in wave-0 of deploy-prereqs.sh).
+# Requires MinIO to be running — deploy first if not already:
+#   bash optional/storage/deploy-storage.sh --minio
 info "Applying ACM Observability (Thanos + Grafana → MinIO) ..."
 apply_cr "${SCRIPT_DIR}/../03-acm-observability/10-acm-observability.yaml"
 success "ACM Observability applied"
