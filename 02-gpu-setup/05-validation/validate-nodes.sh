@@ -42,9 +42,9 @@ for NODE in "${GPU_NODES[@]}"; do
   has_large=$(oc get node "${NODE}" -o go-template='{{index .metadata.labels "demo/gpu-has-large-mig"}}' 2>/dev/null); [[ -z "${has_large}" ]] && has_large="-"
   has_full=$(oc get node "${NODE}"  -o go-template='{{index .metadata.labels "demo/gpu-has-full"}}' 2>/dev/null); [[ -z "${has_full}" ]] && has_full="-"
 
-  [[ "${has_small}" == "true" ]] && has_small="✓" || has_small="-"
-  [[ "${has_large}" == "true" ]] && has_large="✓" || has_large="-"
-  [[ "${has_full}"  == "true" ]] && has_full="✓"  || has_full="-"
+  [[ "${has_small}" == "true" ]] && has_small="yes" || has_small="-"
+  [[ "${has_large}" == "true" ]] && has_large="yes" || has_large="-"
+  [[ "${has_full}"  == "true" ]] && has_full="yes"  || has_full="-"
 
   printf "%-45s %-12s %-8s %-8s %-10s %-10s %-10s\n" \
     "${NODE}" "${gpu_type}" "${gpu_mem}" "${gpu_arch}" \

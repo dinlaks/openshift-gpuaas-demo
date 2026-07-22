@@ -101,5 +101,6 @@ watch -n 5 "oc get node -o custom-columns='NODE:.metadata.name,MIG-1G:.status.ca
 
 ## Cleanup
 ```bash
+# Run from repo root:
 bash cleanup.sh uc1
 ```

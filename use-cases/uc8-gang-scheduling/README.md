@@ -220,5 +220,6 @@ watch -n2 'oc get clusterqueue research-cluster-queue \
 ## Cleanup
 
 ```bash
+# Run from repo root:
 bash cleanup.sh uc8
 ```

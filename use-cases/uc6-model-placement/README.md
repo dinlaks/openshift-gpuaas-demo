@@ -258,5 +258,6 @@ oc get nodes -l nvidia.com/gpu.present=true \
 ## Cleanup
 
 ```bash
+# Run from repo root:
 bash cleanup.sh uc6
 ```

@@ -315,5 +315,6 @@ oc logs -n gpuaas-system -l demo/policy=weekend -f
 ## Cleanup
 
 ```bash
+# Run from repo root:
 bash cleanup.sh uc9
 ```

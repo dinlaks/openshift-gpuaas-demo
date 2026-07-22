@@ -159,5 +159,6 @@ watch -n 3 "oc get workloads -A"
 
 ## Cleanup
 ```bash
+# Run from repo root:
 bash cleanup.sh uc3
 ```

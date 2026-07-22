@@ -23,13 +23,13 @@ Uncomment the multi-cluster section in `env.sh`:
 
 ```bash
 CLUSTER_A_API_URL=https://api.cluster-a.example.com:6443
-CLUSTER_A_USERNAME=gpuaas-admin
+CLUSTER_A_USERNAME=kubeadmin
 CLUSTER_A_PASSWORD=<password>
 CLUSTER_A_NAME=cluster-a
 CLUSTER_A_KUBECONFIG=<path>
 
 CLUSTER_B_API_URL=https://api.cluster-b.example.com:6443
-CLUSTER_B_USERNAME=gpuaas-admin
+CLUSTER_B_USERNAME=kubeadmin
 CLUSTER_B_PASSWORD=<password>
 CLUSTER_B_NAME=cluster-b
 CLUSTER_B_KUBECONFIG=<path>
@@ -41,24 +41,26 @@ MINIO_SECRET_KEY=minio123
 
 ## Setup order
 
+> All commands run from the **repo root** (`openshift-gpuaas-demo/`).
+
 ```bash
 # 1. Install ACM Hub on Cluster A
-bash 01-acm-setup/01-install-hub.sh
+bash multi-cluster/01-acm-setup/01-install-hub.sh
 
 # 2. Import Cluster B + apply GPU policy across both clusters
-bash 01-acm-setup/03-import-cluster-b.sh
-oc apply -f 01-acm-setup/08-acm-gpu-policy.yaml
-oc apply -f 01-acm-setup/09-acm-policy-binding.yaml
+bash multi-cluster/01-acm-setup/03-import-cluster-b.sh
+oc apply -f multi-cluster/01-acm-setup/08-acm-gpu-policy.yaml
+oc apply -f multi-cluster/01-acm-setup/09-acm-policy-binding.yaml
 
 # 3. Configure MultiKueue (generates kubeconfig secret for Cluster B)
-bash 02-multikueue/01-multikueue-setup.sh
+bash multi-cluster/02-multikueue/01-multikueue-setup.sh
 
 # 4. Enable ACM Observability (unified GPU metrics)
-oc apply -f 03-acm-observability/10-acm-observability.yaml
-# Then import grafana-dcgm-mig-dashboard.json — see 03-acm-observability/README.md
+oc apply -f multi-cluster/03-acm-observability/10-acm-observability.yaml
+# Then import grafana-dcgm-mig-dashboard.json — see multi-cluster/03-acm-observability/README.md
 
 # 5. Run UC7 demo
-cd uc7-global-gpu-pool && bash run-demo.sh
+bash multi-cluster/uc7-global-gpu-pool/run-demo.sh
 ```
 
 ## UC7: Global GPU Pool

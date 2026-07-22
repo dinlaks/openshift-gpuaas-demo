@@ -170,5 +170,6 @@ watch -n 2 "oc get pods -n ds-team-project -o wide; echo '---'; oc get pods -n i
 
 ## Cleanup
 ```bash
+# Run from repo root:
 bash cleanup.sh uc5
 ```

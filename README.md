@@ -93,12 +93,13 @@ and the exact GPU product name reported by the hardware.
 
 Each use case is self-contained in `use-cases/`:
 
+All commands run from the **repo root** (`openshift-gpuaas-demo/`):
+
 ```bash
-cd use-cases/uc3-multi-tenant
-bash run-demo.sh
+bash use-cases/uc3-multi-tenant/run-demo.sh
 
 # Clean up when done
-bash ../../cleanup.sh uc3
+bash cleanup.sh uc3
 ```
 
 ---

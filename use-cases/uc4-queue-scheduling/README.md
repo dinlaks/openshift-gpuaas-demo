@@ -160,5 +160,6 @@ watch -n 2 "oc get clusterqueue research-cluster-queue -o wide"
 
 ## Cleanup
 ```bash
+# Run from repo root:
 bash cleanup.sh uc4
 ```

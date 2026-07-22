@@ -19,7 +19,7 @@ DRA changes the model: workloads describe **capability** (not name), Kubernetes 
 Run this before the demo (takes ~2 min):
 
 ```bash
-bash 03-gpu-management/03-dra/deploy-dra.sh
+bash 02-gpu-setup/04-dra/deploy-dra.sh
 ```
 
 This disables the device plugin, installs `dra-driver-nvidia-gpu v0.4.0`, and waits for ResourceSlices to appear.
@@ -68,7 +68,7 @@ oc get resourceclaim -n research-team-project -w
 
 **Right pane** — apply the demo jobs:
 ```bash
-oc apply -f 03-gpu-management/03-dra/03-dra-demo-pod.yaml
+oc apply -f 02-gpu-setup/04-dra/03-dra-demo-pod.yaml
 ```
 
 Narrate as events appear in the left pane:
@@ -172,7 +172,7 @@ For the live demo, focus on `dra-gpu-job` (full GPU) which is end-to-end validat
 ## Cleanup
 
 ```bash
-bash 03-gpu-management/03-dra/teardown-dra.sh
+bash 02-gpu-setup/04-dra/teardown-dra.sh
 ```
 
 This re-enables the device plugin for UC4/UC5/UC8 (which use MIG slices via device plugin).
