@@ -219,11 +219,11 @@ if [[ "${MULTI}" == "true" ]]; then
         fail "ACM Hub not found on Cluster A — run: bash multi-cluster/01-acm-setup/01-install-hub.sh"
       fi
 
-      B_NAME="${CLUSTER_B_NAME:-cluster-b}"
+      B_NAME=$(resolve_cluster_b_name 2>/dev/null || echo "cluster-b")
       if oc get managedcluster "${B_NAME}" --no-headers 2>/dev/null | grep -q .; then
         pass "Cluster B imported into ACM as '${B_NAME}'"
       else
-        fail "Cluster B not imported into ACM as '${B_NAME}' — run: bash multi-cluster/01-acm-setup/03-import-cluster-b.sh"
+        fail "Cluster B not imported into ACM — run: bash multi-cluster/01-acm-setup/03-import-cluster-b.sh"
       fi
     else
       fail "Cannot reach Cluster A at ${CLUSTER_A_API_URL}"

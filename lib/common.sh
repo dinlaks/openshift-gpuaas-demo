@@ -97,6 +97,22 @@ switch_cluster() {
   require_oc_login
 }
 
+# Auto-detect Cluster B's OCP infrastructure name for use as ACM ManagedCluster name.
+# Uses a temp kubeconfig to query Cluster B without disturbing the current session.
+# Falls back to "cluster-b" if detection fails.
+resolve_cluster_b_name() {
+  [[ -n "${CLUSTER_B_NAME:-}" ]] && echo "${CLUSTER_B_NAME}" && return
+  local tmpkube name
+  tmpkube=$(mktemp)
+  KUBECONFIG="${tmpkube}" oc login "${CLUSTER_B_API_URL:-}" \
+    -u "${CLUSTER_B_USERNAME:-}" -p "${CLUSTER_B_PASSWORD:-}" \
+    --insecure-skip-tls-verify=true &>/dev/null 2>/dev/null || true
+  name=$(KUBECONFIG="${tmpkube}" oc get infrastructure cluster \
+    -o jsonpath='{.status.infrastructureName}' 2>/dev/null || echo "")
+  rm -f "${tmpkube}"
+  echo "${name:-cluster-b}"
+}
+
 # ── Operator channel helpers ──────────────────────────────────────────────────
 
 # Auto-detect the default channel for an operator from the marketplace.
@@ -456,7 +472,7 @@ label_node_capabilities() {
 # Use for any YAML that contains ${MIG_SMALL_RESOURCE} etc.
 apply_template() {
   local file="$1"
-  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}'
+  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}${CLUSTER_B_NAME}'
   if [[ "${DRY_RUN}" == "true" ]]; then
     info "[DRY-RUN] Would apply template: ${file}"
     envsubst "${vars}" < "${file}" | oc apply -f - --dry-run=client

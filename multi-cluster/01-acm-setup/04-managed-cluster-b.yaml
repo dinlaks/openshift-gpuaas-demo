@@ -2,7 +2,7 @@
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedCluster
 metadata:
-  name: cluster-b
+  name: ${CLUSTER_B_NAME}
   labels:
     cluster.open-cluster-management.io/clusterset: gpuaas-clusterset
     vendor: OpenShift              # required by MCO placementrule_controller to enable observability
@@ -10,7 +10,7 @@ metadata:
     demo/gpu-type: a30
     demo/gpu-count: "2"
     demo/role: spoke
-    demo/server: cluster-b
+    demo/server: ${CLUSTER_B_NAME}
     environment: gpuaas-demo
 spec:
   hubAcceptsClient: true
@@ -20,8 +20,8 @@ spec:
 apiVersion: agent.open-cluster-management.io/v1
 kind: KlusterletAddonConfig
 metadata:
-  name: cluster-b
-  namespace: cluster-b
+  name: ${CLUSTER_B_NAME}
+  namespace: ${CLUSTER_B_NAME}
 spec:
   applicationManager:
     enabled: false

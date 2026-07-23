@@ -39,15 +39,14 @@ Uncomment and fill in the multi-cluster section in `env.sh`:
 CLUSTER_A_API_URL=https://api.your-hub-cluster.example.com:6443
 CLUSTER_A_USERNAME=kubeadmin
 CLUSTER_A_PASSWORD=<password>
-CLUSTER_A_NAME=cluster-a
 # CLUSTER_A_KUBECONFIG=<path>   # [optional] alternative to username/password
 
 # Cluster B — spoke (second cluster for UC7)
 CLUSTER_B_API_URL=https://api.your-spoke-cluster.example.com:6443
 CLUSTER_B_USERNAME=kubeadmin
 CLUSTER_B_PASSWORD=<password>
-CLUSTER_B_NAME=cluster-b
 # CLUSTER_B_KUBECONFIG=<path>   # [optional] alternative to username/password
+# CLUSTER_B_NAME is auto-detected from Cluster B's OCP infrastructure name — no manual config needed
 
 MINIO_ENDPOINT=http://minio.minio.svc.cluster.local:9000
 MINIO_ACCESS_KEY=minio

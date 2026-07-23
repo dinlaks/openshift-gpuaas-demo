@@ -42,14 +42,20 @@ if [[ -z "${CLUSTER_B_TOKEN}" ]]; then
   error "Could not obtain token for Cluster B. Check CLUSTER_B_API_URL / credentials in env.sh"
   exit 1
 fi
-success "Token obtained for Cluster B — main session still on Cluster A"
+
+# Auto-detect Cluster B's infrastructure name for use as ACM ManagedCluster name
+CLUSTER_B_NAME=$(KUBECONFIG="${TMPKUBE}" oc get infrastructure cluster \
+  -o jsonpath='{.status.infrastructureName}' 2>/dev/null || echo "")
+CLUSTER_B_NAME="${CLUSTER_B_NAME:-cluster-b}"
+export CLUSTER_B_NAME
+success "Token obtained for Cluster B — ACM name will be: ${CLUSTER_B_NAME}"
 
 # ── Step 3: Back on Hub — create ManagedCluster resources ─────────────────────
 info "Creating ManagedCluster and ClusterSet on Hub..."
-apply_cr "${SCRIPT_DIR}/04-managed-cluster-b.yaml"
-apply_cr "${SCRIPT_DIR}/05-clusterset.yaml"
+apply_template "${SCRIPT_DIR}/04-managed-cluster-b.yaml"
+apply_cr       "${SCRIPT_DIR}/05-clusterset.yaml"
 
-wait_for "cluster-b namespace created by ACM" "oc get namespace cluster-b" 120 5
+wait_for "${CLUSTER_B_NAME} namespace created by ACM" "oc get namespace ${CLUSTER_B_NAME}" 120 5
 
 oc apply -f - <<EOF
 apiVersion: cluster.open-cluster-management.io/v1beta2
@@ -62,22 +68,21 @@ spec:
 EOF
 
 # ── Step 4: Create auto-import secret with Cluster B API URL + token ──────────
-# ACM reads this secret, contacts Cluster B's API, installs klusterlet — all from Hub.
 info "Creating auto-import-secret (server URL + token only)..."
 oc create secret generic auto-import-secret \
   --from-literal=autoImportRetry=5 \
   --from-literal=server="${CLUSTER_B_API_URL}" \
   --from-literal=token="${CLUSTER_B_TOKEN}" \
-  -n cluster-b \
+  -n "${CLUSTER_B_NAME}" \
   --dry-run=client -o yaml | oc apply -f -
 
-oc label secret auto-import-secret -n cluster-b auto-import=cluster --overwrite
+oc label secret auto-import-secret -n "${CLUSTER_B_NAME}" auto-import=cluster --overwrite
 
 success "Auto-import secret created — ACM is installing klusterlet on Cluster B via API"
 
 # ── Step 5: Wait for Cluster B to join ────────────────────────────────────────
 wait_for "Cluster B joined ACM Hub" \
-  "oc get managedcluster cluster-b -o jsonpath='{.status.conditions}' 2>/dev/null | grep -q ManagedClusterJoined" \
+  "oc get managedcluster ${CLUSTER_B_NAME} -o jsonpath='{.status.conditions}' 2>/dev/null | grep -q ManagedClusterJoined" \
   300 15
 
 success "Cluster B is now managed by ACM Hub on Cluster A!"

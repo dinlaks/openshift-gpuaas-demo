@@ -4,9 +4,9 @@
 apiVersion: kueue.x-k8s.io/v1beta2
 kind: MultiKueueCluster
 metadata:
-  name: cluster-b
+  name: ${CLUSTER_B_NAME}
 spec:
   clusterSource:
     kubeConfig:
       locationType: Secret
-      location: multikueue-cluster-b-kubeconfig
+      location: multikueue-${CLUSTER_B_NAME}-kubeconfig
