@@ -70,7 +70,7 @@ info "Building MultiKueue kubeconfig from ACM-synced token..."
 TOKEN=$(oc get secret multikueue-worker -n "${CLUSTER_B_NAME}" \
   -o jsonpath='{.data.token}' | base64 -d)
 
-# Get the real cluster-b API URL from ACM ManagedCluster (not CLUSTER_B_API_URL which may
+# Get the real cluster-b API URL from ACM ManagedCluster (not SPOKE_CLUSTER_API_URL which may
 # be a local tunnel). Kueue controller runs inside the cluster and needs the routable URL.
 CLUSTER_B_REAL_URL=$(oc get managedcluster ${CLUSTER_B_NAME} \
   -o jsonpath='{.spec.managedClusterClientConfigs[0].url}' 2>/dev/null)
@@ -79,7 +79,7 @@ CLUSTER_B_REAL_URL=$(oc get managedcluster ${CLUSTER_B_NAME} \
 info "Fetching ${CLUSTER_B_NAME} CA from kube-root-ca.crt..."
 oc login "${CLUSTER_B_REAL_URL}" -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null || \
-  oc login "${CLUSTER_B_API_URL}" -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
+  oc login "${SPOKE_CLUSTER_API_URL}" -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
 CA_DATA=$(oc get configmap kube-root-ca.crt -n default \
   -o jsonpath='{.data.ca\.crt}' | base64 | tr -d '\n')
@@ -99,7 +99,7 @@ kind: Config
 clusters:
   - name: ${CLUSTER_B_NAME}
     cluster:
-      server: ${CLUSTER_B_REAL_URL:-${CLUSTER_B_API_URL}}
+      server: ${CLUSTER_B_REAL_URL:-${SPOKE_CLUSTER_API_URL}}
       certificate-authority-data: ${CA_DATA}
 contexts:
   - name: ${CLUSTER_B_NAME}
@@ -135,7 +135,7 @@ success "ACM GPU policy applied — fleet governance active"
 info "Waiting 20s for policy propagation to ${CLUSTER_B_NAME}..."
 sleep 20
 
-oc login "${CLUSTER_B_REAL_URL:-${CLUSTER_B_API_URL}}" \
+oc login "${CLUSTER_B_REAL_URL:-${SPOKE_CLUSTER_API_URL}}" \
   -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
 GOV_PODS=$(oc get pods -n open-cluster-management-agent-addon \

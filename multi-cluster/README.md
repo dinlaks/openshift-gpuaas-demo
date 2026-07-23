@@ -42,7 +42,7 @@ CLUSTER_A_PASSWORD=<password>
 # CLUSTER_A_KUBECONFIG=<path>   # [optional] alternative to username/password
 
 # Cluster B — spoke (second cluster for UC7)
-CLUSTER_B_API_URL=https://api.your-spoke-cluster.example.com:6443
+SPOKE_CLUSTER_API_URL=https://api.your-spoke-cluster.example.com:6443
 SPOKE_CLUSTER_USERNAME=kubeadmin
 SPOKE_CLUSTER_PASSWORD=<password>
 # SPOKE_CLUSTER_KUBECONFIG=<path>   # [optional] alternative to username/password

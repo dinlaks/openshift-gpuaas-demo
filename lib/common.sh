@@ -114,8 +114,8 @@ switch_cluster() {
       [[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
       ;;
     b)
-      [[ -z "${CLUSTER_B_API_URL:-}" ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
-      OCP_API_URL="${CLUSTER_B_API_URL}"
+      [[ -z "${SPOKE_CLUSTER_API_URL:-}" ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
+      OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
       OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
       OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
       [[ -n "${SPOKE_CLUSTER_KUBECONFIG:-}" ]] && export KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG}"
@@ -136,7 +136,7 @@ resolve_cluster_b_name() {
   [[ -n "${CLUSTER_B_NAME:-}" ]] && echo "${CLUSTER_B_NAME}" && return
   local tmpkube name
   tmpkube=$(mktemp)
-  KUBECONFIG="${tmpkube}" oc login "${CLUSTER_B_API_URL:-}" \
+  KUBECONFIG="${tmpkube}" oc login "${SPOKE_CLUSTER_API_URL:-}" \
     -u "${SPOKE_CLUSTER_USERNAME:-}" -p "${SPOKE_CLUSTER_PASSWORD:-}" \
     --insecure-skip-tls-verify=true &>/dev/null 2>/dev/null || true
   name=$(KUBECONFIG="${tmpkube}" oc get infrastructure cluster \

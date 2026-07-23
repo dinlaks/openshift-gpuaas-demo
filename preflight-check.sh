@@ -199,7 +199,7 @@ if [[ "${MULTI}" == "true" ]]; then
   header "9. Multi-cluster (Cluster A + B)"
 
   for var in CLUSTER_A_API_URL CLUSTER_A_USERNAME CLUSTER_A_PASSWORD \
-             CLUSTER_B_API_URL SPOKE_CLUSTER_USERNAME SPOKE_CLUSTER_PASSWORD; do
+             SPOKE_CLUSTER_API_URL SPOKE_CLUSTER_USERNAME SPOKE_CLUSTER_PASSWORD; do
     if [[ -z "${!var:-}" ]]; then
       fail "Multi-cluster: '${var}' not set in env.sh"
     else
@@ -231,12 +231,12 @@ if [[ "${MULTI}" == "true" ]]; then
   fi
 
   # Cluster B
-  if [[ -n "${CLUSTER_B_API_URL:-}" ]]; then
-    if oc login "${CLUSTER_B_API_URL}" -u "${SPOKE_CLUSTER_USERNAME:-}" -p "${SPOKE_CLUSTER_PASSWORD:-}" \
+  if [[ -n "${SPOKE_CLUSTER_API_URL:-}" ]]; then
+    if oc login "${SPOKE_CLUSTER_API_URL}" -u "${SPOKE_CLUSTER_USERNAME:-}" -p "${SPOKE_CLUSTER_PASSWORD:-}" \
         --insecure-skip-tls-verify=true &>/dev/null 2>&1; then
       pass "Cluster B reachable: $(oc whoami --show-server 2>/dev/null)"
     else
-      fail "Cannot reach Cluster B at ${CLUSTER_B_API_URL}"
+      fail "Cannot reach Cluster B at ${SPOKE_CLUSTER_API_URL}"
     fi
   fi
 

@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
 
-[[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+[[ -z "${SPOKE_CLUSTER_API_URL:-}"  ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
 [[ -z "${SPOKE_CLUSTER_USERNAME:-}" ]] && error "SPOKE_CLUSTER_USERNAME not set in env.sh" && exit 1
 [[ -z "${SPOKE_CLUSTER_PASSWORD:-}" ]] && error "SPOKE_CLUSTER_PASSWORD not set in env.sh" && exit 1
 [[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
@@ -31,7 +31,7 @@ info "Logging into Cluster B to get an API token (temp kubeconfig)..."
 TMPKUBE=$(mktemp)
 trap "rm -f ${TMPKUBE}" EXIT
 
-KUBECONFIG="${TMPKUBE}" oc login "${CLUSTER_B_API_URL}" \
+KUBECONFIG="${TMPKUBE}" oc login "${SPOKE_CLUSTER_API_URL}" \
   -u "${SPOKE_CLUSTER_USERNAME}" \
   -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
@@ -39,7 +39,7 @@ KUBECONFIG="${TMPKUBE}" oc login "${CLUSTER_B_API_URL}" \
 CLUSTER_B_TOKEN=$(KUBECONFIG="${TMPKUBE}" oc whoami -t)
 
 if [[ -z "${CLUSTER_B_TOKEN}" ]]; then
-  error "Could not obtain token for Cluster B. Check CLUSTER_B_API_URL / credentials in env.sh"
+  error "Could not obtain token for Cluster B. Check SPOKE_CLUSTER_API_URL / credentials in env.sh"
   exit 1
 fi
 
@@ -71,7 +71,7 @@ EOF
 info "Creating auto-import-secret (server URL + token only)..."
 oc create secret generic auto-import-secret \
   --from-literal=autoImportRetry=5 \
-  --from-literal=server="${CLUSTER_B_API_URL}" \
+  --from-literal=server="${SPOKE_CLUSTER_API_URL}" \
   --from-literal=token="${CLUSTER_B_TOKEN}" \
   -n "${CLUSTER_B_NAME}" \
   --dry-run=client -o yaml | oc apply -f -

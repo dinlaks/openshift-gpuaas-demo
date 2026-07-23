@@ -29,13 +29,13 @@ done
 load_env
 
 if [[ "${TARGET_CLUSTER}" == "b" ]]; then
-  [[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
+  [[ -z "${SPOKE_CLUSTER_API_URL:-}"  ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
   [[ -z "${SPOKE_CLUSTER_USERNAME:-}" ]] && error "SPOKE_CLUSTER_USERNAME not set in env.sh" && exit 1
   [[ -z "${SPOKE_CLUSTER_PASSWORD:-}" ]] && error "SPOKE_CLUSTER_PASSWORD not set in env.sh" && exit 1
-  export SPOKE_CLUSTER_OCP_API_URL="${CLUSTER_B_API_URL}"
+  export SPOKE_CLUSTER_OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
   export SPOKE_CLUSTER_OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
   export SPOKE_CLUSTER_OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
-  OCP_API_URL="${CLUSTER_B_API_URL}"
+  OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
   OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
   OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
   info "Targeting Cluster B: ${OCP_API_URL}"
