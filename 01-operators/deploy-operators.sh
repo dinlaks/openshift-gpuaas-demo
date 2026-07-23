@@ -120,9 +120,8 @@ info "Waiting for NVIDIA driver DaemonSet (kernel compile — up to 10 min on ba
 wait_for "NVIDIA driver DaemonSet ready" \
   "oc get ds -n nvidia-gpu-operator --no-headers 2>/dev/null \
     | grep '^nvidia-driver-daemonset' | awk '{print \$4}' | grep -v '^0\$'" 600 20
-wait_for "NVIDIA device plugin ready" \
-  "oc get ds nvidia-device-plugin-daemonset -n nvidia-gpu-operator --no-headers 2>/dev/null \
-    | awk '{print \$4}' | grep -v '^0\$'" 300 10
+# Device plugin readiness is checked in configure-mig.sh (Step 2) after MIG slices
+# are carved — on a fresh install there are no devices until MIG is partitioned.
 
 # ── Service Mesh + Serverless (required by RHOAI KServe) ─────────────────────
 header "Service Mesh 3 + Serverless"

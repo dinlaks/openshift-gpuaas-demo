@@ -114,4 +114,11 @@ if (( ${#MIG_NODES[@]} > 0 )); then
   success "MIG partitions active on ${#MIG_NODES[@]} node(s)"
 fi
 
+# Device plugin may have been waiting for MIG slices on a fresh install.
+# Now that partitions are carved, wait for it to become ready.
+wait_for "NVIDIA device plugin ready" \
+  "oc get ds nvidia-device-plugin-daemonset -n nvidia-gpu-operator --no-headers 2>/dev/null \
+    | awk '{print \$4}' | grep -v '^0\$'" 120 10 \
+  || warn "Device plugin not yet ready — check: oc get ds -n nvidia-gpu-operator"
+
 info "Verify: bash 02-gpu-setup/05-validation/validate-nodes.sh"
