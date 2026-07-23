@@ -77,9 +77,9 @@ CLUSTER_B_REAL_URL=$(oc get managedcluster ${CLUSTER_B_NAME} \
 
 # Get CA from cluster-b's kube-root-ca.crt (the ACM token ca.crt is not parseable as PEM by Kueue)
 info "Fetching ${CLUSTER_B_NAME} CA from kube-root-ca.crt..."
-oc login "${CLUSTER_B_REAL_URL}" -u "${CLUSTER_B_USERNAME}" -p "${CLUSTER_B_PASSWORD}" \
+oc login "${CLUSTER_B_REAL_URL}" -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null || \
-  oc login "${CLUSTER_B_API_URL}" -u "${CLUSTER_B_USERNAME}" -p "${CLUSTER_B_PASSWORD}" \
+  oc login "${CLUSTER_B_API_URL}" -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
 CA_DATA=$(oc get configmap kube-root-ca.crt -n default \
   -o jsonpath='{.data.ca\.crt}' | base64 | tr -d '\n')
@@ -136,7 +136,7 @@ info "Waiting 20s for policy propagation to ${CLUSTER_B_NAME}..."
 sleep 20
 
 oc login "${CLUSTER_B_REAL_URL:-${CLUSTER_B_API_URL}}" \
-  -u "${CLUSTER_B_USERNAME}" -p "${CLUSTER_B_PASSWORD}" \
+  -u "${SPOKE_CLUSTER_USERNAME}" -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
 GOV_PODS=$(oc get pods -n open-cluster-management-agent-addon \
   -l app=governance-policy-framework --no-headers 2>/dev/null | wc -l | tr -d ' ')

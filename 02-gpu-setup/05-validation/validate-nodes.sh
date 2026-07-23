@@ -30,14 +30,14 @@ load_env
 
 if [[ "${TARGET_CLUSTER}" == "b" ]]; then
   [[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
-  [[ -z "${CLUSTER_B_USERNAME:-}" ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
-  [[ -z "${CLUSTER_B_PASSWORD:-}" ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
-  export GPUAAS_OCP_API_URL="${CLUSTER_B_API_URL}"
-  export GPUAAS_OCP_USERNAME="${CLUSTER_B_USERNAME}"
-  export GPUAAS_OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  [[ -z "${SPOKE_CLUSTER_USERNAME:-}" ]] && error "SPOKE_CLUSTER_USERNAME not set in env.sh" && exit 1
+  [[ -z "${SPOKE_CLUSTER_PASSWORD:-}" ]] && error "SPOKE_CLUSTER_PASSWORD not set in env.sh" && exit 1
+  export SPOKE_CLUSTER_OCP_API_URL="${CLUSTER_B_API_URL}"
+  export SPOKE_CLUSTER_OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
+  export SPOKE_CLUSTER_OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
   OCP_API_URL="${CLUSTER_B_API_URL}"
-  OCP_USERNAME="${CLUSTER_B_USERNAME}"
-  OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+  OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
+  OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
   info "Targeting Cluster B: ${OCP_API_URL}"
 elif [[ -n "${TARGET_CLUSTER}" ]]; then
   error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."

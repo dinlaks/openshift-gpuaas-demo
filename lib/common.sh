@@ -32,36 +32,68 @@ load_env() {
 
   # Apply cluster overrides if set by a parent script (e.g. setup.sh --cluster b).
   # These survive re-sourcing of env.sh across sub-script load_env calls.
-  [[ -n "${GPUAAS_OCP_API_URL:-}"  ]] && OCP_API_URL="${GPUAAS_OCP_API_URL}"
-  [[ -n "${GPUAAS_OCP_USERNAME:-}" ]] && OCP_USERNAME="${GPUAAS_OCP_USERNAME}"
-  [[ -n "${GPUAAS_OCP_PASSWORD:-}" ]] && OCP_PASSWORD="${GPUAAS_OCP_PASSWORD}"
+  [[ -n "${SPOKE_CLUSTER_OCP_API_URL:-}"    ]] && OCP_API_URL="${SPOKE_CLUSTER_OCP_API_URL}"
+  [[ -n "${SPOKE_CLUSTER_OCP_USERNAME:-}"   ]] && OCP_USERNAME="${SPOKE_CLUSTER_OCP_USERNAME}"
+  [[ -n "${SPOKE_CLUSTER_OCP_PASSWORD:-}"   ]] && OCP_PASSWORD="${SPOKE_CLUSTER_OCP_PASSWORD}"
+  [[ -n "${SPOKE_CLUSTER_OCP_KUBECONFIG:-}" ]] && OCP_KUBECONFIG="${SPOKE_CLUSTER_OCP_KUBECONFIG}"
 
-  for var in OCP_API_URL OCP_USERNAME OCP_PASSWORD; do
+  for var in OCP_API_URL; do
     if [[ -z "${!var:-}" ]]; then
       error "Required variable ${var} is not set in env.sh"
       exit 1
     fi
   done
+  # Username/password OR kubeconfig must be available
+  if [[ -z "${OCP_USERNAME:-}" && -z "${OCP_KUBECONFIG:-}" ]]; then
+    error "Either OCP_USERNAME/OCP_PASSWORD or OCP_KUBECONFIG must be set in env.sh"
+    exit 1
+  fi
 }
 
 # ── OpenShift Login ───────────────────────────────────────────────────────────
+# Auth priority:
+#   1. OCP_USERNAME / OCP_PASSWORD  (kubeadmin or any IdP user — LDAP, HTPasswd, etc.)
+#   2. OCP_KUBECONFIG               (fallback when credentials unavailable or IdP not configured)
 require_oc_login() {
   local insecure=""
   [[ -z "${OCP_CA_CERT:-}" ]] && insecure="--insecure-skip-tls-verify=true"
 
-  local current_server current_user
-  current_server=$(oc whoami --show-server 2>/dev/null || echo "")
-  current_user=$(oc whoami 2>/dev/null || echo "")
+  # Path 1: username/password
+  if [[ -n "${OCP_USERNAME:-}" && -n "${OCP_PASSWORD:-}" ]]; then
+    local current_server current_user
+    current_server=$(oc whoami --show-server 2>/dev/null || echo "")
+    current_user=$(oc whoami 2>/dev/null || echo "")
 
-  if [[ "${current_server}" != "${OCP_API_URL}" || -z "${current_user}" ]]; then
+    if [[ "${current_server}" == "${OCP_API_URL}" && -n "${current_user}" ]]; then
+      success "Logged in as ${current_user} → ${current_server}"
+      return 0
+    fi
+
     info "Logging in to OpenShift at ${OCP_API_URL}..."
-    oc login "${OCP_API_URL}" \
-      -u "${OCP_USERNAME}" \
-      -p "${OCP_PASSWORD}" \
-      ${insecure} \
-      ${OCP_CA_CERT:+--certificate-authority="${OCP_CA_CERT}"}
+    if oc login "${OCP_API_URL}" \
+        -u "${OCP_USERNAME}" \
+        -p "${OCP_PASSWORD}" \
+        ${insecure} \
+        ${OCP_CA_CERT:+--certificate-authority="${OCP_CA_CERT}"} 2>/dev/null; then
+      success "Logged in as $(oc whoami) → $(oc whoami --show-server)"
+      return 0
+    fi
+    warn "Username/password login failed — trying kubeconfig fallback..."
   fi
-  success "Logged in as $(oc whoami) → $(oc whoami --show-server)"
+
+  # Path 2: kubeconfig fallback
+  if [[ -n "${OCP_KUBECONFIG:-}" ]]; then
+    export KUBECONFIG="${OCP_KUBECONFIG}"
+    if oc whoami &>/dev/null; then
+      success "Logged in via kubeconfig as $(oc whoami) → $(oc whoami --show-server)"
+      return 0
+    fi
+    error "OCP_KUBECONFIG is set but session is not valid: ${OCP_KUBECONFIG}"
+  else
+    error "Login failed — no valid credentials for ${OCP_API_URL}"
+    error "Options: set OCP_USERNAME/OCP_PASSWORD or OCP_KUBECONFIG in env.sh"
+  fi
+  exit 1
 }
 
 # ── Cluster context switching (multi-cluster only) ────────────────────────────
@@ -84,8 +116,8 @@ switch_cluster() {
     b)
       [[ -z "${CLUSTER_B_API_URL:-}" ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
       OCP_API_URL="${CLUSTER_B_API_URL}"
-      OCP_USERNAME="${CLUSTER_B_USERNAME}"
-      OCP_PASSWORD="${CLUSTER_B_PASSWORD}"
+      OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
+      OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
       [[ -n "${CLUSTER_B_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_B_KUBECONFIG}"
       ;;
     *)
@@ -105,7 +137,7 @@ resolve_cluster_b_name() {
   local tmpkube name
   tmpkube=$(mktemp)
   KUBECONFIG="${tmpkube}" oc login "${CLUSTER_B_API_URL:-}" \
-    -u "${CLUSTER_B_USERNAME:-}" -p "${CLUSTER_B_PASSWORD:-}" \
+    -u "${SPOKE_CLUSTER_USERNAME:-}" -p "${SPOKE_CLUSTER_PASSWORD:-}" \
     --insecure-skip-tls-verify=true &>/dev/null 2>/dev/null || true
   name=$(KUBECONFIG="${tmpkube}" oc get infrastructure cluster \
     -o jsonpath='{.status.infrastructureName}' 2>/dev/null || echo "")

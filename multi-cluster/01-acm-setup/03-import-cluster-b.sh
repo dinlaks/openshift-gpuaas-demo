@@ -13,8 +13,8 @@ source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
 
 [[ -z "${CLUSTER_B_API_URL:-}"  ]] && error "CLUSTER_B_API_URL not set in env.sh" && exit 1
-[[ -z "${CLUSTER_B_USERNAME:-}" ]] && error "CLUSTER_B_USERNAME not set in env.sh" && exit 1
-[[ -z "${CLUSTER_B_PASSWORD:-}" ]] && error "CLUSTER_B_PASSWORD not set in env.sh" && exit 1
+[[ -z "${SPOKE_CLUSTER_USERNAME:-}" ]] && error "SPOKE_CLUSTER_USERNAME not set in env.sh" && exit 1
+[[ -z "${SPOKE_CLUSTER_PASSWORD:-}" ]] && error "SPOKE_CLUSTER_PASSWORD not set in env.sh" && exit 1
 [[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
 
 # ── Step 1: Stay on Cluster A (Hub) throughout ────────────────────────────────
@@ -32,8 +32,8 @@ TMPKUBE=$(mktemp)
 trap "rm -f ${TMPKUBE}" EXIT
 
 KUBECONFIG="${TMPKUBE}" oc login "${CLUSTER_B_API_URL}" \
-  -u "${CLUSTER_B_USERNAME}" \
-  -p "${CLUSTER_B_PASSWORD}" \
+  -u "${SPOKE_CLUSTER_USERNAME}" \
+  -p "${SPOKE_CLUSTER_PASSWORD}" \
   --insecure-skip-tls-verify=true 2>/dev/null
 
 CLUSTER_B_TOKEN=$(KUBECONFIG="${TMPKUBE}" oc whoami -t)
