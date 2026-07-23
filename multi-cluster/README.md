@@ -17,11 +17,11 @@ This add-on extends the single-cluster setup with three capabilities:
   - Bare-metal SNO: `bash optional/storage/deploy-storage.sh --lvm` (see `optional/storage/README.md`)
   - 3-node compact or multi-node without storage: deploy ODF before running `setup.sh`
   - Verify: `oc get storageclass` — a `(default)` entry means you're good
-- **Single-cluster setup complete on both clusters:**
+- **Single-cluster setup complete on both clusters** (run from repo root):
   - Cluster A: `bash setup.sh`
   - Cluster B: `bash setup.sh --cluster b`
 - Both clusters running Kueue (handled by `setup.sh`)
-- MinIO for ACM Observability: `bash optional/storage/deploy-storage.sh --minio`
+- MinIO for ACM Observability (run from repo root): `bash optional/storage/deploy-storage.sh --minio`
 
 ## Cluster roles
 
