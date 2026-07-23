@@ -118,7 +118,7 @@ switch_cluster() {
       OCP_API_URL="${CLUSTER_B_API_URL}"
       OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
       OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
-      [[ -n "${CLUSTER_B_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_B_KUBECONFIG}"
+      [[ -n "${SPOKE_CLUSTER_KUBECONFIG:-}" ]] && export KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG}"
       ;;
     *)
       error "switch_cluster: unknown target '${target}'. Use 'a' or 'b'."

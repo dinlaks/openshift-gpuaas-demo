@@ -45,7 +45,7 @@ CLUSTER_A_PASSWORD=<password>
 CLUSTER_B_API_URL=https://api.your-spoke-cluster.example.com:6443
 SPOKE_CLUSTER_USERNAME=kubeadmin
 SPOKE_CLUSTER_PASSWORD=<password>
-# CLUSTER_B_KUBECONFIG=<path>   # [optional] alternative to username/password
+# SPOKE_CLUSTER_KUBECONFIG=<path>   # [optional] alternative to username/password
 # CLUSTER_B_NAME is auto-detected from Cluster B's OCP infrastructure name — no manual config needed
 
 MINIO_ENDPOINT=http://minio.minio.svc.cluster.local:9000
