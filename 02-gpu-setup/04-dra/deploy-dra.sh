@@ -35,7 +35,7 @@ source "${SCRIPT_DIR}/../../lib/common.sh"
 load_env
 require_oc_login
 
-header "DRA Setup — Cluster A (UC2)"
+header "DRA Setup — UC2"
 
 # ── 0. Ensure CRI-O CDI scanning is enabled ───────────────────────────────────
 # Without cdi_spec_dirs configured, CRI-O cannot inject the exact DRA-allocated
@@ -158,9 +158,9 @@ echo ""
 success "DRA ready for UC2 demo!"
 echo ""
 info "Run the demo:"
-echo "  oc apply -f 03-gpu-management/03-dra/03-dra-demo-pod.yaml"
+echo "  oc apply -f 02-gpu-setup/04-dra/03-dra-demo-pod.yaml"
 echo "  oc get resourceclaim -n research-team-project -w"
 echo "  oc get pods -n research-team-project -l demo/uc=uc2-dra"
 echo ""
 warn "When UC2 is done, restore device plugin for other use cases:"
-echo "  bash 03-gpu-management/03-dra/teardown-dra.sh"
+echo "  bash 02-gpu-setup/04-dra/teardown-dra.sh"

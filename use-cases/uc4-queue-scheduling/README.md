@@ -4,7 +4,7 @@
 In a shared GPU environment, teams submit more work than the cluster can absorb at once. Without a queue, excess jobs fail and engineers retry manually — wasting time and creating operational noise. With Kueue, jobs that exceed current capacity wait in an ordered queue and are admitted automatically the instant a slot opens. The platform absorbs demand spikes without any human intervention.
 
 ## What You're Showing
-- Three research jobs filling charlie's queue quota — all admitted and running
+- Four research jobs filling charlie's queue quota — all admitted and running
 - A fourth job hitting the quota ceiling and transitioning to `Inadmissible`
 - Deleting one running job — the fourth job automatically admitted within seconds
 - The full lifecycle visible in real time with `oc get workloads -w`
@@ -20,7 +20,7 @@ oc describe clusterqueue research-cluster-queue | grep -A10 "Resource Groups"
 - Ensure the demo jobs manifest is present:
 
 ```bash
-ls -la 06-kueue/05-queue-demo-jobs.yaml
+ls -la 05-kueue/05-queue-demo-jobs.yaml
 ```
 
 - Optional: open a split terminal with the watch command pre-loaded so it is visible as soon as jobs are submitted.
@@ -45,11 +45,11 @@ Confirm:
 
 ---
 
-### Step 2: Submit Three Jobs to Fill the Quota
-**Say:** "The research cluster queue has a nominalQuota of 3 MIG slices — enough for three simultaneous jobs. Let's fill it."
+### Step 2: Submit Four Jobs to Fill the Quota
+**Say:** "The research cluster queue has a quota of up to 4 MIG slices (nominalQuota=1 + borrowingLimit=3 from cohort) — enough for four simultaneous jobs. Let's fill it."
 
 ```bash
-oc apply -f 06-kueue/05-queue-demo-jobs.yaml -n research-team-project
+oc apply -f 05-kueue/05-queue-demo-jobs.yaml -n research-team-project
 ```
 
 Watch the admission in real time:
@@ -58,17 +58,17 @@ Watch the admission in real time:
 oc get workloads -n research-team-project -w
 ```
 
-All three workloads should transition through:
+All four workloads should transition through:
 `Pending` → `QuotaReserved` → `Admitted`
 
-Once all three are admitted:
+Once all four are admitted:
 
 ```bash
 oc get workloads -n research-team-project
 oc get clusterqueue research-cluster-queue -o wide
 ```
 
-**Say:** "Three jobs, three slices, three simultaneous admissions. The queue is now at full capacity."
+**Say:** "Four jobs, four slices — 1 from own quota + 3 borrowed from idle cohort. admissions. The queue is now at full capacity."
 
 ---
 
@@ -76,7 +76,7 @@ oc get clusterqueue research-cluster-queue -o wide
 **Say:** "Now let's push past the limit. I'll submit a fourth job while the queue is fully occupied."
 
 ```bash
-oc apply -f 06-kueue/05-queue-demo-jobs-overflow.yaml -n research-team-project
+oc apply -f 05-kueue/05-queue-demo-jobs-overflow.yaml -n research-team-project
 ```
 
 Watch the fourth workload:
@@ -138,7 +138,7 @@ oc get workloads -n research-team-project
 oc get clusterqueue research-cluster-queue -o wide
 ```
 
-Three workloads running again, zero pending. The queue has self-healed.
+Four workloads running again, zero pending. The queue has self-healed.
 
 **Say:** "Platform teams don't babysit queues. Users don't retry failed jobs. The system manages itself."
 

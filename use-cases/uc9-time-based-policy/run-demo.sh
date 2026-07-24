@@ -24,4 +24,4 @@ case "$MODE" in
     ;;
   *) error "Usage: bash run-demo.sh [weekday|weekend]" ;;
 esac
-info "Cleanup: bash ../../cleanup.sh uc9"
+info "Cleanup: bash cleanup.sh uc9"

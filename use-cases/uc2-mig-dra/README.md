@@ -11,8 +11,8 @@ DRA changes the model: workloads describe **capability** (not name), Kubernetes 
 - **ResourceSlices** — every GPU and MIG slice published as a DRA device
 - **DeviceClasses** — capability-based selectors (not resource names)
 - **Live ResourceClaim lifecycle** — created dynamically, auto-deleted on completion
-- **Full GPU DRA (Cluster A GPU 1)** — end-to-end working demo ✅
-- **MIG DRA scheduling (Cluster A GPU 0)** — correct slice allocated ✅ | CDI injection has a known upstream driver bug (container sees full GPU — tracked in kubernetes-sigs/dra-driver-nvidia-gpu)
+- **Full GPU DRA (GPU 1)** — end-to-end working demo ✅
+- **MIG DRA scheduling (GPU 0)** — correct slice allocated ✅ | CDI injection has a known upstream driver bug (container sees full GPU — tracked in kubernetes-sigs/dra-driver-nvidia-gpu)
 
 ## Setup
 

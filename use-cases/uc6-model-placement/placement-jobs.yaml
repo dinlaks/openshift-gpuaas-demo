@@ -39,7 +39,7 @@ spec:
       restartPolicy: Never
       nodeSelector:
         demo/gpu-has-full: "true"
-        demo/gpu-type: a30
+        demo/gpu-type: ${GPU_TYPE}
       containers:
         - name: large-model
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
@@ -55,9 +55,9 @@ spec:
               time.sleep(1800)
           resources:
             requests:
-              nvidia.com/gpu: "1"
+              ${FULL_GPU_RESOURCE}: "1"
             limits:
-              nvidia.com/gpu: "1"
+              ${FULL_GPU_RESOURCE}: "1"
 ---
 apiVersion: batch/v1
 kind: Job

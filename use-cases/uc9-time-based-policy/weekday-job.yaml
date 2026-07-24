@@ -8,7 +8,7 @@
 #   Mon 6am: gpuaas-weekday-policy CronJob deletes the weekend job, restores quota,
 #            then applies this job again via the uc9-job-templates ConfigMap.
 #
-# Apply:   oc apply -f 06-kueue/09-uc9-weekday-job.yaml
+# Apply:   oc apply -f 05-kueue/09-uc9-weekday-job.yaml
 # Cleanup: oc delete job uc9-inference-weekday -n inference-team-project
 apiVersion: batch/v1
 kind: Job

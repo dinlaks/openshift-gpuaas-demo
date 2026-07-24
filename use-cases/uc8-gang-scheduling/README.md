@@ -8,7 +8,7 @@ Distributed training is not parallelism — it is synchronization. When you laun
 
 - Without gang scheduling: partial starts lead to deadlock and wasted GPU time
 - Kueue holds a 4-pod gang job in `Inadmissible` state when only 1 of 4 GPU slices is free
-- Releasing one filler job frees enough capacity — all 4 gang pods start simultaneously
+- Releasing all three filler jobs frees all 4 slots simultaneously — all 4 gang pods start simultaneously
 - Kueue's `parallelism` field is the gang size — no special API required
 
 ## Setup
@@ -55,7 +55,7 @@ With Kueue gang scheduling:
 What to say: "I'm going to fill 3 of the 4 available 1g.6gb MIG slices with low-priority filler jobs. That leaves exactly 1 free — not enough for a 4-pod gang."
 
 ```bash
-oc apply -f 06-kueue/07-gang-scheduling-job.yaml
+bash use-cases/uc8-gang-scheduling/run-demo.sh 1
 ```
 
 This file applies `filler-job-1`, `filler-job-2`, `filler-job-3` AND the gang job `distributed-training-gang`.
@@ -129,12 +129,13 @@ Expected — `inUse: 3`, `nominalQuota: 4`, so only 1 free:
 
 What to say: "Three slices used by filler jobs. One free. The gang needs four — all at once. It waits."
 
-### Step 5: Delete One Filler Job — Watch All 4 Gang Pods Start Simultaneously
+### Step 5: Delete All Three Filler Jobs — Watch All 4 Gang Pods Start Simultaneously
 
 What to say: "I'm going to delete one filler job. That releases one slice — now four are free. Watch what Kueue does."
 
 ```bash
-oc delete job filler-job-1 -n research-team-project
+# Delete ALL three fillers simultaneously to free all 4 slots for gang admission
+oc delete job filler-job-1 filler-job-2 filler-job-3 -n research-team-project
 ```
 
 Immediately watch pods:

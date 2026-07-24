@@ -14,7 +14,7 @@ case "$STEP" in
     header "UC8 Step 1: Fill 3 of 4 MIG slots + submit 4-pod gang job"
     apply_template "${SCRIPT_DIR}/gang-job.yaml"
     info "Show gang Inadmissible: oc get workloads -n research-team-project"
-    info "Show zero gang pods:    oc get pods -n research-team-project -l demo/role=gang"
+    info "Show zero gang pods:    oc get pods -n research-team-project -l demo/role=gang-worker"
     info "Next: bash run-demo.sh 2"
     ;;
   2)
@@ -25,4 +25,4 @@ case "$STEP" in
     ;;
   *) error "Usage: bash run-demo.sh [1|2]" ;;
 esac
-info "Cleanup: bash ../../cleanup.sh uc8"
+info "Cleanup: bash cleanup.sh uc8"

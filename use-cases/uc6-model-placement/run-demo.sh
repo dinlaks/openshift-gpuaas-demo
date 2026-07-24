@@ -10,7 +10,7 @@ load_env; resolve_gpu_config; require_oc_login
 header "UC6: Model Placement — full GPU + small MIG slice"
 apply_template "${SCRIPT_DIR}/placement-jobs.yaml"
 echo ""
-info "Watch:   oc get pods -n inference-team-project -n research-team-project -w"
+info "Watch:   oc get pods -A -l demo/uc=uc6-placement -o wide -w"
 info "Show VRAM difference in logs:"
 info "  oc logs -n inference-team-project -l demo/uc=uc6-placement"
 info "  oc logs -n research-team-project  -l demo/uc=uc6-placement"

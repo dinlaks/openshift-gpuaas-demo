@@ -23,7 +23,7 @@ Start by showing the operator what is actually available on the cluster.
 # List all hardware profiles across all namespaces
 oc get hardwareprofile -A
 
-# Confirm MIG capacity on Cluster B GPU 0 and GPU 1
+# Confirm MIG capacity on GPU 0 and GPU 1 on the cluster
 oc get node -o json | jq '.items[] | {name: .metadata.name, mig: .status.capacity} | select(.mig | keys[] | startswith("nvidia.com/mig"))'
 ```
 
@@ -100,7 +100,5 @@ watch -n 5 "oc get node -o custom-columns='NODE:.metadata.name,MIG-1G:.status.ca
 > "GPU access is governed by the platform. Users self-serve within their allocated tier."
 
 ## Cleanup
-```bash
-# Run from repo root:
-bash cleanup.sh uc1
-```
+
+UC1 is a dashboard walkthrough — no Kueue workloads are submitted. No cleanup required.

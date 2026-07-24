@@ -2,11 +2,11 @@
 
 ## Story
 
-The inference team runs production workloads Monday through Friday on a premium 2g.12gb GPU slice — 12GB of dedicated memory, full performance. On weekends, that premium slice sits mostly idle. A CronJob fires every Friday at 6pm: Kueue drains the inference workload, sets the 2g.12gb quota to zero, and re-admits the job on a cheaper 1g.6gb slice. Monday at 6am, the quota restores and the job moves back to premium. No manual intervention. No tickets. No forgotten weekend GPU bills.
+The inference team runs production workloads Monday through Friday on a premium full GPU (24GB VRAM) — 12GB of dedicated memory, full performance. On weekends, that premium slice sits mostly idle. A CronJob fires every Friday at 6pm: Kueue drains the inference workload, sets the 2g.12gb quota to zero, and re-admits the job on a cheaper 1g.6gb slice. Monday at 6am, the quota restores and the job moves back to premium. No manual intervention. No tickets. No forgotten weekend GPU bills.
 
 ## What You're Showing
 
-- Inference job running on premium 2g.12gb MIG slice during "weekday" policy
+- Inference job running on premium economy 1g.6gb MIG slice during "weekday" policy
 - Weekend CronJob triggers Kueue's `HoldAndDrain` — active job is evicted gracefully
 - Quota for 2g.12gb drops to 0 — the premium tier is closed
 - Kueue re-admits the inference job automatically on the cheaper 1g.6gb slice
@@ -17,7 +17,7 @@ The inference team runs production workloads Monday through Friday on a premium 
 Apply the UC9 manifests (CronJobs, RBAC, inference job):
 
 ```bash
-oc apply -f 06-kueue/08-time-based-policy.yaml
+oc apply -f 05-kueue/08-time-based-policy.yaml
 ```
 
 Verify CronJobs exist:
@@ -41,7 +41,7 @@ oc get clusterqueue inference-cluster-queue \
   -o jsonpath='{.spec.resourceGroups}' | python3 -m json.tool
 ```
 
-Expected: `nominalQuota: "1"` for `nvidia.com/mig-2g.12gb`.
+Expected: `nominalQuota: "1"` for `nvidia.com/gpu`.
 
 ## Demo Steps
 
@@ -93,9 +93,9 @@ spec:
               value: "600"
           resources:
             requests:
-              nvidia.com/mig-2g.12gb: "1"
+              nvidia.com/gpu: "1"
             limits:
-              nvidia.com/mig-2g.12gb: "1"
+              nvidia.com/gpu: "1"
 EOF
 ```
 
@@ -112,7 +112,7 @@ oc logs -n inference-team-project -l demo/uc=uc9-time-based --tail=3
 Expected:
 
 ```
-WEEKDAY INFERENCE | GPU: NVIDIA A30 | VRAM: 11.9GB
+WEEKDAY INFERENCE | GPU: NVIDIA A30 | VRAM: ~23.7GB
 Running on PREMIUM 2g.12gb slice (12GB) — weekday policy active
   inference running... 0s elapsed
 ```
@@ -124,7 +124,7 @@ oc get clusterqueue inference-cluster-queue \
   -o jsonpath='{.status.flavorsUsage}' | python3 -m json.tool
 ```
 
-Expected: `inUse: 1` for `nvidia.com/mig-2g.12gb`.
+Expected: `inUse: 1` for `nvidia.com/gpu`.
 
 What to say: "Premium slice, in use, inference running. Now let's skip to Friday 6pm."
 
@@ -223,7 +223,7 @@ oc get clusterqueue inference-cluster-queue \
   -o jsonpath='{.spec.resourceGroups}' | python3 -m json.tool
 ```
 
-Expected — `nominalQuota: "0"` for `nvidia.com/mig-2g.12gb`:
+Expected — `nominalQuota: "0"` for `nvidia.com/gpu`:
 
 ```json
 [
@@ -231,7 +231,7 @@ Expected — `nominalQuota: "0"` for `nvidia.com/mig-2g.12gb`:
     "flavors": [
       {
         "name": "a30-mig-2g12gb",
-        "resources": [{"name": "nvidia.com/mig-2g.12gb", "nominalQuota": "0"}]
+        "resources": [{"name": "nvidia.com/gpu", "nominalQuota": "0"}]
       },
       {
         "name": "a30-mig-1g6gb",
@@ -278,7 +278,7 @@ oc get clusterqueue inference-cluster-queue \
   -o jsonpath='{.spec.resourceGroups}' | python3 -m json.tool
 ```
 
-Expected: `nominalQuota: "1"` for `nvidia.com/mig-2g.12gb` again.
+Expected: `nominalQuota: "1"` for `nvidia.com/gpu` again.
 
 What to say: "Quota is back. If Alice's job is still in queue, Kueue will re-admit it on the premium slice on its next cycle. The CronJob was just the clock. Kueue owned every scheduling decision."
 

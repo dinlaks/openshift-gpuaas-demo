@@ -42,6 +42,7 @@ spec:
       labels:
         demo/uc: uc2-dra
         demo/approach: dra
+        kueue.x-k8s.io/queue-name: research-queue
     spec:
       restartPolicy: Never
       runtimeClassName: nvidia-cdi
@@ -70,7 +71,7 @@ spec:
 ---
 # ── DRA — MIG 1g.6gb slice (GPU 0) via ResourceClaim ─────────────────────────
 # DeviceClass CEL: type=="mig" && migProfile=="1g.6gb"
-# Targets GPU 0 on Cluster A (4× 1g.6gb slices). Scheduler picks a free slice.
+# Targets GPU 0 (MIG-enabled)
 # No "nvidia.com/mig-1g.6gb" hardcoded in pod spec — capability drives selection.
 apiVersion: batch/v1
 kind: Job
@@ -88,7 +89,8 @@ spec:
     metadata:
       labels:
         demo/uc: uc2-dra
-        demo/approach: dra-mig
+        demo/approach: dra
+        kueue.x-k8s.io/queue-name: research-queue-mig
     spec:
       restartPolicy: Never
       runtimeClassName: nvidia-cdi

@@ -286,13 +286,13 @@ spec:
 
 # Live demo trigger — simulate weekend/weekday policy instantly
 # Step 1: Apply weekday baseline job first:
-#   oc apply -f 06-kueue/09-uc9-weekday-job.yaml
+#   oc apply -f 05-kueue/09-uc9-weekday-job.yaml
 # Step 2: Trigger weekend policy manually:
 #   oc create job --from=cronjob/gpuaas-weekend-policy weekend-now -n gpuaas-system
 # Step 3: Watch logs, confirm economy job running (VRAM: 6.2GB)
 # Step 4: Restore weekday:
 #   oc create job --from=cronjob/gpuaas-weekday-policy weekday-now -n gpuaas-system
 #
-# NOTE: The standalone weekday job YAML is at 06-kueue/09-uc9-weekday-job.yaml
-#       The standalone weekend job YAML is at 06-kueue/09-uc9-weekend-job.yaml
+# NOTE: The standalone weekday job YAML is at 05-kueue/09-uc9-weekday-job.yaml
+#       The standalone weekend job YAML is at 05-kueue/09-uc9-weekend-job.yaml
 #       Both are also embedded in the uc9-job-templates ConfigMap for CronJob use.
