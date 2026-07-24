@@ -34,8 +34,8 @@ stringData:
       bucket: thanos
       endpoint: minio.minio.svc.cluster.local:9000
       insecure: true
-      access_key: minio
-      secret_key: minio123
+      access_key: ${MINIO_ACCESS_KEY}
+      secret_key: ${MINIO_SECRET_KEY}
 ---
 # ── MultiClusterObservability — enables the full ACM observability stack ───────
 apiVersion: observability.open-cluster-management.io/v1beta2

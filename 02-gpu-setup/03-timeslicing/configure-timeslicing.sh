@@ -8,7 +8,7 @@
 # NOTE: This conflicts with DRA (UC2) which also uses GPU 1.
 #       Run teardown-dra.sh before this if DRA is active.
 #
-# Usage: bash 03-gpu-management/05-timeslicing/configure-timeslicing.sh
+# Usage: bash 02-gpu-setup/03-timeslicing/configure-timeslicing.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -58,4 +58,4 @@ oc get node -o jsonpath='{.items[0].status.allocatable}' 2>/dev/null \
   | python3 -c "import sys,json; r={k:v for k,v in json.load(sys.stdin).items() if 'nvidia' in k or 'mig' in k}; [print(f'  {k}: {v}') for k,v in sorted(r.items())]"
 echo ""
 info "Apply demo jobs:"
-echo "  oc apply -f 03-gpu-management/05-timeslicing/inference-job-timesliced.yaml"
+echo "  oc apply -f 02-gpu-setup/03-timeslicing/inference-job-timesliced.yaml"

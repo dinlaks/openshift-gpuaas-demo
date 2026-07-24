@@ -69,7 +69,7 @@ info "Checking prerequisites ..."
 
 if ! oc get nodes -l "demo/gpu-has-full=true" --no-headers | grep -q .; then
   error "Node label demo/gpu-has-full=true not found."
-  error "Run first: bash 03-gpu-management/01-node-setup/node-labels-multinode.sh --cluster a"
+  error "Run first: bash 02-gpu-setup/01-node-labels.sh --cluster a"
   exit 1
 fi
 

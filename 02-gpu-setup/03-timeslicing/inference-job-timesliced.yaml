@@ -5,10 +5,10 @@
 # Start at the BEGINNING of the timeslicing scenario (image pull takes ~30s).
 # Pods will be Running by the time you finish the capacity walkthrough.
 #
-# Apply:  oc apply -f 03-gpu-management/05-timeslicing/inference-job-timesliced.yaml
+# Apply:  oc apply -f 02-gpu-setup/03-timeslicing/inference-job-timesliced.yaml
 # Watch:  oc get pods -n ds-team-project -l demo/scenario=timeslicing -w
 # Logs:   oc logs -n ds-team-project -l demo/scenario=timeslicing --prefix --follow --tail=5
-# Clean:  oc delete -f 03-gpu-management/05-timeslicing/inference-job-timesliced.yaml
+# Clean:  oc delete -f 02-gpu-setup/03-timeslicing/inference-job-timesliced.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:

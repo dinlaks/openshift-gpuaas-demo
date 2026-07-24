@@ -1,7 +1,7 @@
 # UC9: Time-Based Policy — weekend economy job
 # Runs on 1g.6gb MIG slice (6.2GB) — economy tier active on weekends.
 # Applied by the gpuaas-weekend-policy CronJob automatically every Friday 6pm.
-# Also apply manually for demo: oc apply -f 06-kueue/09-uc9-weekend-job.yaml
+# Also apply manually for demo: oc apply -f 05-kueue/09-uc9-weekend-job.yaml
 # Cleanup:                       oc delete job uc9-inference-weekend -n inference-team-project
 apiVersion: batch/v1
 kind: Job

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Dinesh Lakshmanan
-# Orchestrate full GPUaaS config deploy to Cluster B (Cluster B).
+# Orchestrate full GPUaaS config deploy to spoke cluster.
 # Each step delegates to the owning folder's script with --cluster b.
 # Run AFTER: 00-prereqs/deploy-prereqs.sh --cluster b
 #        AND: 00-prereqs/acm/03-import-spoke-cluster.sh

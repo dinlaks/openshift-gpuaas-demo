@@ -10,7 +10,7 @@
 # No hardcoded resource names (nvidia.com/gpu, nvidia.com/mig-1g.6gb) in the pod spec.
 #
 # Demo commands:
-#   oc apply -f 03-gpu-management/03-dra/03-dra-demo-pod.yaml
+#   oc apply -f 02-gpu-setup/04-dra/03-dra-demo-pod.yaml
 #
 #   # Watch ResourceClaims created dynamically as pods start:
 #   oc get resourceclaim -n research-team-project -w

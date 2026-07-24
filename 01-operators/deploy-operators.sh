@@ -33,7 +33,7 @@ MANIFESTS="${SCRIPT_DIR}/manifests"
 header "Resolving operator channels"
 
 RHOAI_CHANNEL="${RHOAI_CHANNEL:-stable-3.4}"
-KUEUE_CHANNEL="${KUEUE_CHANNEL:-stable-v1.4}"
+KUEUE_CHANNEL="${KUEUE_CHANNEL:-stable-v1.3}"
 
 # GPU Operator: versioned channel (v26.x etc.) — auto-detect if not set
 if [[ -z "${GPU_OPERATOR_CHANNEL:-}" ]]; then
