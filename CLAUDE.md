@@ -24,7 +24,7 @@ Public repo: https://github.com/dinlaks/openshift-gpuaas-demo
   - GPU[1]: 1× `nvidia.com/mig-2g.12gb` + 2× `nvidia.com/mig-1g.6gb` (mixed)
 - **UC2 approach**: Toggle — run `deploy-dra.sh` before UC2, `teardown-dra.sh` after
 - **RHOAI**: 3.4 (`stable-3.4`)
-- **Kueue**: `stable-v1.4`
+- **Kueue**: `stable-v1.3`
 - **GPU Operator channel**: auto-detected from marketplace
 - **NODE_ROLES**: not used (1 Kubernetes node per SNO, MIG_STRATEGY covers it)
 
@@ -66,7 +66,7 @@ Hardware profiles use the same labels in nodeSelector.
 
 ### Operator channels (all auto-detect or explicit)
 - `RHOAI_CHANNEL=stable-3.4`
-- `KUEUE_CHANNEL=stable-v1.4`
+- `KUEUE_CHANNEL=stable-v1.3`
 - `GPU_OPERATOR_CHANNEL=` (auto-detect from marketplace default)
 - `NFD_CHANNEL=` (auto-detect from OCP version)
 - `LVM_CHANNEL=` (auto-detect — only if using optional/storage/)
@@ -122,7 +122,7 @@ bash cleanup.sh all --hard # also removes Kueue queues and hardware profiles
 ```bash
 # On SNO-A (hub):
 bash multi-cluster/01-acm-setup/01-install-hub.sh
-bash multi-cluster/01-acm-setup/03-import-cluster-b.sh
+bash multi-cluster/01-acm-setup/03-import-spoke-cluster.sh
 bash multi-cluster/02-multikueue/01-multikueue-setup.sh   # also applies ACM policy + observability
 
 # Validate multi-cluster prereqs:

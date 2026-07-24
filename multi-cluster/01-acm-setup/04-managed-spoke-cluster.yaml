@@ -2,15 +2,15 @@
 apiVersion: cluster.open-cluster-management.io/v1
 kind: ManagedCluster
 metadata:
-  name: ${CLUSTER_B_NAME}
+  name: ${SPOKE_CLUSTER_NAME}
   labels:
     cluster.open-cluster-management.io/clusterset: gpuaas-clusterset
     vendor: OpenShift              # required by MCO placementrule_controller to enable observability
     cloud: Other                   # required by MCO placementrule_controller
-    demo/gpu-type: a30
-    demo/gpu-count: "2"
+    demo/gpu-type: ${GPU_TYPE}
+    demo/gpu-count: ${GPU_COUNT}
     demo/role: spoke
-    demo/server: ${CLUSTER_B_NAME}
+    demo/server: ${SPOKE_CLUSTER_NAME}
     environment: gpuaas-demo
 spec:
   hubAcceptsClient: true
@@ -20,8 +20,8 @@ spec:
 apiVersion: agent.open-cluster-management.io/v1
 kind: KlusterletAddonConfig
 metadata:
-  name: ${CLUSTER_B_NAME}
-  namespace: ${CLUSTER_B_NAME}
+  name: ${SPOKE_CLUSTER_NAME}
+  namespace: ${SPOKE_CLUSTER_NAME}
 spec:
   applicationManager:
     enabled: false
@@ -30,7 +30,7 @@ spec:
   iamPolicyController:
     enabled: false
   policyController:
-    enabled: false
+    enabled: true
   searchCollector:
     enabled: true
   workManager:

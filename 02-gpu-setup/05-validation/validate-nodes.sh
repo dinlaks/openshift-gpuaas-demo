@@ -6,9 +6,9 @@
 #
 # Usage:
 #   bash validate-nodes.sh                    # validate Cluster A (OCP_API_URL)
-#   bash validate-nodes.sh --cluster b        # validate Cluster B (CLUSTER_B_* vars)
+#   bash validate-nodes.sh --cluster <name>        # validate named cluster
 #   bash validate-nodes.sh --wide             # include MIG config state
-#   bash validate-nodes.sh --cluster b --wide # both
+#   bash validate-nodes.sh --cluster <name> --wide # both
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,20 +28,16 @@ done
 
 load_env
 
-if [[ "${TARGET_CLUSTER}" == "b" ]]; then
-  [[ -z "${SPOKE_CLUSTER_API_URL:-}"  ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
-  [[ -z "${SPOKE_CLUSTER_USERNAME:-}" ]] && error "SPOKE_CLUSTER_USERNAME not set in env.sh" && exit 1
-  [[ -z "${SPOKE_CLUSTER_PASSWORD:-}" ]] && error "SPOKE_CLUSTER_PASSWORD not set in env.sh" && exit 1
-  export SPOKE_CLUSTER_OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-  export SPOKE_CLUSTER_OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
-  export SPOKE_CLUSTER_OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
-  OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-  OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
-  OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
-  info "Targeting Cluster B: ${OCP_API_URL}"
-elif [[ -n "${TARGET_CLUSTER}" ]]; then
-  error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."
-  exit 1
+if [[ -n "${TARGET_CLUSTER}" ]]; then
+  _N=$(echo "${TARGET_CLUSTER}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+  [[ -z "$(get_cluster_var "${TARGET_CLUSTER}" API_URL)" ]] && \
+    error "CLUSTER_${_N}_API_URL not set in env.sh for --cluster ${TARGET_CLUSTER}" && exit 1
+  export OCP_CLUSTER_TARGET="${TARGET_CLUSTER}"
+  OCP_API_URL=$(get_cluster_var "${TARGET_CLUSTER}" API_URL)
+  OCP_USERNAME=$(get_cluster_var "${TARGET_CLUSTER}" USERNAME)
+  OCP_PASSWORD=$(get_cluster_var "${TARGET_CLUSTER}" PASSWORD)
+  OCP_KUBECONFIG=$(get_cluster_var "${TARGET_CLUSTER}" KUBECONFIG)
+  info "Targeting cluster: ${TARGET_CLUSTER} (CLUSTER_${_N}_*)"
 fi
 
 require_oc_login

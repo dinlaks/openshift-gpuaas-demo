@@ -2,14 +2,22 @@
 
 ## Story
 
-Two OpenShift clusters — managed as a single platform. ACM governs the fleet: identical GPU configuration, identical Kueue flavors, identical policy on both clusters. When Cluster A's premium GPU slice fills up, Kueue's MultiKueue automatically dispatches to Cluster B — without the user specifying a cluster, without resubmitting, without manual intervention. The platform finds the capacity.
+Two OpenShift clusters — managed as a single platform. ACM governs the fleet: identical GPU configuration, identical Kueue flavors, identical policy on both clusters. When Cluster A's premium GPU slice fills up, Kueue's MultiKueue automatically dispatches to the spoke cluster — without the user specifying a cluster, without resubmitting, without manual intervention. The platform finds the capacity.
 
 ## What You're Showing
 
 - ACM policy enforcing identical GPU configuration across both clusters (fleet governance)
 - ACM Observability surfacing unified DCGM GPU metrics from both clusters
-- MultiKueue automatically dispatching to Cluster B when Cluster A's 2g.12gb quota is exhausted
+- MultiKueue automatically dispatching to spoke cluster when Cluster A's 2g.12gb quota is exhausted
 - The user submits to one queue — the platform picks the cluster
+
+## Requirements
+
+- **Kueue version must be consistent across hub and spoke** — set `KUEUE_CHANNEL` in `env.sh`
+  and use the same value for both `setup.sh` (hub) and `setup.sh --cluster <name>` (spoke).
+  Validated with `stable-v1.3`.
+- **Step 1 is not optional** — without filling Cluster A's slots first, the job runs locally
+  on Cluster A instead of being dispatched to the spoke.
 
 ## Setup
 
@@ -54,7 +62,7 @@ Expected:
 ```
 NAME        HUB ACCEPTED   MANAGED CLUSTER URLS   JOINED   AVAILABLE   AGE
 cluster-a   true           https://api.cluster-a…  True     True        5d
-cluster-b   true           https://api.cluster-b…  True     True        5d
+<spoke-name>   true           https://api.<spoke>…  True     True        5d
 ```
 
 #### Step 2: Show the GPU Config Policy
@@ -88,11 +96,11 @@ Expected output showing both clusters Compliant:
 ```json
 [
   {"clustername": "cluster-a", "clusternamespace": "cluster-a", "compliant": "Compliant"},
-  {"clustername": "cluster-b", "clusternamespace": "cluster-b", "compliant": "Compliant"}
+  {"clustername": "<spoke-name>", "clusternamespace": "<spoke-name>", "compliant": "Compliant"}
 ]
 ```
 
-What to say: "Both clusters are Compliant. ACM verified that GPU Operator is installed, MIG is configured identically, and Kueue ResourceFlavors match — on both clusters. If cluster-b drifted, ACM would auto-remediate it within 60 seconds."
+What to say: "Both clusters are Compliant. ACM verified that GPU Operator is installed, MIG is configured identically, and Kueue ResourceFlavors match — on both clusters. If the spoke cluster drifted, ACM would auto-remediate it within 60 seconds."
 
 ---
 
@@ -102,7 +110,7 @@ What to say: "ACM Observability aggregates DCGM metrics from both clusters into 
 
 Open the ACM Observability console (Grafana):
 - Navigate to: ACM Console → Observe → Grafana → GPU Utilization dashboard
-- Show the DCGM panel with metrics from both `cluster-a` and `cluster-b`
+- Show the DCGM panel with metrics from both hub and spoke clusters
 
 ```bash
 # Confirm Observability is collecting from both clusters
@@ -165,7 +173,7 @@ Expected — `inUse: 1`, `nominalQuota: 1` for `a30-mig-2g12gb`:
 [{"name": "${MIG_LARGE_FLAVOR}", "resources": [{"borrowed": "0", "inUse": "1", "name": "nvidia.com/mig-2g.12gb"}]}]
 ```
 
-#### Step 4: Submit to the Global Queue — MultiKueue Picks Cluster B
+#### Step 4: Submit to the Global Queue — MultiKueue Picks the Spoke Cluster
 
 What to say: "Cluster A is full. Now I submit a second inference job to the global-gpu-queue — this is the MultiKueue-enabled queue. Watch what happens."
 
@@ -174,7 +182,7 @@ oc apply -f multi-cluster/02-multikueue/07-uc7-demo-job.yaml
 ```
 
 ```bash
-# Watch the workload status — it will show MultiKueue dispatching to cluster-b
+# Watch the workload status — it will show MultiKueue dispatching to spoke cluster
 oc get workloads -n inference-team-project -w
 ```
 
@@ -183,24 +191,24 @@ Expected progression:
 ```
 NAME                    QUEUE          RESERVED IN   ADMITTED   AGE
 global-inference-job-…  global-queue   <none>        False      5s
-global-inference-job-…  global-queue   cluster-b     True       12s
+global-inference-job-…  global-queue   <spoke-name>   True       12s
 ```
 
-What to say: "Cluster A was full. MultiKueue checked Cluster B — found the 2g.12gb slice free — and dispatched there. The user submitted once to `global-gpu-queue`. The platform picked the cluster."
+What to say: "Cluster A was full. MultiKueue checked spoke cluster — found the 2g.12gb slice free — and dispatched there. The user submitted once to `global-gpu-queue`. The platform picked the cluster."
 
-#### Step 5: Confirm Job Running on Cluster B
+#### Step 5: Confirm Job Running on Spoke Cluster
 
 ```bash
-# View job on Cluster B (spoke)
-oc get jobs -n inference-team-project --context cluster-b
-oc get pods -n inference-team-project --context cluster-b -o wide
+# View job on spoke cluster
+oc get jobs -n inference-team-project --context <spoke-cluster-name>
+oc get pods -n inference-team-project --context <spoke-cluster-name> -o wide
 ```
 
-Expected: pod running on a cluster-b node.
+Expected: pod running on a spoke cluster node.
 
 ```bash
-# Read the job output — confirms it's on Cluster B's hardware
-oc logs -n inference-team-project --context cluster-b \
+# Read the job output — confirms it's on spoke cluster hardware
+oc logs -n inference-team-project --context <spoke-cluster-name> \
   -l demo/uc=uc7-multi-cluster
 ```
 
@@ -210,10 +218,10 @@ Expected:
 ============================================================
 UC7: GLOBAL GPU POOL — CROSS-CLUSTER DISPATCH
 ============================================================
-Running on node : cluster-b-node-1
+Running on node : <spoke-node>
 GPU             : (your GPU type)
 GPU Memory      : 11.9 GB  (2g.12gb MIG slice)
-Cluster A full  : Job dispatched to Cluster B by MultiKueue
+Cluster A full  : Job dispatched to spoke cluster by MultiKueue
 ============================================================
 ```
 
@@ -229,8 +237,8 @@ oc get workloads -n inference-team-project -w
 ```
 
 ```bash
-# Terminal 2: Watch jobs appear on Cluster B
-watch -n3 'echo "=== Cluster B Jobs ===" && oc get jobs -n inference-team-project --context cluster-b && echo "" && echo "=== Cluster B Pods ===" && oc get pods -n inference-team-project --context cluster-b -o wide'
+# Terminal 2: Watch jobs appear on spoke cluster
+watch -n3 'echo "=== Spoke Cluster Jobs ===" && oc get jobs -n inference-team-project --context <spoke-cluster-name> && echo "" && echo "=== Spoke Cluster Pods ===" && oc get pods -n inference-team-project --context <spoke-cluster-name> -o wide'
 ```
 
 ```bash

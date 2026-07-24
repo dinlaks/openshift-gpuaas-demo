@@ -13,7 +13,7 @@ GPU utilization, memory, temperature, and power across every cluster simultaneou
 
 ## Prerequisites
 
-- ACM Hub installed and Cluster B imported (`01-acm-setup/`)
+- ACM Hub installed and spoke cluster imported (`01-acm-setup/`)
 - Object storage for Thanos — use MinIO (`optional/storage/deploy-storage.sh --minio`)
   or any S3-compatible endpoint
 - `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` set in `env.sh`

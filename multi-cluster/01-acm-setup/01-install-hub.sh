@@ -70,7 +70,24 @@ wait_for "MultiClusterHub running (MCE installs in background — up to 10 min)"
   "oc get multiclusterhub multiclusterhub -n open-cluster-management \
     -o jsonpath='{.status.phase}' 2>/dev/null | grep -qi running" 600 20
 
+# Enable policyController on local-cluster so compliance is reported for the hub itself
+# (GRC is enabled in 02-multiclusterhub.yaml — this ensures local-cluster reports compliance)
+wait_for "local-cluster KlusterletAddonConfig available" \
+  "oc get klusterletaddonconfig local-cluster -n local-cluster &>/dev/null" 120 10
+oc patch klusterletaddonconfig local-cluster -n local-cluster \
+  --type=merge -p '{"spec":{"policyController":{"enabled":true}}}' 2>/dev/null || true
+
+# Add local-cluster (hub) to gpuaas-clusterset and label it so ACM policy placement
+# includes it in GPU fleet governance alongside spoke clusters
+info "Adding local-cluster to gpuaas-clusterset and applying GPU labels..."
+oc label managedcluster local-cluster \
+  cluster.open-cluster-management.io/clusterset=gpuaas-clusterset \
+  demo/gpu-type="${GPU_TYPE}" \
+  demo/gpu-count=2 \
+  demo/role=hub \
+  --overwrite 2>/dev/null || true
+
 success "ACM Hub deployed on Cluster A"
 echo ""
-info "Next: Register Cluster B as a spoke"
-echo "  bash multi-cluster/01-acm-setup/03-import-cluster-b.sh"
+info "Next: Register spoke cluster with ACM Hub"
+echo "  bash multi-cluster/01-acm-setup/03-import-spoke-cluster.sh"

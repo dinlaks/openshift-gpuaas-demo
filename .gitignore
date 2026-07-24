@@ -2,3 +2,5 @@ env.sh
 config-cluster-*
 *.kubeconfig
 *.htpasswd
+cleanup-spoke.sh
+cleanup-spoke.sh

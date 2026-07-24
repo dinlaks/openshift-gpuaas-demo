@@ -14,5 +14,5 @@ spec:
         name: console
       - enabled: false
         name: insights    # disable for demo — reduces resource footprint
-      - enabled: false
-        name: grc
+      - enabled: true
+        name: grc     # required for policy compliance reporting across managed clusters

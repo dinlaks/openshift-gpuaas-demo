@@ -30,12 +30,19 @@ load_env() {
   source "${env_file}"
   info "Loaded env from ${env_file}"
 
-  # Apply cluster overrides if set by a parent script (e.g. setup.sh --cluster b).
-  # These survive re-sourcing of env.sh across sub-script load_env calls.
-  [[ -n "${SPOKE_CLUSTER_OCP_API_URL:-}"    ]] && OCP_API_URL="${SPOKE_CLUSTER_OCP_API_URL}"
-  [[ -n "${SPOKE_CLUSTER_OCP_USERNAME:-}"   ]] && OCP_USERNAME="${SPOKE_CLUSTER_OCP_USERNAME}"
-  [[ -n "${SPOKE_CLUSTER_OCP_PASSWORD:-}"   ]] && OCP_PASSWORD="${SPOKE_CLUSTER_OCP_PASSWORD}"
-  [[ -n "${SPOKE_CLUSTER_OCP_KUBECONFIG:-}" ]] && OCP_KUBECONFIG="${SPOKE_CLUSTER_OCP_KUBECONFIG}"
+  # If a cluster target is set (e.g. OCP_CLUSTER_TARGET=ai160 from --cluster ai160),
+  # dynamically look up CLUSTER_AI160_API_URL, CLUSTER_AI160_USERNAME, etc. from env.sh.
+  # This survives re-sourcing across sub-script load_env calls.
+  if [[ -n "${OCP_CLUSTER_TARGET:-}" ]]; then
+    local _N
+    _N=$(echo "${OCP_CLUSTER_TARGET}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+    local _api="CLUSTER_${_N}_API_URL" _user="CLUSTER_${_N}_USERNAME"
+    local _pass="CLUSTER_${_N}_PASSWORD" _kube="CLUSTER_${_N}_KUBECONFIG"
+    [[ -n "${!_api:-}"  ]] && OCP_API_URL="${!_api}"     || { error "CLUSTER_${_N}_API_URL not set in env.sh"; exit 1; }
+    [[ -n "${!_user:-}" ]] && OCP_USERNAME="${!_user}"   || OCP_USERNAME=""
+    [[ -n "${!_pass:-}" ]] && OCP_PASSWORD="${!_pass}"   || OCP_PASSWORD=""
+    [[ -n "${!_kube:-}" ]] && OCP_KUBECONFIG="${!_kube}" || OCP_KUBECONFIG=""
+  fi
 
   for var in OCP_API_URL; do
     if [[ -z "${!var:-}" ]]; then
@@ -48,6 +55,16 @@ load_env() {
     error "Either OCP_USERNAME/OCP_PASSWORD or OCP_KUBECONFIG must be set in env.sh"
     exit 1
   fi
+}
+
+# Resolve a CLUSTER_{NAME}_{VAR} variable dynamically.
+# Usage: url=$(get_cluster_var ai160 API_URL)
+get_cluster_var() {
+  local name="$1" var="$2"
+  local _N
+  _N=$(echo "${name}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+  local _VAR="CLUSTER_${_N}_${var}"
+  echo "${!_VAR:-}"
 }
 
 # ── OpenShift Login ───────────────────────────────────────────────────────────
@@ -102,47 +119,37 @@ require_oc_login() {
 # raw `oc login` calls so all switching goes through one place.
 #
 # Usage: switch_cluster a    (switch to Cluster A / hub)
-#        switch_cluster b    (switch to Cluster B / spoke)
+#        switch_cluster <name>  (switch to named spoke cluster)
 switch_cluster() {
   local target="${1,,}"
   case "${target}" in
     a)
       [[ -z "${CLUSTER_A_API_URL:-}" ]] && error "CLUSTER_A_API_URL not set in env.sh" && exit 1
       OCP_API_URL="${CLUSTER_A_API_URL}"
-      OCP_USERNAME="${CLUSTER_A_USERNAME}"
-      OCP_PASSWORD="${CLUSTER_A_PASSWORD}"
-      [[ -n "${CLUSTER_A_KUBECONFIG:-}" ]] && export KUBECONFIG="${CLUSTER_A_KUBECONFIG}"
-      ;;
-    b)
-      [[ -z "${SPOKE_CLUSTER_API_URL:-}" ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
-      OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-      OCP_USERNAME="${SPOKE_CLUSTER_USERNAME}"
-      OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD}"
-      [[ -n "${SPOKE_CLUSTER_KUBECONFIG:-}" ]] && export KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG}"
+      OCP_USERNAME="${CLUSTER_A_USERNAME:-}"
+      OCP_PASSWORD="${CLUSTER_A_PASSWORD:-}"
+      OCP_KUBECONFIG="${CLUSTER_A_KUBECONFIG:-}"
       ;;
     *)
-      error "switch_cluster: unknown target '${target}'. Use 'a' or 'b'."
-      exit 1
+      # Dynamic spoke lookup: switch_cluster <name> uses CLUSTER_<NAME>_* vars
+      local _api
+      _api=$(get_cluster_var "${target}" API_URL)
+      [[ -z "${_api}" ]] && error "CLUSTER_$(echo "${target}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')_API_URL not set in env.sh" && exit 1
+      OCP_API_URL="${_api}"
+      OCP_USERNAME=$(get_cluster_var "${target}" USERNAME)
+      OCP_PASSWORD=$(get_cluster_var "${target}" PASSWORD)
+      OCP_KUBECONFIG=$(get_cluster_var "${target}" KUBECONFIG)
       ;;
   esac
-  export OCP_API_URL OCP_USERNAME OCP_PASSWORD
+  export OCP_API_URL OCP_USERNAME OCP_PASSWORD OCP_KUBECONFIG
   require_oc_login
 }
 
-# Auto-detect Cluster B's OCP infrastructure name for use as ACM ManagedCluster name.
-# Uses a temp kubeconfig to query Cluster B without disturbing the current session.
-# Falls back to "cluster-b" if detection fails.
+# Resolve the ACM ManagedCluster name for the spoke cluster.
+# Uses SPOKE_CLUSTER_TARGET from env.sh — clear and user-controlled.
 resolve_cluster_b_name() {
-  [[ -n "${CLUSTER_B_NAME:-}" ]] && echo "${CLUSTER_B_NAME}" && return
-  local tmpkube name
-  tmpkube=$(mktemp)
-  KUBECONFIG="${tmpkube}" oc login "${SPOKE_CLUSTER_API_URL:-}" \
-    -u "${SPOKE_CLUSTER_USERNAME:-}" -p "${SPOKE_CLUSTER_PASSWORD:-}" \
-    --insecure-skip-tls-verify=true &>/dev/null 2>/dev/null || true
-  name=$(KUBECONFIG="${tmpkube}" oc get infrastructure cluster \
-    -o jsonpath='{.status.infrastructureName}' 2>/dev/null || echo "")
-  rm -f "${tmpkube}"
-  echo "${name:-cluster-b}"
+  [[ -n "${SPOKE_CLUSTER_NAME:-}" ]] && echo "${SPOKE_CLUSTER_NAME}" && return
+  echo "${SPOKE_CLUSTER_TARGET:-spoke}"
 }
 
 # ── Operator channel helpers ──────────────────────────────────────────────────
@@ -251,6 +258,15 @@ ensure_operator_template() {
 
 wait_operator() {
   local name="$1" namespace="$2" timeout="${3:-300}"
+  [[ "${DRY_RUN:-false}" == "true" ]] && info "[DRY-RUN] Skipping wait for operator: ${name}" && return 0
+  # Quick check — if already Succeeded, skip the wait entirely
+  local _phase
+  _phase=$(oc get csv -n "${namespace}" --no-headers 2>/dev/null \
+    | grep -i "^${name}" | awk '{print $NF}' | grep -i 'succeeded' | head -1 || true)
+  if [[ -n "${_phase}" ]]; then
+    success "Operator ${name} already ready"
+    return 0
+  fi
   info "Waiting for operator CSV ${name} in ${namespace} (timeout ${timeout}s)..."
   local deadline=$(( $(date +%s) + timeout ))
   while (( $(date +%s) < deadline )); do
@@ -295,6 +311,12 @@ apply_dir() {
 # ── Generic wait ──────────────────────────────────────────────────────────────
 wait_for() {
   local description="$1" check_cmd="$2" timeout="${3:-300}" interval="${4:-10}"
+  [[ "${DRY_RUN:-false}" == "true" ]] && info "[DRY-RUN] Skipping wait for: ${description}" && return 0
+  # Quick check — if already satisfied, skip wait and log noise
+  if eval "${check_cmd}" &>/dev/null; then
+    success "${description} — ready"
+    return 0
+  fi
   info "Waiting for: ${description} (timeout ${timeout}s)..."
   local deadline=$(( $(date +%s) + timeout ))
   while (( $(date +%s) < deadline )); do
@@ -504,7 +526,7 @@ label_node_capabilities() {
 # Use for any YAML that contains ${MIG_SMALL_RESOURCE} etc.
 apply_template() {
   local file="$1"
-  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}${CLUSTER_B_NAME}'
+  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}${SPOKE_CLUSTER_NAME}${GPU_COUNT}'
   if [[ "${DRY_RUN}" == "true" ]]; then
     info "[DRY-RUN] Would apply template: ${file}"
     envsubst "${vars}" < "${file}" | oc apply -f - --dry-run=client

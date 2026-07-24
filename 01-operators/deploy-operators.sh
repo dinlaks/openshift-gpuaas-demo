@@ -14,7 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/common.sh"
 
-DRY_RUN=false
+DRY_RUN="${DRY_RUN:-false}"   # inherit from parent (e.g. setup.sh --dry-run)
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run) DRY_RUN=true ;;
@@ -144,6 +144,20 @@ ensure_operator_template openshift-kueue-operator openshift-kueue-operator \
   "${MANIFESTS}/wave-1-kueue-subscription.yaml"
 wait_operator kueue-operator openshift-kueue-operator 300
 
+# Apply Kueue CR to enable BatchJob integration (required for MultiKueue batch/Job
+# dispatch and for RHOAI Dashboard to show Kueue as active).
+# Name must be "cluster" — required by openshift-kueue-operator.
+wait_for "Kueue CR CRD registered" \
+  "oc get crd kueues.kueue.openshift.io &>/dev/null" 60 5
+if oc get kueue.kueue.openshift.io cluster &>/dev/null; then
+  info "Kueue CR already exists — patching frameworks to include BatchJob"
+  oc patch kueue.kueue.openshift.io cluster --type='json' \
+    -p='[{"op":"replace","path":"/spec/config/integrations/frameworks","value":["BatchJob","Deployment","Pod","PyTorchJob","RayCluster","RayJob","StatefulSet","TrainJob"]}]' \
+    2>/dev/null || true
+else
+  apply_cr "${MANIFESTS}/wave-1-kueue-cr.yaml"
+fi
+
 # ── Red Hat OpenShift AI ──────────────────────────────────────────────────────
 header "Red Hat OpenShift AI (RHOAI)"
 ensure_operator_template rhods-operator redhat-ods-operator \
@@ -172,5 +186,51 @@ wait_for "DataScienceCluster ready" \
     -o jsonpath='{.status.phase}' 2>/dev/null | grep -qi ready" 600
 wait_for "RHOAI dashboard pod running" \
   "oc get pod -n redhat-ods-applications -l app=rhods-dashboard --field-selector=status.phase=Running --no-headers 2>/dev/null | grep -q ." 300
+
+cat << 'EOF'
+# ── Kueue openshift-kueue-operator compatibility: Training Operator v2 CRDs ──────────────
+# openshift-kueue-operator (v1.3+) configures trainer.kubeflow.org/trainjob integration.
+# RHOAI 3.x ships Training Operator v1 (kubeflow.org) not v2 (trainer.kubeflow.org).
+# On Kubernetes 1.35+, Kueue crashes at startup if these CRDs are missing.
+# Minimal stub CRDs satisfy the indexer without requiring the full training operator v2.
+EOF
+for CRD_NAME in \
+  "trainjobs.trainer.kubeflow.org:TrainJob:trainjob:Namespaced" \
+  "trainingruntimes.trainer.kubeflow.org:TrainingRuntime:trainingruntime:Cluster" \
+  "clustertrainingruntimes.trainer.kubeflow.org:ClusterTrainingRuntime:clustertrainingruntime:Cluster" \
+  "jobsets.jobset.x-k8s.io:JobSet:jobset:Namespaced"; do
+  NAME="${CRD_NAME%%:*}"
+  REST="${CRD_NAME#*:}"
+  KIND="${REST%%:*}"
+  REST2="${REST#*:}"
+  SINGULAR="${REST2%%:*}"
+  SCOPE="${REST2##*:}"
+  if oc get crd "${NAME}" &>/dev/null; then
+    info "CRD ${NAME} already exists — skipping"
+  else
+    info "Creating stub CRD ${NAME}..."
+    oc apply -f - <<CRDEOF
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ${NAME}
+spec:
+  group: trainer.kubeflow.org
+  names:
+    kind: ${KIND}
+    plural: $(echo "${NAME%%.*}" )
+    singular: ${SINGULAR}
+  scope: ${SCOPE}
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        x-kubernetes-preserve-unknown-fields: true
+CRDEOF
+  fi
+done
 
 success "All operators deployed on $(oc whoami --show-server)"

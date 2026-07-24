@@ -23,8 +23,10 @@ require_oc_login
 
 header "Configuring RHOAI Auth Groups (RHOAI 3.3+)"
 
-info "Waiting for RHOAI operator to settle (30s)..."
-sleep 30
+if [[ "${DRY_RUN:-false}" != "true" ]]; then
+  info "Waiting for RHOAI operator to settle (30s)..."
+  sleep 30
+fi
 
 wait_for "RHOAI Auth CR exists" \
   "oc get auth auth 2>/dev/null | grep -q auth" \

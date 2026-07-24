@@ -22,7 +22,7 @@ STEP="${1:-2}"
 
 case "$STEP" in
   1)
-    header "UC7 Step 1: Fill Cluster A's GPU slots (forces dispatch to Cluster B)"
+    header "UC7 Step 1: Fill Cluster A's GPU slots (forces dispatch to spoke cluster)"
     apply_template "${SCRIPT_DIR}/07-uc7-cluster-a-fillers.yaml"
     info "Watch Cluster A queues fill up:"
     echo "  oc get clusterqueues -o wide"
@@ -34,14 +34,17 @@ case "$STEP" in
     echo ""
     info "Watch dispatch on Cluster A (hub):"
     echo "  oc get workloads -n inference-team-project -w"
-    echo "  oc get jobs -n inference-team-project"
+    echo "  oc get pod global-inference-job -n inference-team-project"
     echo ""
-    info "Check which cluster received the job:"
+    info "Check which cluster received the pod (reservation field):"
     echo "  oc get workload -n inference-team-project -o jsonpath='{.items[].status.admissionChecks}'"
+    echo ""
+    info "Confirm pod running on spoke (not hub):"
+    echo "  oc get pod -n inference-team-project --context <spoke-cluster-name>"
     ;;
   *)
     error "Usage: bash run-demo.sh [1|2]"
-    echo "  1 — fill Cluster A slots (optional, forces dispatch to Cluster B)"
+    echo "  1 — fill Cluster A slots (optional, forces dispatch to spoke cluster)"
     echo "  2 — submit global job (default)"
     exit 1
     ;;

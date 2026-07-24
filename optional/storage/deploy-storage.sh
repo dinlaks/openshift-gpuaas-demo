@@ -5,7 +5,7 @@
 #
 # Usage:
 #   bash deploy-storage.sh --lvm                    # LVM on Cluster A
-#   bash deploy-storage.sh --lvm --cluster b        # LVM on Cluster B (UC7)
+#   bash deploy-storage.sh --lvm --cluster <name>    # LVM on named cluster (UC7)
 #   bash deploy-storage.sh --minio                  # MinIO only (ACM Observability)
 #   bash deploy-storage.sh --lvm --minio            # both
 #
@@ -29,33 +29,29 @@ while [[ $# -gt 0 ]]; do
     --lvm)     DEPLOY_LVM=true ;;
     --minio)   DEPLOY_MINIO=true ;;
     --cluster) shift; TARGET_CLUSTER="${1:-}" ;;
-    *) error "Unknown argument: $1. Use --lvm and/or --minio [--cluster b]"; exit 1 ;;
+    *) error "Unknown argument: $1. Use --lvm and/or --minio [--cluster <name>]"; exit 1 ;;
   esac
   shift
 done
 
 if [[ "${DEPLOY_LVM}" == "false" && "${DEPLOY_MINIO}" == "false" ]]; then
   error "Specify at least one option: --lvm and/or --minio"
-  echo "Usage: bash deploy-storage.sh --lvm --minio [--cluster b]"
+  echo "Usage: bash deploy-storage.sh --lvm --minio [--cluster <name>]"
   exit 1
 fi
 
 load_env
 
-if [[ "${TARGET_CLUSTER}" == "b" ]]; then
-  [[ -z "${SPOKE_CLUSTER_API_URL:-}" ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
-  export SPOKE_CLUSTER_OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-  export SPOKE_CLUSTER_OCP_USERNAME="${SPOKE_CLUSTER_USERNAME:-}"
-  export SPOKE_CLUSTER_OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD:-}"
-  export SPOKE_CLUSTER_OCP_KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG:-}"
-  OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-  OCP_USERNAME="${SPOKE_CLUSTER_USERNAME:-}"
-  OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD:-}"
-  OCP_KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG:-}"
-  info "Targeting Cluster B: ${OCP_API_URL}"
-elif [[ -n "${TARGET_CLUSTER}" ]]; then
-  error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."
-  exit 1
+if [[ -n "${TARGET_CLUSTER}" ]]; then
+  _N=$(echo "${TARGET_CLUSTER}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+  [[ -z "$(get_cluster_var "${TARGET_CLUSTER}" API_URL)" ]] && \
+    error "CLUSTER_${_N}_API_URL not set in env.sh for --cluster ${TARGET_CLUSTER}" && exit 1
+  export OCP_CLUSTER_TARGET="${TARGET_CLUSTER}"
+  OCP_API_URL=$(get_cluster_var "${TARGET_CLUSTER}" API_URL)
+  OCP_USERNAME=$(get_cluster_var "${TARGET_CLUSTER}" USERNAME)
+  OCP_PASSWORD=$(get_cluster_var "${TARGET_CLUSTER}" PASSWORD)
+  OCP_KUBECONFIG=$(get_cluster_var "${TARGET_CLUSTER}" KUBECONFIG)
+  info "Targeting cluster: ${TARGET_CLUSTER} (CLUSTER_${_N}_*)"
 fi
 
 require_oc_login

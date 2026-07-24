@@ -219,24 +219,24 @@ if [[ "${MULTI}" == "true" ]]; then
         fail "ACM Hub not found on Cluster A — run: bash multi-cluster/01-acm-setup/01-install-hub.sh"
       fi
 
-      B_NAME=$(resolve_cluster_b_name 2>/dev/null || echo "cluster-b")
+      B_NAME=$(resolve_cluster_b_name 2>/dev/null || echo "spoke")
       if oc get managedcluster "${B_NAME}" --no-headers 2>/dev/null | grep -q .; then
-        pass "Cluster B imported into ACM as '${B_NAME}'"
+        pass "Spoke cluster imported into ACM as '${B_NAME}'"
       else
-        fail "Cluster B not imported into ACM — run: bash multi-cluster/01-acm-setup/03-import-cluster-b.sh"
+        fail "Cluster B not imported into ACM — run: bash multi-cluster/01-acm-setup/03-import-spoke-cluster.sh"
       fi
     else
       fail "Cannot reach Cluster A at ${CLUSTER_A_API_URL}"
     fi
   fi
 
-  # Cluster B
+  # Spoke cluster
   if [[ -n "${SPOKE_CLUSTER_API_URL:-}" ]]; then
     if oc login "${SPOKE_CLUSTER_API_URL}" -u "${SPOKE_CLUSTER_USERNAME:-}" -p "${SPOKE_CLUSTER_PASSWORD:-}" \
         --insecure-skip-tls-verify=true &>/dev/null 2>&1; then
-      pass "Cluster B reachable: $(oc whoami --show-server 2>/dev/null)"
+      pass "Spoke cluster reachable: $(oc whoami --show-server 2>/dev/null)"
     else
-      fail "Cannot reach Cluster B at ${SPOKE_CLUSTER_API_URL}"
+      fail "Cannot reach spoke cluster at ${SPOKE_CLUSTER_API_URL}"
     fi
   fi
 

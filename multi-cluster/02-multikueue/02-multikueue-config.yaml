@@ -4,4 +4,4 @@ metadata:
   name: gpuaas-multikueue
 spec:
   clusters:
-    - ${CLUSTER_B_NAME}   # Cluster B (Cluster B) is the only spoke
+    - ${SPOKE_CLUSTER_NAME}   # spoke cluster in the global GPU pool

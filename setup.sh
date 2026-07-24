@@ -8,7 +8,7 @@
 #
 # Usage:
 #   bash setup.sh                  # full setup on Cluster A (OCP_API_URL in env.sh)
-#   bash setup.sh --cluster b      # setup on Cluster B (uses CLUSTER_B_* vars — UC7 only)
+#   bash setup.sh --cluster <name> # target a named cluster (uses CLUSTER_<NAME>_* vars — e.g. --cluster <name>)
 #   bash setup.sh --dry-run        # print changes, no apply
 #   bash setup.sh --skip-operators # skip operator install (already installed)
 set -euo pipefail
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run)        DRY_RUN=true ;;
     --skip-operators) SKIP_OPERATORS=true ;;
     --cluster)        shift; TARGET_CLUSTER="${1:-}" ;;
-    *) error "Unknown argument: $1. Usage: bash setup.sh [--cluster b] [--dry-run] [--skip-operators]"; exit 1 ;;
+    *) error "Unknown argument: $1. Usage: bash setup.sh [--cluster <name>] [--dry-run] [--skip-operators]"; exit 1 ;;
   esac
   shift
 done
@@ -33,23 +33,17 @@ export DRY_RUN
 
 load_env
 
-# ── Multi-cluster: override OCP_* with CLUSTER_B_* when --cluster b is given ──
-if [[ "${TARGET_CLUSTER}" == "b" ]]; then
-  [[ -z "${SPOKE_CLUSTER_API_URL:-}"  ]] && error "SPOKE_CLUSTER_API_URL not set in env.sh" && exit 1
-  [[ -z "${SPOKE_CLUSTER_USERNAME:-}" ]] && error "SPOKE_CLUSTER_USERNAME not set in env.sh" && exit 1
-  [[ -z "${SPOKE_CLUSTER_PASSWORD:-}" ]] && error "SPOKE_CLUSTER_PASSWORD not set in env.sh" && exit 1
-  export SPOKE_CLUSTER_OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-  export SPOKE_CLUSTER_OCP_USERNAME="${SPOKE_CLUSTER_USERNAME:-}"
-  export SPOKE_CLUSTER_OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD:-}"
-  export SPOKE_CLUSTER_OCP_KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG:-}"
-  OCP_API_URL="${SPOKE_CLUSTER_API_URL}"
-  OCP_USERNAME="${SPOKE_CLUSTER_USERNAME:-}"
-  OCP_PASSWORD="${SPOKE_CLUSTER_PASSWORD:-}"
-  OCP_KUBECONFIG="${SPOKE_CLUSTER_KUBECONFIG:-}"
-  info "Targeting Cluster B: ${OCP_API_URL}"
-elif [[ -n "${TARGET_CLUSTER}" ]]; then
-  error "Unknown cluster '${TARGET_CLUSTER}'. Only --cluster b is supported."
-  exit 1
+# ── Cluster targeting: --cluster <name> looks up CLUSTER_<NAME>_* vars in env.sh ──
+if [[ -n "${TARGET_CLUSTER}" ]]; then
+  _N=$(echo "${TARGET_CLUSTER}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+  [[ -z "$(get_cluster_var "${TARGET_CLUSTER}" API_URL)" ]] && \
+    error "CLUSTER_${_N}_API_URL not set in env.sh for --cluster ${TARGET_CLUSTER}" && exit 1
+  export OCP_CLUSTER_TARGET="${TARGET_CLUSTER}"
+  OCP_API_URL=$(get_cluster_var "${TARGET_CLUSTER}" API_URL)
+  OCP_USERNAME=$(get_cluster_var "${TARGET_CLUSTER}" USERNAME)
+  OCP_PASSWORD=$(get_cluster_var "${TARGET_CLUSTER}" PASSWORD)
+  OCP_KUBECONFIG=$(get_cluster_var "${TARGET_CLUSTER}" KUBECONFIG)
+  info "Targeting cluster: ${TARGET_CLUSTER} (CLUSTER_${_N}_*)"
 fi
 
 # ── Pre-flight validation ─────────────────────────────────────────────────────
@@ -99,4 +93,4 @@ info "Next steps:"
 echo "  • Validate GPU resources:  bash 02-gpu-setup/05-validation/validate-nodes.sh"
 echo "  • Run a use case:          cd use-cases/uc3-multi-tenant && bash run-demo.sh"
 echo "  • Clean up between UCs:    bash cleanup.sh uc3"
-echo "  • Multi-cluster add-on:    bash setup.sh --cluster b  (then see multi-cluster/README.md)"
+echo "  • Multi-cluster add-on:    bash setup.sh --cluster <name>  (then see multi-cluster/README.md)"

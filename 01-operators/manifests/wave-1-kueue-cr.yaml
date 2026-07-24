@@ -1,0 +1,30 @@
+# Kueue CR — activates Red Hat Kueue operator after the subscription installs.
+# Name MUST be "cluster" — required by the openshift-kueue-operator.
+#
+# managementState: Managed → operator actively manages Kueue configuration.
+# frameworks: BatchJob required for MultiKueue batch/Job dispatch (hub Job stays
+#   suspended, shadow Job created on spoke) and for RHOAI Dashboard to recognise
+#   Kueue without showing "Kueue is disabled in this cluster" warning.
+#
+# Apply AFTER wave-1-kueue-subscription.yaml and operator CSV reaches Succeeded.
+# Separate from DataScienceCluster kueue.managementState: Unmanaged —
+# that setting tells RHOAI not to manage Kueue; this CR tells the Kueue
+# operator to manage itself. Both settings coexist without conflict.
+
+apiVersion: kueue.openshift.io/v1
+kind: Kueue
+metadata:
+  name: cluster
+spec:
+  managementState: Managed
+  config:
+    integrations:
+      frameworks:
+        - BatchJob
+        - RayJob
+        - RayCluster
+        - Pod
+        - PyTorchJob
+        - StatefulSet
+        - Deployment
+        - TrainJob
