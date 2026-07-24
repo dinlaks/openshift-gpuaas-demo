@@ -77,7 +77,7 @@ oc get clusterqueue inference-cluster-queue -o jsonpath='{.status.admittedWorklo
 Submit extra research jobs that exceed charlie's nominalQuota:
 
 ```bash
-oc apply -f 06-kueue/03-multi-tenant-jobs.yaml -n research-team-project
+bash use-cases/uc3-multi-tenant/run-demo.sh
 ```
 
 Watch the workloads:
@@ -110,7 +110,7 @@ oc get workloads -n research-team-project
 Submit the excess job:
 
 ```bash
-oc apply -f 06-kueue/04-overflow-research-job.yaml -n research-team-project
+bash use-cases/uc3-multi-tenant/run-demo.sh 2
 ```
 
 ```bash

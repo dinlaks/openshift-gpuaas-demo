@@ -4,7 +4,7 @@
 # UC7: Global GPU Pool — submit one job, MultiKueue dispatches to the cluster with capacity.
 #
 # Prerequisites: multi-cluster/ setup complete (01-acm-setup + 02-multikueue)
-# Step 1 (optional): fill Cluster A's slots to force dispatch to Cluster B
+# Step 1 (optional): fill Cluster A's slots to force dispatch to spoke cluster
 # Step 2: submit the global job — watch it land on whichever cluster has capacity
 set -euo pipefail
 

@@ -1,0 +1,49 @@
+# UC3: Multi-Tenant Quota Enforcement — overflow (Inadmissible) demo
+#
+# This 5th charlie job demonstrates hard quota enforcement:
+# charlie's borrowingLimit=3 is already exhausted by jobs 2-4.
+# His nominalQuota=1 is already used by job 1.
+# Total capacity: 4 slices (1 own + 3 borrowed) — all occupied.
+#
+# Result: job-5 goes Inadmissible — queued, not failed.
+# Key message: "Quota policy, not pod failure. The platform holds the job."
+#
+# Apply AFTER jobs.yaml (all 4 jobs must be Admitted first).
+# Apply via run-demo.sh 2 or: apply_template use-cases/uc3-multi-tenant/overflow-job.yaml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: charlie-research-job-5
+  namespace: research-team-project
+  labels:
+    demo/uc: uc3-quota
+    demo/user: charlie
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc3-quota
+        demo/user: charlie
+        kueue.x-k8s.io/queue-name: research-queue
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: workload
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -c]
+          args:
+            - |
+              import torch, socket, time
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print(f"[job-5] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB")
+              print("[job-5] This job was QUEUED, not failed — quota enforcement in action")
+              time.sleep(3600)
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
