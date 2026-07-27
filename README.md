@@ -8,6 +8,20 @@ A full working demo of GPU sharing governance on OpenShift using **Kueue**, **RH
 
 ---
 
+## Supported environments
+
+This demo works on **any OpenShift cluster with GPU nodes**. The only setup file you touch is `env.sh` — it connects your cluster credentials, GPU type, and environment-specific settings to all scripts automatically.
+
+| Environment | How to use |
+|---|---|
+| **AWS Open Environment** (RHDP/sandbox) | Use the API URL, username, and password from your provisioned environment. Set in `env.sh`. GPU instance type determines `GPU_TYPE`. |
+| **BYOE** — your own OCP cluster + NVIDIA GPU hardware | Any topology (SNO, compact, multi-node) on any infrastructure (bare-metal, on-prem, private cloud). Set cluster credentials and `GPU_TYPE` in `env.sh`. Supports A30, A100, H100, H200, or custom GPUs. Deploy LVM storage if no default StorageClass exists. |
+| **Cloud-hosted OCP** (AWS, Azure, GCP) | Default StorageClass already present — skip the LVM setup step. Set cluster credentials in `env.sh`. |
+
+> **`env.sh` is the only file you configure.** It drives GPU resource names, MIG profiles, Kueue flavors, operator channels, RBAC passwords, and cluster credentials — everything flows from it. Copy `env.sh.example` → `env.sh`, fill in your values, and run `bash setup.sh`.
+
+---
+
 ## Use cases
 
 | # | Use Case | What it shows |
