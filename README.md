@@ -10,7 +10,7 @@ A full working demo of GPU sharing governance on OpenShift using **Kueue**, **RH
 
 ## Supported environments
 
-This demo works on **any OpenShift cluster with GPU nodes**. The only setup file you touch is `env.sh` — it connects your cluster credentials, GPU type, and environment-specific settings to all scripts automatically.
+This demo works on any OpenShift cluster with NVIDIA GPU nodes (OCP 4.17+, validated on 4.22). The only setup file you touch is `env.sh` — it connects your cluster credentials, GPU type, and environment-specific settings to all scripts automatically.
 
 | Environment | How to use |
 |---|---|
