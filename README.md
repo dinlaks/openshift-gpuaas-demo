@@ -12,8 +12,8 @@ A full working demo of GPU sharing governance on OpenShift using **Kueue**, **RH
 
 | # | Use Case | What it shows |
 |---|---|---|
-| UC1 | GPU Flavors | MIG slices vs full GPU — different tiers for different workloads |
-| UC2 | MIG + DRA | Dynamic Resource Allocation for GPU scheduling (OCP 4.21+) |
+| UC1 | GPU Flavors | MIG slices vs full GPU — different tiers for different workloads (dashboard demo) |
+| UC2 | MIG + DRA | Dynamic Resource Allocation for GPU scheduling (OCP 4.21+) (toggle setup) |
 | UC3 | Multi-Tenant Quotas | Per-team GPU quotas with cohort borrowing |
 | UC4 | Queue-Based Scheduling | Jobs queue intelligently — never fail, never starve |
 | UC5 | Priority + Preemption | High-priority jobs preempt lower-priority ones automatically |
@@ -80,7 +80,13 @@ This installs all operators, labels GPU nodes, configures MIG, deploys RBAC, har
 bash setup.sh --skip-operators
 ```
 
-### 3. Validate GPU resources
+Preview changes without applying (requires an active `oc` session):
+
+```bash
+bash setup.sh --dry-run
+```
+
+### 4. Validate GPU resources
 
 ```bash
 bash 02-gpu-setup/05-validation/validate-nodes.sh
@@ -89,7 +95,7 @@ bash 02-gpu-setup/05-validation/validate-nodes.sh
 This shows a table of all GPU nodes with their configured roles, capability labels,
 and the exact GPU product name reported by the hardware.
 
-### 4. Run a use case
+### 5. Run a use case
 
 Each use case is self-contained in `use-cases/`:
 
