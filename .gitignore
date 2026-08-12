@@ -3,3 +3,7 @@ config-cluster-*
 *.kubeconfig
 *.htpasswd
 cleanup-spoke.sh
+docs/DEMO-SCRIPT-FAST.md
+preview-demo.sh
+validate-demo.sh
+presenter-view.sh

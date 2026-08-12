@@ -25,6 +25,16 @@ if helm status dra-driver-nvidia-gpu -n dra-driver-nvidia-gpu &>/dev/null 2>&1; 
   exit 1
 fi
 
+info "Disabling MIG on GPU 1 (switching to full-combo-a30) ..."
+oc label node -l nvidia.com/gpu.present=true nvidia.com/mig.config=full-combo-a30 --overwrite
+
+wait_for "GPU 1 MIG disabled (nvidia.com/mig-2g.12gb = 0)" \
+  "val=\$(oc get node -o jsonpath='{.items[0].status.allocatable.nvidia\.com/mig-2g\.12gb}' 2>/dev/null); [ \"\$val\" = '0' ] || [ \"\$val\" = '' ]" \
+  180 10
+
+info "Setting demo/gpu-has-full=true label (required by gpu-full hardware profile and timeslicing jobs) ..."
+oc label node -l nvidia.com/gpu.present=true demo/gpu-has-full=true --overwrite
+
 info "Applying device-plugin time-slicing ConfigMap ..."
 apply_cr "${SCRIPT_DIR}/device-plugin-timeslice-config.yaml"
 

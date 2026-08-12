@@ -13,7 +13,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: timeslice-inference
-  namespace: gpu-premium-project
+  namespace: ds-team-project
   labels:
     demo/scenario: timeslicing
     demo/uc: uc-timeslice
