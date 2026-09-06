@@ -47,13 +47,13 @@ spec:
               nominalQuota: "1"
               borrowingLimit: "0"
 ---
-# ── Data Science Team (bob) — shared small MIG slices ────────────────────────
+# ── Data Science Team (bob) — shared small MIG slices + time-sliced full GPU ──
 apiVersion: kueue.x-k8s.io/v1beta2
 kind: ClusterQueue
 metadata:
   name: ds-cluster-queue
   annotations:
-    description: "Data Science Team — shared small MIG slices for development"
+    description: "Data Science Team — shared small MIG slices for development; full GPU quota for time-slicing demo (Module 5)"
 spec:
   namespaceSelector:
     matchLabels:
@@ -71,6 +71,13 @@ spec:
             - name: "${MIG_SMALL_RESOURCE}"
               nominalQuota: "2"
               borrowingLimit: "2"
+    - coveredResources: ["${FULL_GPU_RESOURCE}"]
+      flavors:
+        - name: ${FULL_GPU_FLAVOR}
+          resources:
+            - name: "${FULL_GPU_RESOURCE}"
+              nominalQuota: "${TIMESLICE_REPLICAS}"
+              borrowingLimit: "0"
 ---
 # ── Research Team (charlie) — small MIG, borrows heavily when idle ────────────
 apiVersion: kueue.x-k8s.io/v1beta2

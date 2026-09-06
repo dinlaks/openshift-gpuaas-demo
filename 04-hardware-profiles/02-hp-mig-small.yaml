@@ -1,83 +1,80 @@
-# RHOAI HardwareProfile — small MIG slice tier.
-# Template: ${MIG_SMALL_RESOURCE}, ${MIG_SMALL_FLAVOR}, ${GPU_TYPE} substituted
-# by deploy-hardware-profiles.sh via envsubst. Do not oc apply directly.
-#
-# Shown to users in RHOAI Dashboard when creating a Workbench.
-
+# MIG small-slice profile — project-scoped per tenant namespace.
+# Uses Kueue scheduling: RHOAI submits workbench workloads through the local queue.
+# Node placement is handled by Kueue ResourceFlavor a30-mig-1g6gb (nodeLabels + tolerations).
+# Template: ${MIG_SMALL_RESOURCE}, ${GPU_TYPE} substituted by deploy-hardware-profiles.sh via envsubst.
+# Do not oc apply directly.
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
 metadata:
   name: gpu-mig-small
   namespace: ds-team-project
+  labels:
+    app.opendatahub.io/hardwareprofile: "true"
+    app.kubernetes.io/part-of: hardwareprofile
   annotations:
-    opendatahub.io/display-name: "${GPU_TYPE} MIG — Small Slice"
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Small Slice (${MIG_SMALL_RESOURCE})"
+    opendatahub.io/description: "Small MIG partition. Ideal for development, experiments, and lightweight inference."
     opendatahub.io/disabled: "false"
+    opendatahub.io/dashboard-feature-visibility: "[]"
 spec:
-  displayName: "${GPU_TYPE} MIG — Small Slice (${MIG_SMALL_RESOURCE})"
-  description: "Small MIG partition. Ideal for development, experiments, and lightweight inference."
-  enabled: true
   identifiers:
     - displayName: "CPU"
       identifier: "cpu"
-      minCount: "1"
-      maxCount: "4"
-      defaultCount: "2"
+      resourceType: CPU
+      minCount: 1
+      maxCount: 4
+      defaultCount: 2
     - displayName: "Memory"
       identifier: "memory"
+      resourceType: Memory
       minCount: "2Gi"
       maxCount: "16Gi"
       defaultCount: "4Gi"
     - displayName: "GPU (MIG small)"
       identifier: "${MIG_SMALL_RESOURCE}"
-      minCount: "1"
-      maxCount: "1"
-      defaultCount: "1"
+      resourceType: Accelerator
+      minCount: 1
+      maxCount: 1
+      defaultCount: 1
   scheduling:
-    type: Node
-    node:
-      nodeSelector:
-        demo/gpu-has-small-mig: "true"
-        demo/gpu-type: ${GPU_TYPE}
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
+    type: Queue
+    kueue:
+      localQueueName: "ds-queue"
 ---
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
 metadata:
   name: gpu-mig-small
   namespace: research-team-project
+  labels:
+    app.opendatahub.io/hardwareprofile: "true"
+    app.kubernetes.io/part-of: hardwareprofile
   annotations:
-    opendatahub.io/display-name: "${GPU_TYPE} MIG — Small Slice"
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Small Slice (${MIG_SMALL_RESOURCE})"
+    opendatahub.io/description: "Small MIG partition. Ideal for research experiments and model evaluation."
     opendatahub.io/disabled: "false"
+    opendatahub.io/dashboard-feature-visibility: "[]"
 spec:
-  displayName: "${GPU_TYPE} MIG — Small Slice (${MIG_SMALL_RESOURCE})"
-  description: "Small MIG partition. Ideal for research experiments and model evaluation."
-  enabled: true
   identifiers:
     - displayName: "CPU"
       identifier: "cpu"
-      minCount: "1"
-      maxCount: "4"
-      defaultCount: "2"
+      resourceType: CPU
+      minCount: 1
+      maxCount: 4
+      defaultCount: 2
     - displayName: "Memory"
       identifier: "memory"
+      resourceType: Memory
       minCount: "2Gi"
       maxCount: "16Gi"
       defaultCount: "4Gi"
     - displayName: "GPU (MIG small)"
       identifier: "${MIG_SMALL_RESOURCE}"
-      minCount: "1"
-      maxCount: "1"
-      defaultCount: "1"
+      resourceType: Accelerator
+      minCount: 1
+      maxCount: 1
+      defaultCount: 1
   scheduling:
-    type: Node
-    node:
-      nodeSelector:
-        demo/gpu-has-small-mig: "true"
-        demo/gpu-type: ${GPU_TYPE}
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
+    type: Queue
+    kueue:
+      localQueueName: "research-queue"

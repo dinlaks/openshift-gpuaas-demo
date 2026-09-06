@@ -60,6 +60,7 @@ apply_cr "${SCRIPT_DIR}/04-rhoai-admin-rbac.yaml"
 apply_cr "${SCRIPT_DIR}/05-data-science-projects.yaml"
 apply_cr "${SCRIPT_DIR}/06-project-rbac.yaml"
 apply_cr "${SCRIPT_DIR}/08-odh-dashboard-config.yaml"
+apply_cr "${SCRIPT_DIR}/09-resource-quotas.yaml"
 
 # ── Disable self-provisioner ──────────────────────────────────────────────────
 header "Disable self-provisioner (users cannot create namespaces)"

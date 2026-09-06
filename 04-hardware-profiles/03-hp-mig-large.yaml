@@ -1,80 +1,80 @@
-# RHOAI HardwareProfile — large MIG slice tier.
-# Template: ${MIG_LARGE_RESOURCE}, ${GPU_TYPE} substituted by deploy script.
-
+# MIG large-slice profile — project-scoped per tenant namespace.
+# Uses Kueue scheduling: RHOAI submits workbench workloads through the local queue.
+# Node placement is handled by Kueue ResourceFlavor a30-mig-2g12gb (nodeLabels + tolerations).
+# Template: ${MIG_LARGE_RESOURCE}, ${GPU_TYPE} substituted by deploy-hardware-profiles.sh via envsubst.
+# Do not oc apply directly.
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
 metadata:
   name: gpu-mig-large
   namespace: inference-team-project
+  labels:
+    app.opendatahub.io/hardwareprofile: "true"
+    app.kubernetes.io/part-of: hardwareprofile
   annotations:
-    opendatahub.io/display-name: "${GPU_TYPE} MIG — Large Slice"
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Large Slice (${MIG_LARGE_RESOURCE})"
+    opendatahub.io/description: "Large MIG partition. Ideal for inference and fine-tuning workloads."
     opendatahub.io/disabled: "false"
+    opendatahub.io/dashboard-feature-visibility: "[]"
 spec:
-  displayName: "${GPU_TYPE} MIG — Large Slice (${MIG_LARGE_RESOURCE})"
-  description: "Large MIG partition. Ideal for inference and fine-tuning workloads."
-  enabled: true
   identifiers:
     - displayName: "CPU"
       identifier: "cpu"
-      minCount: "2"
-      maxCount: "8"
-      defaultCount: "4"
+      resourceType: CPU
+      minCount: 2
+      maxCount: 8
+      defaultCount: 4
     - displayName: "Memory"
       identifier: "memory"
+      resourceType: Memory
       minCount: "8Gi"
       maxCount: "32Gi"
       defaultCount: "16Gi"
     - displayName: "GPU (MIG large)"
       identifier: "${MIG_LARGE_RESOURCE}"
-      minCount: "1"
-      maxCount: "1"
-      defaultCount: "1"
+      resourceType: Accelerator
+      minCount: 1
+      maxCount: 1
+      defaultCount: 1
   scheduling:
-    type: Node
-    node:
-      nodeSelector:
-        demo/gpu-has-large-mig: "true"
-        demo/gpu-type: ${GPU_TYPE}
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
+    type: Queue
+    kueue:
+      localQueueName: "inference-queue"
 ---
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
 metadata:
   name: gpu-mig-large
   namespace: finetune-team-project
+  labels:
+    app.opendatahub.io/hardwareprofile: "true"
+    app.kubernetes.io/part-of: hardwareprofile
   annotations:
-    opendatahub.io/display-name: "${GPU_TYPE} MIG — Large Slice"
+    opendatahub.io/display-name: "${GPU_TYPE} MIG — Large Slice (${MIG_LARGE_RESOURCE})"
+    opendatahub.io/description: "Large MIG partition. Ideal for LLM fine-tuning."
     opendatahub.io/disabled: "false"
+    opendatahub.io/dashboard-feature-visibility: "[]"
 spec:
-  displayName: "${GPU_TYPE} MIG — Large Slice (${MIG_LARGE_RESOURCE})"
-  description: "Large MIG partition. Ideal for LLM fine-tuning."
-  enabled: true
   identifiers:
     - displayName: "CPU"
       identifier: "cpu"
-      minCount: "2"
-      maxCount: "8"
-      defaultCount: "4"
+      resourceType: CPU
+      minCount: 2
+      maxCount: 8
+      defaultCount: 4
     - displayName: "Memory"
       identifier: "memory"
+      resourceType: Memory
       minCount: "8Gi"
       maxCount: "32Gi"
       defaultCount: "16Gi"
     - displayName: "GPU (MIG large)"
       identifier: "${MIG_LARGE_RESOURCE}"
-      minCount: "1"
-      maxCount: "1"
-      defaultCount: "1"
+      resourceType: Accelerator
+      minCount: 1
+      maxCount: 1
+      defaultCount: 1
   scheduling:
-    type: Node
-    node:
-      nodeSelector:
-        demo/gpu-has-large-mig: "true"
-        demo/gpu-type: ${GPU_TYPE}
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
+    type: Queue
+    kueue:
+      localQueueName: "finetune-queue"

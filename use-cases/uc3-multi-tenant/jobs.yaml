@@ -33,7 +33,7 @@ spec:
       containers:
         - name: workload
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c]
+          command: [python, -u, -c]
           args:
             - |
               import torch, socket, time
@@ -69,7 +69,7 @@ spec:
       containers:
         - name: workload
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c]
+          command: [python, -u, -c]
           args:
             - |
               import torch, socket, time
@@ -105,7 +105,7 @@ spec:
       containers:
         - name: workload
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c]
+          command: [python, -u, -c]
           args:
             - |
               import torch, socket, time
@@ -141,7 +141,7 @@ spec:
       containers:
         - name: workload
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c]
+          command: [python, -u, -c]
           args:
             - |
               import torch, socket, time

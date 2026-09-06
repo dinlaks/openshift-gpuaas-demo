@@ -1,14 +1,14 @@
-# Time-Slicing Demo Jobs — 3 concurrent inference jobs on shared GPU 1
-# All 3 run simultaneously on the same A30, proving time-slicing is active.
-# Each sees the full GPU memory (24GB) — time-slicing shares compute time, not memory.
+# Time-Slicing Demo Jobs — TIMESLICE_REPLICAS concurrent inference jobs on shared GPU 1.
+# All pods run simultaneously on the same GPU, proving time-slicing is active.
+# Each sees the full GPU memory — time-slicing shares compute time, not memory.
 #
-# Start at the BEGINNING of the timeslicing scenario (image pull takes ~30s).
-# Pods will be Running by the time you finish the capacity walkthrough.
+# Template: ${TIMESLICE_REPLICAS} substituted by configure-timeslicing.sh via apply_template.
+# Do not oc apply directly — run configure-timeslicing.sh which sets up time-slicing and
+# submits these jobs in one step.
 #
-# Apply:  oc apply -f 02-gpu-setup/03-timeslicing/inference-job-timesliced.yaml
 # Watch:  oc get pods -n ds-team-project -l demo/scenario=timeslicing -w
 # Logs:   oc logs -n ds-team-project -l demo/scenario=timeslicing --prefix --follow --tail=5
-# Clean:  oc delete -f 02-gpu-setup/03-timeslicing/inference-job-timesliced.yaml
+# Clean:  bash 02-gpu-setup/03-timeslicing/teardown-timeslicing.sh
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -17,15 +17,17 @@ metadata:
   labels:
     demo/scenario: timeslicing
     demo/uc: uc-timeslice
+    kueue.x-k8s.io/queue-name: ds-queue
 spec:
-  parallelism: 3
-  completions: 3
+  parallelism: ${TIMESLICE_REPLICAS}
+  completions: ${TIMESLICE_REPLICAS}
   ttlSecondsAfterFinished: 300
   template:
     metadata:
       labels:
         demo/scenario: timeslicing
         demo/uc: uc-timeslice
+        kueue.x-k8s.io/queue-name: ds-queue
     spec:
       restartPolicy: Never
       nodeSelector:

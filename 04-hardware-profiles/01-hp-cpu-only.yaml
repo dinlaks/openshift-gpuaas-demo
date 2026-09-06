@@ -1,22 +1,34 @@
-# CPU-only profile — visible to all users globally (redhat-ods-applications namespace)
-# Eve (analytics) and any user in any project can see this profile
+# CPU-only profile — analytics-project only.
+# Uses Kueue scheduling so RHOAI dashboard shows it in Kueue-managed projects.
+# analytics-queue routes to analytics-cluster-queue which has CPU quota only.
 apiVersion: infrastructure.opendatahub.io/v1
 kind: HardwareProfile
 metadata:
   name: cpu-only
-  namespace: redhat-ods-applications
+  namespace: analytics-project
+  labels:
+    app.opendatahub.io/hardwareprofile: "true"
+    app.kubernetes.io/part-of: hardwareprofile
+  annotations:
+    opendatahub.io/display-name: "CPU Only"
+    opendatahub.io/description: "Standard CPU compute. No GPU access. Suitable for data preparation, analytics, and light ML workloads."
+    opendatahub.io/disabled: "false"
+    opendatahub.io/dashboard-feature-visibility: "[]"
 spec:
-  displayName: "CPU Only"
-  description: "Standard CPU compute. No GPU access. Suitable for data preparation, analytics, and light ML workloads."
-  enabled: true
   identifiers:
     - displayName: "CPU"
       identifier: "cpu"
-      minCount: "1"
-      maxCount: "8"
-      defaultCount: "2"
+      resourceType: CPU
+      minCount: 1
+      maxCount: 8
+      defaultCount: 2
     - displayName: "Memory"
       identifier: "memory"
+      resourceType: Memory
       minCount: "2Gi"
       maxCount: "32Gi"
       defaultCount: "4Gi"
+  scheduling:
+    type: Queue
+    kueue:
+      localQueueName: "analytics-queue"

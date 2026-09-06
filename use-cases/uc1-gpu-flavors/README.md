@@ -77,8 +77,9 @@ In the **Hardware profile** dropdown, eve sees:
 Return to the admin terminal.
 
 ```bash
-# Describe a specific hardware profile to show the resource limits backing it
-oc describe hardwareprofile mig-1g6gb -n redhat-ods-operator
+# Describe a hardware profile to show the Kueue queue binding and resource limits
+oc get hardwareprofile gpu-mig-small -n ds-team-project -o yaml
+oc get hardwareprofile gpu-full -n inference-team-project -o yaml
 
 # Show project-level binding
 oc get hardwareprofile -n inference-team-project
@@ -86,7 +87,7 @@ oc get hardwareprofile -n research-team-project
 oc get hardwareprofile -n analytics-project
 ```
 
-Point out the `resources.requests` and `resources.limits` fields that map directly to the MIG slice resource names.
+Point out `spec.identifiers` (the GPU resource limits) and `spec.scheduling.kueue.localQueueName` (the Kueue queue that enforces admission and routes to the correct GPU node via ResourceFlavor).
 
 ## Watch Commands
 Run in a separate terminal throughout the demo:

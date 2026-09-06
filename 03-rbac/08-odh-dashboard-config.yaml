@@ -25,3 +25,10 @@ spec:
     disableUserManagement: false
     modelMetricsNamespace: ""
     genAiStudio: true
+    disableKueue: false
+    disableProjectScoped: false
+  hardwareProfileOrder:
+    - gpu-mig-small
+    - gpu-mig-large
+    - gpu-full
+    - cpu-only

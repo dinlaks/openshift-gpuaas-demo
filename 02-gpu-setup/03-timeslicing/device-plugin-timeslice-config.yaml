@@ -1,10 +1,13 @@
 # GPU Time-Slicing Configuration
-# Enables 4 virtual GPUs from a full (non-MIG) GPU
+# Enables ${TIMESLICE_REPLICAS} virtual GPUs from a full (non-MIG) GPU.
 # GPU 0 remains in MIG mode — time-slicing only applies to GPU 1 (nvidia.com/gpu)
 #
 # Time-slicing vs MIG:
 #   Time-slicing: Multiple pods share GPU compute time (no memory isolation)
 #   MIG:          Hardware partitioning — each pod gets guaranteed memory + SMs
+#
+# Template: ${TIMESLICE_REPLICAS} substituted by configure-timeslicing.sh via apply_template.
+# Do not oc apply directly.
 #
 # Apply: included in configure-timeslicing.sh
 # Teardown: included in teardown-timeslicing.sh
@@ -14,7 +17,7 @@ metadata:
   name: device-plugin-config
   namespace: nvidia-gpu-operator
 data:
-  a30-timeslice: |
+  gpu-timeslice: |
     version: v1
     sharing:
       timeSlicing:
@@ -22,4 +25,4 @@ data:
         failRequestsGreaterThanOne: false
         resources:
           - name: nvidia.com/gpu
-            replicas: 4
+            replicas: ${TIMESLICE_REPLICAS}

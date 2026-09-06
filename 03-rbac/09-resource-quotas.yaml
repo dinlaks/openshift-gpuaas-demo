@@ -1,0 +1,18 @@
+# ResourceQuota — analytics-project
+# Prevents GPU workloads from running in the CPU-only analytics namespace.
+# Workbench pods bypass Kueue (no queue-name annotation), so this quota
+# is the hard guard ensuring analytics users cannot consume GPU resources
+# even when GPU hardware profiles are visible in the RHOAI dashboard.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: no-gpu
+  namespace: analytics-project
+spec:
+  hard:
+    requests.nvidia.com/gpu: "0"
+    limits.nvidia.com/gpu: "0"
+    requests.nvidia.com/mig-1g.6gb: "0"
+    limits.nvidia.com/mig-1g.6gb: "0"
+    requests.nvidia.com/mig-2g.12gb: "0"
+    limits.nvidia.com/mig-2g.12gb: "0"

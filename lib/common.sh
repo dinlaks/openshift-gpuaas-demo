@@ -367,6 +367,7 @@ resolve_gpu_config() {
       MIG_PROFILE_FULL_COMBO="full-combo-a30"
       GPU_MEMORY="24gb"
       GPU_ARCH="ampere"
+      TIMESLICE_REPLICAS="${TIMESLICE_REPLICAS:-4}"
       ;;
     a100-40gb)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.5gb"
@@ -381,6 +382,7 @@ resolve_gpu_config() {
       MIG_PROFILE_FULL_COMBO="full-combo-a100-40gb"
       GPU_MEMORY="40gb"
       GPU_ARCH="ampere"
+      TIMESLICE_REPLICAS="${TIMESLICE_REPLICAS:-4}"
       ;;
     a100-80gb)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.10gb"
@@ -395,6 +397,7 @@ resolve_gpu_config() {
       MIG_PROFILE_FULL_COMBO="full-combo-a100-80gb"
       GPU_MEMORY="80gb"
       GPU_ARCH="ampere"
+      TIMESLICE_REPLICAS="${TIMESLICE_REPLICAS:-8}"
       ;;
     h100-80gb)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.10gb"
@@ -409,6 +412,7 @@ resolve_gpu_config() {
       MIG_PROFILE_FULL_COMBO="full-combo-h100-80gb"
       GPU_MEMORY="80gb"
       GPU_ARCH="hopper"
+      TIMESLICE_REPLICAS="${TIMESLICE_REPLICAS:-8}"
       ;;
     h100-nvl)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.12gb"
@@ -423,6 +427,7 @@ resolve_gpu_config() {
       MIG_PROFILE_FULL_COMBO="full-combo-h100-nvl"
       GPU_MEMORY="94gb"
       GPU_ARCH="hopper"
+      TIMESLICE_REPLICAS="${TIMESLICE_REPLICAS:-8}"
       ;;
     h200)
       MIG_SMALL_RESOURCE="nvidia.com/mig-1g.18gb"
@@ -437,13 +442,12 @@ resolve_gpu_config() {
       MIG_PROFILE_FULL_COMBO="full-combo-h200"
       GPU_MEMORY="141gb"
       GPU_ARCH="hopper"
+      TIMESLICE_REPLICAS="${TIMESLICE_REPLICAS:-8}"
       ;;
     custom)
       local missing=()
-      for v in MIG_SMALL_RESOURCE MIG_LARGE_RESOURCE MIG_SMALL_FLAVOR MIG_LARGE_FLAVOR \
-                FULL_GPU_RESOURCE FULL_GPU_FLAVOR \
-                MIG_PROFILE_SMALL MIG_PROFILE_LARGE MIG_PROFILE_MIXED MIG_PROFILE_FULL_COMBO \
-                GPU_MEMORY GPU_ARCH; do
+      # Always required — every custom GPU type needs these.
+      for v in FULL_GPU_RESOURCE FULL_GPU_FLAVOR GPU_MEMORY GPU_ARCH TIMESLICE_REPLICAS; do
         [[ -z "${!v:-}" ]] && missing+=("${v}")
       done
       if [[ ${#missing[@]} -gt 0 ]]; then
@@ -451,6 +455,20 @@ resolve_gpu_config() {
         for v in "${missing[@]}"; do error "  ${v}"; done
         error "See env.sh.example for the custom GPU_TYPE section."
         exit 1
+      fi
+      # MIG vars are required only when MIG resources are in use (not needed for non-MIG GPUs
+      # like T4, A10, L4 — leave them unset and MIG-specific steps are skipped automatically).
+      if [[ -n "${MIG_SMALL_RESOURCE:-}" || -n "${MIG_LARGE_RESOURCE:-}" ]]; then
+        local mig_missing=()
+        for v in MIG_SMALL_RESOURCE MIG_LARGE_RESOURCE MIG_SMALL_FLAVOR MIG_LARGE_FLAVOR \
+                  MIG_PROFILE_SMALL MIG_PROFILE_LARGE MIG_PROFILE_MIXED MIG_PROFILE_FULL_COMBO; do
+          [[ -z "${!v:-}" ]] && mig_missing+=("${v}")
+        done
+        if [[ ${#mig_missing[@]} -gt 0 ]]; then
+          error "GPU_TYPE=custom: partial MIG config detected — set all MIG vars or none:"
+          for v in "${mig_missing[@]}"; do error "  ${v}"; done
+          exit 1
+        fi
       fi
       ;;
     *)
@@ -463,7 +481,7 @@ resolve_gpu_config() {
   export MIG_SMALL_RESOURCE MIG_LARGE_RESOURCE MIG_SMALL_FLAVOR MIG_LARGE_FLAVOR \
          FULL_GPU_RESOURCE FULL_GPU_FLAVOR GPU_TYPE \
          MIG_PROFILE_SMALL MIG_PROFILE_LARGE MIG_PROFILE_MIXED MIG_PROFILE_FULL_COMBO \
-         GPU_MEMORY GPU_ARCH
+         GPU_MEMORY GPU_ARCH TIMESLICE_REPLICAS
   info "GPU config resolved: GPU_TYPE=${GPU_TYPE} (${GPU_MEMORY}, arch=${GPU_ARCH})"
   info "  small : ${MIG_SMALL_RESOURCE}  large : ${MIG_LARGE_RESOURCE}  full : ${FULL_GPU_RESOURCE}"
 }
@@ -526,7 +544,7 @@ label_node_capabilities() {
 # Use for any YAML that contains ${MIG_SMALL_RESOURCE} etc.
 apply_template() {
   local file="$1"
-  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}${SPOKE_CLUSTER_NAME}${GPU_COUNT}'
+  local vars='${GPU_TYPE}${MIG_SMALL_RESOURCE}${MIG_LARGE_RESOURCE}${MIG_SMALL_FLAVOR}${MIG_LARGE_FLAVOR}${FULL_GPU_RESOURCE}${FULL_GPU_FLAVOR}${TIMESLICE_REPLICAS}${NFD_CHANNEL}${GPU_OPERATOR_CHANNEL}${KUEUE_CHANNEL}${RHOAI_CHANNEL}${WEB_TERMINAL_CHANNEL}${LVM_DISK_PATH}${LVM_STORAGE_CLASS}${LVM_CHANNEL}${MINIO_ACCESS_KEY}${MINIO_SECRET_KEY}${MINIO_ENDPOINT}${SPOKE_CLUSTER_NAME}${GPU_COUNT}'
   if [[ "${DRY_RUN}" == "true" ]]; then
     info "[DRY-RUN] Would apply template: ${file}"
     envsubst "${vars}" < "${file}" | oc apply -f - --dry-run=client

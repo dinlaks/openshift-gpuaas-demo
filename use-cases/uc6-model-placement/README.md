@@ -9,7 +9,7 @@ Large models need large GPU memory — you cannot fit a 13B parameter model on a
 - Hardware profiles in RHOAI enforce GPU selection — users cannot accidentally pick the wrong GPU tier
 - A job requesting a full A30 lands on Cluster A GPU 1 (non-MIG, 24GB)
 - A job requesting 1g.6gb lands on GPU 0 (MIG, 6GB slice)
-- `nodeSelector` in the hardware profile is the mechanism — not hope, not documentation
+- Kueue queue scheduling in the hardware profile routes workloads to the right GPU — the ResourceFlavor carries the node constraints, not the hardware profile directly
 
 ## Setup
 
@@ -32,7 +32,7 @@ Expected: Cluster A node shows `gpu-gpu1-mode=full` and `gpu-mode=mig-mixed`.
 
 ### Step 1: Show the Hardware Profiles in RHOAI Dashboard
 
-What to say: "Platform operators define hardware profiles — these are the GPU tiers available to data scientists. Each profile enforces a nodeSelector. Users pick the tier they need; placement is automatic."
+What to say: "Platform operators define hardware profiles — these are the GPU tiers available to data scientists. Each profile routes workloads through a Kueue LocalQueue; the ResourceFlavor bound to that queue enforces GPU node placement. Users pick the tier they need; placement is automatic."
 
 Open the RHOAI dashboard → Settings → Hardware Profiles. Show two profiles:
 - **A30 GPU — Full (24GB, Non-MIG)** — scoped to `inference-team-project`
@@ -41,28 +41,31 @@ Open the RHOAI dashboard → Settings → Hardware Profiles. Show two profiles:
 Then show the YAML behind each profile:
 
 ```bash
-oc get hardwareprofile gpu-a30-full -n inference-team-project -o yaml
+oc get hardwareprofile gpu-full -n inference-team-project -o yaml
 ```
 
-Point out the `scheduling.nodeSelector`:
+Point out the `scheduling` section:
 
 ```yaml
 scheduling:
-  nodeSelector:
-    demo/gpu-has-full: "true"
-    demo/gpu-type: a30
+  type: Queue
+  kueue:
+    localQueueName: "inference-queue"
 ```
 
+Node placement is enforced by the `a30-full` ResourceFlavor linked to `inference-cluster-queue`.
+
 ```bash
-oc get hardwareprofile gpu-a30-mig-1g6gb -n research-team-project -o yaml
+oc get hardwareprofile gpu-mig-small -n research-team-project -o yaml
 ```
 
 Point out the contrast:
 
 ```yaml
 scheduling:
-  nodeSelector:
-    demo/gpu-has-small-mig: "true"
+  type: Queue
+  kueue:
+    localQueueName: "research-queue"
 ```
 
 ### Step 2: Submit a Job Targeting the Full A30
