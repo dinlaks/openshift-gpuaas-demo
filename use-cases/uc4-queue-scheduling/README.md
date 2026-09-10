@@ -20,7 +20,7 @@ oc describe clusterqueue research-cluster-queue | grep -A10 "Resource Groups"
 - Ensure the demo jobs manifest is present:
 
 ```bash
-ls -la 05-kueue/05-queue-demo-jobs.yaml
+ls -la use-cases/uc4-queue-scheduling/fill-jobs.yaml
 ```
 
 - Optional: open a split terminal with the watch command pre-loaded so it is visible as soon as jobs are submitted.
@@ -49,7 +49,7 @@ Confirm:
 **Say:** "The research cluster queue has a quota of up to 4 MIG slices (nominalQuota=1 + borrowingLimit=3 from cohort) — enough for four simultaneous jobs. Let's fill it."
 
 ```bash
-oc apply -f 05-kueue/05-queue-demo-jobs.yaml -n research-team-project
+oc apply -f use-cases/uc4-queue-scheduling/fill-jobs.yaml -n research-team-project
 ```
 
 Watch the admission in real time:
@@ -76,7 +76,7 @@ oc get clusterqueue research-cluster-queue -o wide
 **Say:** "Now let's push past the limit. I'll submit a fourth job while the queue is fully occupied."
 
 ```bash
-oc apply -f 05-kueue/05-queue-demo-jobs-overflow.yaml -n research-team-project
+oc apply -f use-cases/uc4-queue-scheduling/overflow-job.yaml -n research-team-project
 ```
 
 Watch the fourth workload:
