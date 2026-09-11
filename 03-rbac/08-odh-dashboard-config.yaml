@@ -27,6 +27,24 @@ spec:
     genAiStudio: true
     disableKueue: false
     disableProjectScoped: false
+    disableLMEval: false
+    gpuaas: true
+    connectionTest: true
+    projectRBAC: true
+    agentsCatalog: true
+    agentOps: true
+    externalModels: true
+    mcpCatalog: true
+    mcpRegistry: true
+    autorag: true
+    guardrails: true
+    agentConfigManagement: true
+    genAiTracing: true
+    promptManagement: true
+    globalProjectPrompts: true
+    automl: true
+    llmdTemplates: true
+    vLLMDeploymentOnMaaS: true
   hardwareProfileOrder:
     - gpu-mig-small
     - gpu-mig-large
