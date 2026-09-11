@@ -32,7 +32,7 @@ MANIFESTS="${SCRIPT_DIR}/manifests"
 # ── Resolve operator channels (auto-detect if not set in env.sh) ──────────────
 header "Resolving operator channels"
 
-RHOAI_CHANNEL="${RHOAI_CHANNEL:-stable-3.4}"
+RHOAI_CHANNEL="${RHOAI_CHANNEL:-stable-3.5}"
 KUEUE_CHANNEL="${KUEUE_CHANNEL:-stable-v1.3}"
 
 # GPU Operator: versioned channel (v26.x etc.) — auto-detect if not set
