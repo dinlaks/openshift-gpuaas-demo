@@ -54,7 +54,7 @@ done
 
 | Operator | Package name | OCP 4.21 | OCP 4.22 ✅ | Notes |
 |---|---|---|---|---|
-| Red Hat OpenShift AI | `rhods-operator` | `stable-3.4` | `stable-3.5` | Set `RHOAI_CHANNEL` |
+| Red Hat OpenShift AI | `rhods-operator` | `stable-3.3` | `stable-3.5` | Set `RHOAI_CHANNEL` |
 | Red Hat build of Kueue | `kueue-operator` | `stable-v1.3` | `stable-v1.3` | Set `KUEUE_CHANNEL` |
 | NVIDIA GPU Operator | `gpu-operator-certified` | `v25.x` | `v26.x` | **Auto-detect** — changes every release |
 | Node Feature Discovery | `nfd` | `4.21` | `4.22` | **Auto-detect** — OCP version-specific |
