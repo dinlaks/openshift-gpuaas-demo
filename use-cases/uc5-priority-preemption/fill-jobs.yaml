@@ -14,7 +14,8 @@
 # Key message: "Production workloads always win. Dev workloads yield automatically.
 #               No manual intervention — priority is platform policy."
 #
-# NOTE: kueue.x-k8s.io/queue-name and priority-class must be in Pod template LABELS
+# NOTE: kueue.x-k8s.io/queue-name and priority-class must be in BOTH Job metadata labels
+#       AND Pod template labels (Kueue v1.3 batch/Job integration reads from Job metadata)
 #       Red Hat Kueue uses Pod integration.
 
 apiVersion: batch/v1
@@ -28,6 +29,7 @@ metadata:
     demo/priority: medium
     demo/role: dev-experiment
     kueue.x-k8s.io/queue-name: inference-queue
+    kueue.x-k8s.io/priority-class: medium-priority
 spec:
   parallelism: 1
   completions: 1
@@ -52,7 +54,8 @@ spec:
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"[alice-dev] MEDIUM-PRIORITY experiment | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB")
               print("[alice-dev] Running dev experiment — will be preempted by production job")
-              x = torch.randn(1024, 1024, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(360):
                   _ = torch.mm(x, x)
                   time.sleep(5)

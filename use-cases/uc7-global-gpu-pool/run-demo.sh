@@ -23,7 +23,7 @@ STEP="${1:-2}"
 case "$STEP" in
   1)
     header "UC7 Step 1: Fill Cluster A's GPU slots (forces dispatch to spoke cluster)"
-    apply_template "${SCRIPT_DIR}/07-uc7-cluster-a-fillers.yaml"
+    apply_template "${SCRIPT_DIR}/fillers.yaml"
     info "Watch Cluster A queues fill up:"
     echo "  oc get clusterqueues -o wide"
     info "Next: bash run-demo.sh 2"

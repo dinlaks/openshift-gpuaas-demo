@@ -1,0 +1,38 @@
+# MIG GPU utilization aggregation for RHOAI 3.5 Infrastructure dashboard.
+#
+# DCGM does not export DCGM_FI_DEV_GPU_UTIL for MIG-partitioned GPUs — only
+# DCGM_FI_PROF_GR_ENGINE_ACTIVE is available per MIG instance. This rule
+# aggregates per-instance metrics to GPU level and feeds them into the same
+# recording rules the RHOAI dashboard uses for the summary compute/memory gauges.
+#
+# The `unless on(gpu, Hostname)` clause ensures these rules only emit for GPUs
+# where the native DCGM_FI_DEV_GPU_UTIL / DCGM_FI_DEV_MEM_COPY_UTIL is absent
+# (i.e. MIG-mode GPUs), avoiding double-counting with non-MIG GPUs.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gpuaas-mig-utilization
+  namespace: nvidia-gpu-operator
+  labels:
+    app: nvidia-dcgm-exporter
+spec:
+  groups:
+    - name: gpuaas.mig.utilization
+      interval: 30s
+      rules:
+        - record: accelerator_gpu_utilization
+          expr: |
+            avg by (gpu, device, modelName, Hostname, instance, job, namespace, pod, container, service, endpoint) (
+              DCGM_FI_PROF_GR_ENGINE_ACTIVE
+            ) * 100
+            unless on(gpu, Hostname) DCGM_FI_DEV_GPU_UTIL
+        - record: accelerator_memory_used_bytes
+          expr: |
+            (
+              avg by (gpu, device, modelName, Hostname, instance, job, namespace, pod, container, service, endpoint) (DCGM_FI_DEV_FB_USED)
+              / (
+                avg by (gpu, device, modelName, Hostname, instance, job, namespace, pod, container, service, endpoint) (DCGM_FI_DEV_FB_USED)
+                + avg by (gpu, device, modelName, Hostname, instance, job, namespace, pod, container, service, endpoint) (DCGM_FI_DEV_FB_FREE)
+              )
+            ) * 100
+            unless on(gpu, Hostname) DCGM_FI_DEV_MEM_COPY_UTIL

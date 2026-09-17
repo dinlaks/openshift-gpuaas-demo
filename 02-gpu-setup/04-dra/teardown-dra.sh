@@ -21,19 +21,30 @@ require_oc_login
 
 header "DRA Teardown — restoring device plugin (post-UC2)"
 
-# ── 1. Clean up UC2 demo pods ─────────────────────────────────────────────────
-# Jobs own the ResourceClaims — deleting jobs cascades to ResourceClaim deletion automatically.
+# ── 1. Clean up UC2 demo pods (force delete — DRA ResourceClaims can cause stuck Terminating) ──
 info "Cleaning up UC2 demo jobs ..."
-oc delete job -l demo/uc=uc2-dra -n research-team-project --ignore-not-found
+for job in dra-gpu-job dra-mig-job; do
+  oc delete job "${job}" -n research-team-project --ignore-not-found 2>/dev/null || true
+done
+oc delete job -l demo/uc=uc2-dra -n research-team-project --ignore-not-found 2>/dev/null || true
+# Force delete any pods stuck in Terminating
+oc delete pod -l demo/uc=uc2-dra -n research-team-project --force --grace-period=0 --ignore-not-found 2>/dev/null || true
+oc delete pod -l demo/approach=dra -n research-team-project --force --grace-period=0 --ignore-not-found 2>/dev/null || true
+# Clean up ResourceClaims
+oc delete resourceclaim -n research-team-project --all --force --grace-period=0 --ignore-not-found 2>/dev/null || true
+sleep 3
 success "Demo pods cleaned up"
 
-# ── 2. Uninstall DRA driver Helm chart ────────────────────────────────────────
-info "Uninstalling dra-driver-nvidia-gpu Helm chart ..."
-if helm status dra-driver-nvidia-gpu -n dra-driver-nvidia-gpu &>/dev/null; then
+# ── 2. Uninstall DRA driver (oc apply — not Helm) ─────────────────────────────
+info "Removing DRA driver resources ..."
+if helm status dra-driver-nvidia-gpu -n dra-driver-nvidia-gpu &>/dev/null 2>&1; then
   helm uninstall dra-driver-nvidia-gpu -n dra-driver-nvidia-gpu
   success "Helm chart uninstalled"
 else
-  info "Helm chart not installed — skipping"
+  # DRA was deployed via deploy-dra.sh (oc apply) — delete the namespace and resources directly
+  oc delete namespace dra-driver-nvidia-gpu --ignore-not-found 2>/dev/null || true
+  oc delete resourceslices --all --ignore-not-found 2>/dev/null || true
+  success "DRA driver resources removed"
 fi
 
 # ── 3. Remove DRA node label ──────────────────────────────────────────────────

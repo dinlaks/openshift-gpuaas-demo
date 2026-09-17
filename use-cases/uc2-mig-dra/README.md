@@ -1,5 +1,8 @@
 # UC2: Dynamic Resource Allocation (DRA) — 10 min
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/GE_x_-298Ss) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 
 Traditional GPU allocation hardcodes a resource name (`nvidia.com/gpu`) into the pod spec — developers must know the exact resource string, it never changes, and the GPU reservation persists for the pod's entire lifetime whether it's being used or not.
@@ -36,6 +39,8 @@ oc get deviceclass
 ---
 
 ## Demo Steps
+
+> **Dashboard setup:** DRA workloads bypass the device plugin and do not appear in Workload metrics. Use OpenShift Console (**Workloads → Jobs → namespace: research-team-project**) to track pod lifecycle. Tab 1 (Infrastructure) will show 0/0 total accelerators while DRA is active — this is expected and reinforces the DRA story.
 
 ### Step 1: Show the DRA Inventory (1 min)
 

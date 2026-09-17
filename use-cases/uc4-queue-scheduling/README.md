@@ -1,5 +1,8 @@
 # UC4: Queue-Based Scheduling (8 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/w0XPTzQtuTs) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 In a shared GPU environment, teams submit more work than the cluster can absorb at once. Without a queue, excess jobs fail and engineers retry manually — wasting time and creating operational noise. With Kueue, jobs that exceed current capacity wait in an ordered queue and are admitted automatically the instant a slot opens. The platform absorbs demand spikes without any human intervention.
 
@@ -28,6 +31,10 @@ ls -la use-cases/uc4-queue-scheduling/fill-jobs.yaml
 ---
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two RHOAI Dashboard tabs open and toggle between them throughout the demo:
+> - **Tab 1 — Observe & Monitor > Infrastructure**: GPU utilization, queue allocation donuts, borrowing trends
+> - **Tab 2 — Observe & Monitor > Workload metrics**: individual workload admission state, queue assignment — filter by `research-team-project`
 
 ### Step 1: Show the Empty Queue
 **Say:** "We're starting fresh. Charlie's research queue is empty — no running jobs, no pending workloads."
@@ -69,6 +76,12 @@ oc get clusterqueue research-cluster-queue -o wide
 ```
 
 **Say:** "Four jobs, four slices — 1 from own quota + 3 borrowed from idle cohort. admissions. The queue is now at full capacity."
+
+Open the GPUaaS Infrastructure dashboard to confirm visually:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Scroll to `gpuaas-cohort` → `research-cluster-queue`. The total accelerators donut is full — all admitted, active workloads showing. Compute and memory consumption gauges are climbing. The queue is at the ceiling."
 
 ---
 
@@ -129,6 +142,12 @@ Within a few seconds, the fourth workload transitions:
 `Inadmissible` → `QuotaReserved` → `Admitted`
 
 **Say:** "No cron job. No retry script. No engineer watching a dashboard and clicking buttons. Kueue saw the free slot and admitted the waiting job automatically. This is the queue contract: your job will run, in order, as soon as capacity is available."
+
+Switch to the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Watch `research-cluster-queue` in the cluster queue consumption section — active workloads briefly dropped by one, then immediately back to full. The accelerator donut dipped and refilled. The borrowing trends chart records this moment. That's the queue contract — visible and auditable."
 
 ---
 

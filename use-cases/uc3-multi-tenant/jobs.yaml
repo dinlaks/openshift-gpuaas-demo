@@ -36,10 +36,17 @@ spec:
           command: [python, -u, -c]
           args:
             - |
-              import torch, socket, time
+              import torch, socket, time, os
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               print(f"[job-1] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (own nominalQuota)")
-              time.sleep(3600)
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [job-1] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -72,10 +79,17 @@ spec:
           command: [python, -u, -c]
           args:
             - |
-              import torch, socket, time
+              import torch, socket, time, os
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               print(f"[job-2] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (borrowing from cohort)")
-              time.sleep(3600)
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [job-2] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -108,10 +122,17 @@ spec:
           command: [python, -u, -c]
           args:
             - |
-              import torch, socket, time
+              import torch, socket, time, os
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               print(f"[job-3] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (borrowing from cohort)")
-              time.sleep(3600)
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [job-3] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -144,10 +165,17 @@ spec:
           command: [python, -u, -c]
           args:
             - |
-              import torch, socket, time
+              import torch, socket, time, os
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               print(f"[job-4] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB (borrowing — hits borrowingLimit=3)")
-              time.sleep(3600)
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [job-4] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"

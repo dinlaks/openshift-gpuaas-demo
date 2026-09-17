@@ -52,7 +52,14 @@ spec:
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"[alice] Node: {node} | GPU: {gpu} | VRAM: {mem:.1f}GB (full GPU, no MIG)")
               print("[alice] Large model inference — 24GB GPU tier selected via hardware profile")
-              time.sleep(1800)
+              import os; n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [alice] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${FULL_GPU_RESOURCE}: "1"
@@ -95,7 +102,14 @@ spec:
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"[charlie] Node: {node} | GPU: {gpu} | VRAM: {mem:.1f}GB (1g.6gb MIG slice)")
               print("[charlie] Small model dev — economy MIG tier selected via hardware profile")
-              time.sleep(1800)
+              import os; n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [charlie] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"

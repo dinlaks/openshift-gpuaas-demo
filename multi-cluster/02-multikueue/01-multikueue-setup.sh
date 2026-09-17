@@ -199,7 +199,9 @@ if [[ -f "${SCRIPT_DIR}/../03-acm-observability/grafana-dcgm-mig-dashboard.json"
   oc create configmap grafana-dashboard-dcgm-mig-gpu \
     -n open-cluster-management-observability \
     --from-file=dcgm-mig-dashboard.json="${SCRIPT_DIR}/../03-acm-observability/grafana-dcgm-mig-dashboard.json" \
-    --dry-run=client -o yaml | oc apply -f - 2>/dev/null
+    --dry-run=client -o yaml | \
+    python3 -c "import sys,yaml; d=yaml.safe_load(sys.stdin); d.setdefault('metadata',{}).setdefault('labels',{})['grafana-custom-dashboard']='true'; print(yaml.dump(d))" | \
+    oc apply -f - 2>/dev/null
   success "DCGM MIG GPU dashboard deployed — visible in Grafana → Dashboards → Browse"
 else
   warn "grafana-dcgm-mig-dashboard.json not found — download from https://grafana.com/api/dashboards/23382/revisions/latest/download"

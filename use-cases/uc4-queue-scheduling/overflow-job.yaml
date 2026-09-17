@@ -36,7 +36,8 @@ spec:
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"Job 5 — was QUEUED (Inadmissible), now ADMITTED by Kueue!")
               print(f"Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
-              x = torch.randn(1024, 1024, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(20):
                   _ = torch.mm(x, x)
                   time.sleep(5)

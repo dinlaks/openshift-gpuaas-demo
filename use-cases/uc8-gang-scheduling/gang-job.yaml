@@ -46,7 +46,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c, "import time; print('Filler 1 holding GPU slice'); time.sleep(3600)"]  # holds slot for demo
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"Filler 1 holding GPU slice | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-1] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -78,7 +91,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c, "import time; print('Filler 2 holding GPU slice'); time.sleep(3600)"]  # holds slot for demo
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"Filler 2 holding GPU slice | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-2] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -110,7 +136,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -c, "import time; print('Filler 3 holding GPU slice'); time.sleep(3600)"]  # holds slot for demo
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"Filler 3 holding GPU slice | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-3] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -167,12 +206,14 @@ spec:
               print(f"Gang guarantee  : All {world_size} workers started SIMULTANEOUSLY")
               print("=" * 60)
               # Simulate distributed training workload
-              x = torch.randn(2048, 2048, device='cuda')
-              for step in range(50):
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              total_steps = int(os.getenv('TRAINING_STEPS', '200'))
+              for step in range(total_steps):
                   grad = torch.mm(x, x.T)
-                  x = x - 0.01 * grad[:2048, :2048]
-                  if step % 10 == 0:
-                      print(f"[Worker {rank}] Training step {step}/50")
+                  x = x - 0.01 * grad
+                  if step % 20 == 0:
+                      print(f"[Worker {rank}] Training step {step}/{total_steps}")
                   time.sleep(2)
               print(f"[Worker {rank}] Training complete — no deadlock possible!")
           resources:

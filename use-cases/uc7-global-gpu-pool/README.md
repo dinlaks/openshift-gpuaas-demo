@@ -1,5 +1,8 @@
 # UC7: Global GPU Pools Across Clusters (10 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/DiCK6clvoAc) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 
 Two OpenShift clusters — managed as a single platform. ACM governs the fleet: identical GPU configuration, identical Kueue flavors, identical policy on both clusters. When Cluster A's premium GPU slice fills up, Kueue's MultiKueue automatically dispatches to the spoke cluster — without the user specifying a cluster, without resubmitting, without manual intervention. The platform finds the capacity.
@@ -46,6 +49,11 @@ oc delete jobs -n inference-team-project -l demo/uc=uc7-multi-cluster --ignore-n
 ```
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two sets of RHOAI Dashboard tabs open — one for each cluster:
+> - **Hub Tab 1 — Observe & Monitor > Infrastructure**: Cluster A GPU utilization, inference queue filling up
+> - **Spoke Tab 1 — Observe & Monitor > Infrastructure**: Spoke cluster GPU utilization after dispatch
+> - **Hub Tab 2 — Observe & Monitor > Workload metrics**: workload admission state on the hub — filter by `inference-team-project` to see MultiKueue dispatch
 
 ### Act 1 (3 min): ACM Fleet Governance
 
@@ -173,12 +181,20 @@ Expected — `inUse: 1`, `nominalQuota: 1` for `a30-mig-2g12gb`:
 [{"name": "${MIG_LARGE_FLAVOR}", "resources": [{"borrowed": "0", "inUse": "1", "name": "nvidia.com/mig-2g.12gb"}]}]
 ```
 
+Switch to the GPUaaS Infrastructure dashboard on Cluster A (hub):
+
+Switch to **Tab 1 (Infrastructure)** for the relevant cluster
+
+**Say:** "Scroll to `gpuaas-cohort` → `inference-cluster-queue` — one active workload, accelerators at capacity, compute consumption non-zero. Cluster A has no more room. Now watch where the next job goes."
+
+Switch back to CLI.
+
 #### Step 4: Submit to the Global Queue — MultiKueue Picks the Spoke Cluster
 
 What to say: "Cluster A is full. Now I submit a second inference job to the global-gpu-queue — this is the MultiKueue-enabled queue. Watch what happens."
 
 ```bash
-oc apply -f multi-cluster/02-multikueue/07-uc7-demo-job.yaml
+oc apply -f use-cases/uc7-global-gpu-pool/demo-job.yaml
 ```
 
 ```bash
@@ -224,6 +240,14 @@ GPU Memory      : 11.9 GB  (2g.12gb MIG slice)
 Cluster A full  : Job dispatched to spoke cluster by MultiKueue
 ============================================================
 ```
+
+Switch to the GPUaaS Infrastructure dashboard on the spoke cluster:
+
+Switch to **Spoke Tab 1 (Infrastructure)**
+
+**Say:** "The spoke cluster's Infrastructure page now shows an active workload in `inference-cluster-queue` — accelerators in use, compute consumption non-zero. Switch back to hub — its `inference-cluster-queue` is still at capacity. Two clusters, one job submission, automatic placement. The platform found the capacity."
+
+Switch back to hub CLI.
 
 What to say: "Same GPU, different cluster. The user never specified a cluster. Kueue found the capacity and placed the job. This is what a global GPU pool looks like."
 

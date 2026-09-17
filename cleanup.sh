@@ -26,7 +26,8 @@ delete_by_label() {
   local uc_label="$1"
   info "Cleaning workloads labelled demo/uc=${uc_label}..."
   for ns in ${NAMESPACES}; do
-    oc delete job,pod -n "$ns" -l "demo/uc=${uc_label}" --ignore-not-found 2>/dev/null || true
+    oc delete job -n "$ns" -l "demo/uc=${uc_label}" --ignore-not-found 2>/dev/null || true
+    oc delete pod -n "$ns" -l "demo/uc=${uc_label}" --force --grace-period=0 --ignore-not-found 2>/dev/null || true
     oc delete workload -n "$ns" -l "kueue.x-k8s.io/job-uid" --ignore-not-found 2>/dev/null || true
   done
   success "UC ${uc_label} workloads removed"
@@ -46,10 +47,14 @@ clean_uc9() {
   info "Restoring default quota on inference-cluster-queue..."
   oc patch clusterqueue inference-cluster-queue --type=merge \
     -p '{"spec":{"stopPolicy":"None"}}' 2>/dev/null || true
+  # Restore a30-full nominalQuota to 1 (weekend policy sets it to 0)
+  oc patch clusterqueue inference-cluster-queue --type=json \
+    -p='[{"op":"replace","path":"/spec/resourceGroups/1/flavors/0/resources/0/nominalQuota","value":"1"}]' \
+    2>/dev/null || true
   delete_by_label uc9-time-based
   oc delete cronjob gpuaas-weekend-policy gpuaas-weekday-policy \
     -n gpuaas-system --ignore-not-found 2>/dev/null || true
-  success "UC9: CronJobs removed, queue restored"
+  success "UC9: CronJobs removed, queue restored, a30-full quota reset to 1"
 }
 
 if [[ " ${TARGETS[*]} " =~ " all " ]]; then

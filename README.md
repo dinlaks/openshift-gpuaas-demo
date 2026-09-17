@@ -24,17 +24,19 @@ This demo works on any OpenShift cluster with NVIDIA GPU nodes (OCP 4.17+, valid
 
 ## Use cases
 
-| # | Use Case | What it shows |
-|---|---|---|
-| UC1 | GPU Flavors | MIG slices vs full GPU — different tiers for different workloads (dashboard demo) |
-| UC2 | MIG + DRA | Dynamic Resource Allocation for GPU scheduling (OCP 4.21+) (toggle setup) |
-| UC3 | Multi-Tenant Quotas | Per-team GPU quotas with cohort borrowing |
-| UC4 | Queue-Based Scheduling | Jobs queue intelligently — never fail, never starve |
-| UC5 | Priority + Preemption | High-priority jobs preempt lower-priority ones automatically |
-| UC6 | Model Placement | Hardware profiles route workloads to the right GPU tier |
-| UC7 | Global GPU Pool | MultiKueue dispatches across clusters transparently (add-on) |
-| UC8 | Gang Scheduling | All-or-nothing batch scheduling — 4 GPUs or zero |
-| UC9 | Time-Based Policy | CronJobs auto-switch GPU quota between weekday and weekend tiers |
+| # | Use Case | What it shows | Demo Recording |
+|---|---|---|---|
+| UC1 | GPU Flavors | MIG slices vs full GPU — different tiers for different workloads (dashboard demo) | [▶ Intro + UC1: GPU Flavors & Hardware Profiles](https://youtu.be/BU0Hc7oaKFU) |
+| UC2 | MIG + DRA | Dynamic Resource Allocation for GPU scheduling (OCP 4.21+) (toggle setup) | [▶ UC2: Dynamic Resource Allocation (DRA)](https://youtu.be/GE_x_-298Ss) |
+| UC3 | Multi-Tenant Quotas | Per-team GPU quotas with cohort borrowing | [▶ UC3: Multi-Tenant Quotas + Cohort Borrowing](https://youtu.be/sVS9c26ErLQ) |
+| UC4 | Queue-Based Scheduling | Jobs queue intelligently — never fail, never starve | [▶ UC4: Queue-Based Scheduling](https://youtu.be/w0XPTzQtuTs) |
+| UC5 | Priority + Preemption | High-priority jobs preempt lower-priority ones automatically | [▶ UC5: Workload Priority & Preemption](https://youtu.be/3sD9Edd9qQQ) |
+| UC6 | Model Placement | Hardware profiles route workloads to the right GPU tier | [▶ UC6: Model-Specific GPU Placement](https://youtu.be/0nhiYEQb4VQ) |
+| UC7 | Global GPU Pool | MultiKueue dispatches across clusters transparently (add-on) | [▶ UC7: Global GPU Pool (MultiKueue)](https://youtu.be/DiCK6clvoAc) |
+| UC8 | Gang Scheduling | All-or-nothing batch scheduling — 4 GPUs or zero | [▶ UC8: Gang Scheduling](https://youtu.be/JyPpE_ze03Y) |
+| UC9 | Time-Based Policy | CronJobs auto-switch GPU quota between weekday and weekend tiers | [▶ UC9: Time-Based GPU Cost Policy](https://youtu.be/_qSfaNyW-_c) |
+
+> **Demo recordings** are unlisted YouTube videos — no login required to view. Each recording is a narrated live demo on a real cluster (~5-7 min per use case).
 
 ---
 
@@ -195,6 +197,13 @@ MIG profiles per role are resolved automatically based on `GPU_TYPE` and `MIG_ST
 
 For the full reference — all 5 roles, 30 MIG profiles, and a multi-topology example:
 **[docs/hardware-guide.md](docs/hardware-guide.md)**
+
+> **Current limitation — homogeneous GPU clusters only:**
+> `GPU_TYPE` is a single value that configures the entire cluster. All nodes are assumed to have the same GPU model. Mixed-GPU clusters (e.g. one node with A30, another with A100) are **not supported out of the box** because:
+> - Each GPU type has distinct MIG resource names (`nvidia.com/mig-1g.6gb` vs `nvidia.com/mig-1g.5gb`) that cannot share a single `GPU_TYPE`
+> - ResourceFlavors, Hardware Profiles, and ClusterQueue resourceGroups are all generated from a single GPU type
+>
+> **Workaround for mixed clusters:** Use Dynamic Resource Allocation (DRA) — see [UC2](use-cases/uc2-mig-dra/) — which describes GPU capability rather than hardcoding resource names, allowing a single job spec to land on any GPU type that satisfies the capability requirement. Full heterogeneous multi-GPU-type support (multiple `GPU_TYPE` declarations per cluster) is a planned future enhancement.
 
 ---
 

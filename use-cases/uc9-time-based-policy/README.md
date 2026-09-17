@@ -1,5 +1,8 @@
 # UC9: Time-Based GPU Placement (8 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/_qSfaNyW-_c) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 
 The inference team runs production workloads Monday through Friday on a premium full GPU (24GB VRAM) — 12GB of dedicated memory, full performance. On weekends, that premium slice sits mostly idle. A CronJob fires every Friday at 6pm: Kueue drains the inference workload, sets the 2g.12gb quota to zero, and re-admits the job on a cheaper 1g.6gb slice. Monday at 6am, the quota restores and the job moves back to premium. No manual intervention. No tickets. No forgotten weekend GPU bills.
@@ -44,6 +47,10 @@ oc get clusterqueue inference-cluster-queue \
 Expected: `nominalQuota: "1"` for `nvidia.com/gpu`.
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two RHOAI Dashboard tabs open and toggle between them throughout the demo:
+> - **Tab 1 — Observe & Monitor > Infrastructure**: GPU resource type change (premium → economy slice) and continuous utilization
+> - **Tab 2 — Observe & Monitor > Workload metrics**: HoldAndDrain lifecycle — watch workload evict then re-admit on the cheaper slice — filter by `inference-team-project`
 
 ### Step 1: Start the Weekday Inference Job (Baseline State)
 
@@ -126,7 +133,11 @@ oc get clusterqueue inference-cluster-queue \
 
 Expected: `inUse: 1` for `nvidia.com/gpu`.
 
-What to say: "Premium slice, in use, inference running. Now let's skip to Friday 6pm."
+Open the GPUaaS Infrastructure dashboard to show the weekday baseline:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Scroll to `gpuaas-cohort` → `inference-cluster-queue`. One active workload, compute and memory consumption non-zero — the premium tier is fully occupied. This is the weekday baseline. Now let's skip to Friday 6pm."
 
 ### Step 2: Trigger Weekend Policy Manually
 
@@ -241,6 +252,12 @@ Expected — `nominalQuota: "0"` for `nvidia.com/gpu`:
   }
 ]
 ```
+
+Switch to the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Look at `inference-cluster-queue` — still shows one active workload. Compute and memory consumption stayed non-zero throughout. The job never stopped. Now check the hardware usage bar chart — the resource type in use has changed from the premium slice to the economy slice. The borrowing trends chart shows a continuous line with no gap. Cost optimized, job uninterrupted, no human involved."
 
 What to say: "The premium tier is closed for the weekend. Kueue moved the workload to the cheaper slice automatically. Alice's job is still running — on 1g.6gb instead of 2g.12gb. No ticket, no manual step, no forgotten GPU bill."
 

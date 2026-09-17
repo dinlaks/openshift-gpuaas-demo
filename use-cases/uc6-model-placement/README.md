@@ -1,5 +1,8 @@
 # UC6: Model-Specific Placement (7 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/0nhiYEQb4VQ) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 
 Large models need large GPU memory — you cannot fit a 13B parameter model on a 6GB slice. This platform routes workloads to the right GPU automatically based on the model's memory requirements: full A30 (24GB) for production inference, 1g.6gb MIG slices for development and small models. The hardware profile in the RHOAI dashboard is the policy — users select their profile, and placement is enforced.
@@ -29,6 +32,10 @@ oc get nodes -l nvidia.com/gpu.present=true -o custom-columns='NAME:.metadata.na
 Expected: Cluster A node shows `gpu-gpu1-mode=full` and `gpu-mode=mig-mixed`.
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two RHOAI Dashboard tabs open and toggle between them throughout the demo:
+> - **Tab 1 — Observe & Monitor > Infrastructure**: GPU utilization, both queue cards active simultaneously
+> - **Tab 2 — Observe & Monitor > Workload metrics**: admission state per workload — filter by each namespace to compare inference vs research placement
 
 ### Step 1: Show the Hardware Profiles in RHOAI Dashboard
 
@@ -209,6 +216,12 @@ EOF
 oc get pods -n inference-team-project -l demo/uc=uc6-placement -o wide
 oc get pods -n research-team-project -l demo/uc=uc6-placement -o wide
 ```
+
+Open the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Look at the cluster queue consumption section — `inference-cluster-queue` and `research-cluster-queue` both show active workloads simultaneously. The hardware usage bar chart shows accelerators in use across different resource types. Same cluster, different GPU tiers, right workload on right hardware — enforced by policy."
 
 What to say: "Same physical node, different GPU. The full A30 job landed on GPU 1 (24GB, non-MIG). The small model landed on a 1g.6gb MIG slice on GPU 0. The hardware profile encoded this decision — the user just picked a tier."
 

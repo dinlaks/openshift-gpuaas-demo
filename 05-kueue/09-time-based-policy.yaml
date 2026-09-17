@@ -212,8 +212,8 @@ spec:
                   oc patch clusterqueue inference-cluster-queue \
                     --type=merge -p '{"spec":{"stopPolicy":"HoldAndDrain"}}'
 
-                  echo "Waiting 30s for drain..."
-                  sleep 30
+                  echo "Waiting 60s for drain..."
+                  sleep 60
 
                   echo "Step 3: Set nvidia.com/gpu nominalQuota to 0 — premium tier locked"
                   oc patch clusterqueue inference-cluster-queue --type=json \

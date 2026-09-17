@@ -1,11 +1,14 @@
 # UC1: Multiple GPU Types/Flavors (7 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/BU0Hc7oaKFU) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 Your organization has a heterogeneous GPU estate — economy MIG slices for everyday workloads, premium MIG slices for heavier inference, and full accelerators for large model deployments. Rather than giving every team access to every resource (and the chaos that follows), Red Hat OpenShift AI enforces a governed self-service model: each project sees exactly the GPU flavors it is entitled to, nothing more.
 
 ## What You're Showing
 - Three distinct GPU "flavors" available on the platform: `1g.6gb` (economy MIG), `2g.12gb` (premium MIG), and full A30 (large model / DRA)
-- Hardware profiles scoped per project — alice (inference) sees premium + full GPU, charlie (research) sees economy only, eve (analytics) sees CPU only
+- Hardware profiles scoped per project — alice (inference) sees large MIG slice + full GPU, charlie (research) sees small MIG slice only, eve (analytics) sees CPU only
 - The RHOAI dashboard hardware profile selector as the user-facing self-service surface
 - Platform-enforced boundaries with zero manual ticket-filing by end users
 
@@ -16,8 +19,22 @@ Your organization has a heterogeneous GPU estate — economy MIG slices for ever
 
 ## Demo Steps
 
+> **Dashboard setup (open before starting):** Keep one RHOAI Dashboard tab open — Tab 1 only (Tab 2 not needed for this UC, which is a hardware profile walkthrough with no workload submissions):
+> - **Tab 1 — Observe & Monitor > Infrastructure**: GPU capacity, queue allocation, hardware usage
+
 ### Step 1: Show the Platform Inventory
-Start by showing the operator what is actually available on the cluster.
+Start by opening the GPUaaS Infrastructure dashboard to show real-time cluster GPU capacity.
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Before we look at individual project restrictions, here's the full picture — every GPU resource on this cluster, live. This is what the platform team sees at all times."
+
+Point out each section:
+- **Summary**: "Total accelerators — the count of GPU slices this cluster has available. Compute and memory consumption are our real-time utilization gauges — right now idle, but these fill as teams submit workloads."
+- **Hardware usage**: "The bar shows available vs in-use accelerators grouped by GPU model. One hardware type, governed across five teams."
+- **Cluster queue consumption**: Scroll to `gpuaas-cohort` — "Accelerators across 4 cluster queues, all available to borrow. Every queue has a guaranteed slice — ds, finetune, inference, research. Each card shows active/pending workloads and per-queue utilization live."
+
+Then confirm via CLI:
 
 ```bash
 # List all hardware profiles across all namespaces
@@ -39,11 +56,10 @@ Switch to alice's browser tab and open the RHOAI dashboard.
 Navigate to: **RHOAI Dashboard > Data Science Projects > inference-team-project > Workbenches > Create Workbench**
 
 In the **Hardware profile** dropdown, alice sees:
-- `1g.6gb - Economy MIG Slice`
-- `2g.12gb - Premium MIG Slice`
-- `Full A30 - Large Model`
+- `2g.12gb - Premium MIG Slice` (Large Slice)
+- `Full GPU` (dedicated full accelerator)
 
-**Say:** "Three flavors, self-service, no ticket required."
+**Say:** "Two premium tiers, self-service, no ticket required. Alice is inference team — she gets the high-end slices. The economy tier is invisible to her."
 
 ---
 

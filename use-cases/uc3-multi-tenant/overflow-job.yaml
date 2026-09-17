@@ -37,11 +37,18 @@ spec:
           command: [python, -c]
           args:
             - |
-              import torch, socket, time
+              import torch, socket, time, os
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               print(f"[job-5] charlie | Node: {socket.gethostname()} | VRAM: {mem:.1f}GB")
               print("[job-5] This job was QUEUED, not failed — quota enforcement in action")
-              time.sleep(3600)
+              duration = int(os.getenv('JOB_DURATION_SECS', '1800'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [job-5] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"

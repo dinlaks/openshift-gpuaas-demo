@@ -1,5 +1,8 @@
 # UC8: Gang Scheduling for Multi-GPU Jobs (8 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/JyPpE_ze03Y) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 
 Distributed training is not parallelism — it is synchronization. When you launch a 4-GPU training job, all four workers must start at the same instant and communicate from the first step. If three workers start and one waits for GPU capacity, the three that started block on a barrier, the fourth never comes, and you have a deadlock — all four GPUs stuck, doing nothing. Kueue prevents this with atomic gang scheduling: all four pods are admitted together, or none of them start.
@@ -30,6 +33,10 @@ oc delete jobs -n research-team-project \
 ```
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two RHOAI Dashboard tabs open and toggle between them throughout the demo:
+> - **Tab 1 — Observe & Monitor > Infrastructure**: queue allocation donut — watch the 3→0→4 atomic jump
+> - **Tab 2 — Observe & Monitor > Workload metrics**: individual workload Inadmissible → Admitted transition — filter by `research-team-project`
 
 ### Step 1: Explain the Problem — Why Gang Scheduling Matters
 
@@ -76,6 +83,14 @@ filler-job-2-…                   research-queue  research-cluster-queue  True
 filler-job-3-…                   research-queue  research-cluster-queue  True
 distributed-training-gang-…      research-queue  <none>                 False      Inadmissible
 ```
+
+Switch to the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Look at `research-cluster-queue` in the cluster queue consumption section — it shows active workloads from the 3 fillers. The gang job isn't reflected here at all — zero pods means zero utilization. That's the point: Kueue refused to start any workers until all 4 can run."
+
+Switch back to CLI.
 
 ### Step 3: Show the Gang Job Is Inadmissible
 
@@ -160,6 +175,12 @@ distributed-training-gang-3-…      1/1     Running   4s
 ```
 
 What to say: "All four pods. Same second. Kueue waited until capacity existed for the entire gang, then admitted them atomically. No deadlock possible."
+
+Open the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Watch `research-cluster-queue` — the active workloads count dropped from 3 to 0, then jumped immediately to 4. The total accelerators donut went from 3-in-use to full in one step. No partial ramp-up, no gradual fill. The compute and memory gauges spiked atomically. That's gang scheduling — all 4 or nothing."
 
 ### Step 6: Read the Gang Job Output
 

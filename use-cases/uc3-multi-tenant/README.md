@@ -1,5 +1,8 @@
 # UC3: Multiple Tenants with Quotas (8 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/sVS9c26ErLQ) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 Five teams share a single GPU pool. Without enforcement, the fastest-moving team wins and everyone else files tickets. With Kueue, each team gets a guaranteed quota expressed as Kubernetes-native policy — and when a team isn't using its full allocation, idle capacity flows to whoever needs it through cohort borrowing. The GPU pool becomes a shared resource that feels dedicated to every team simultaneously.
 
@@ -25,6 +28,10 @@ oc get clusterqueue -o json | jq '.items[] | {name: .metadata.name, cohort: .spe
 ---
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two RHOAI Dashboard tabs open and toggle between them throughout the demo:
+> - **Tab 1 — Observe & Monitor > Infrastructure**: GPU utilization, queue allocation donuts, borrowing trends
+> - **Tab 2 — Observe & Monitor > Workload metrics**: individual workload admission state, priority, queue assignment — filter by `research-team-project`
 
 ### Step 1: Show the Full Queue Landscape
 **Say:** "Here is the entire GPU estate, expressed as policy. Five teams, one cluster, five queues — each with a guaranteed slice of capacity."
@@ -96,6 +103,14 @@ oc describe workload -n research-team-project $(oc get workload -n research-team
 
 Look for `BorrowingLimit` and the cohort reference in the workload status.
 
+Switch to the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Scroll to the `gpuaas-cohort` cluster queue consumption section. Find `research-cluster-queue` — the total accelerators donut shows more in use than its nominalQuota. That's borrowed capacity from the idle inference pool. The borrowing trends chart below shows that spike tracked over time — cohort lending made visible."
+
+Switch back to CLI to continue.
+
 ---
 
 ### Step 4: Show Quota Enforcement (job queues, doesn't fail)
@@ -129,6 +144,14 @@ oc describe workload -n research-team-project $(oc get workload -n research-team
 
 ### Step 5: Show the Full Multi-Tenant Picture (operator summary)
 **Say:** "Here is the view a platform team would monitor. Every team's usage, in one command."
+
+Open the GPUaaS Infrastructure dashboard alongside the CLI output:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "This is the same picture — but visual. In the `gpuaas-cohort` section, each queue card shows active workloads and utilization simultaneously. The borrowing trends chart shows which queues borrowed over time. Five teams, one pool, no conflicts — all visible in one view."
+
+Then confirm via CLI:
 
 ```bash
 # All queues and their current utilization

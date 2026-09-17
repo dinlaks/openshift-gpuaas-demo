@@ -42,7 +42,8 @@ spec:
               import torch, time, socket
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"Job 1 | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
-              x = torch.randn(1024, 1024, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(360):  # 30 min hold
                   _ = torch.mm(x, x)
                   time.sleep(5)
@@ -79,7 +80,8 @@ spec:
               import torch, time, socket
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"Job 2 | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
-              x = torch.randn(1024, 1024, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(360):  # 30 min hold
                   _ = torch.mm(x, x)
                   time.sleep(5)
@@ -116,7 +118,8 @@ spec:
               import torch, time, socket
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"Job 3 | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
-              x = torch.randn(1024, 1024, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(360):  # 30 min hold
                   _ = torch.mm(x, x)
                   time.sleep(5)
@@ -153,7 +156,8 @@ spec:
               import torch, time, socket
               mem = torch.cuda.get_device_properties(0).total_memory / 1e9
               print(f"Job 4 | Node: {socket.gethostname()} | GPU: {torch.cuda.get_device_name(0)} | VRAM: {mem:.1f}GB")
-              x = torch.randn(1024, 1024, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(360):  # 30 min hold
                   _ = torch.mm(x, x)
                   time.sleep(5)

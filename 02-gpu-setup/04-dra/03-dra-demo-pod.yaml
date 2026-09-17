@@ -65,7 +65,14 @@ spec:
               print("No hardcoded resource name in pod spec.")
               print("DeviceClass selected this A30 by capability, not by name.")
               print("Holding ResourceClaim open for demo — teardown-dra.sh will release it.")
-              time.sleep(1800)  # hold GPU claim open for 30 min during demo
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              start, i = time.time(), 0
+              while time.time() - start < 1800:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [dra-gpu] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           # No resources.requests needed — DRA handles GPU allocation
           resources: {}
 ---

@@ -51,7 +51,8 @@ spec:
               print("User submitted to global-queue — no cluster specified")
               print("Platform dispatched to whichever cluster had capacity")
               print("=" * 60)
-              x = torch.randn(2048, 2048, device='cuda')
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
               for i in range(36):       # 36 × 15s = 9 min — gives presenter time to show all steps
                   _ = torch.mm(x, x)
                   print(f"  inference step {i+1}/36 | GPU mem: {torch.cuda.memory_allocated()/1e9:.2f}GB")

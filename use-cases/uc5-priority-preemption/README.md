@@ -1,5 +1,8 @@
 # UC5: Workload Priority (8 min)
 
+> **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/3sD9Edd9qQQ) — narrated live demo on a real cluster, no login required.
+
+
 ## Story
 Not all GPU workloads are equal. A batch fine-tuning job that runs overnight should yield to a production inference request that needs to start in seconds. Without priority enforcement, the first job to claim a GPU holds it regardless of business value — turning your expensive accelerator estate into first-come-first-served infrastructure. Kueue preemption policy makes priority a platform contract: high-priority workloads always run, even if that means evicting lower-priority ones.
 
@@ -22,6 +25,10 @@ oc get clusterqueue inference-cluster-queue -o wide
 ---
 
 ## Demo Steps
+
+> **Dashboard setup (open before starting):** Keep two RHOAI Dashboard tabs open and toggle between them throughout the demo:
+> - **Tab 1 — Observe & Monitor > Infrastructure**: GPU utilization, queue allocation donuts — watch the slot stay occupied through preemption
+> - **Tab 2 — Observe & Monitor > Workload metrics**: admission state and priority per workload — filter by `inference-team-project`
 
 ### Step 1: Show the Priority Classes
 **Say:** "Before we see preemption, let's establish the priority hierarchy. These are Kubernetes PriorityClasses — platform policy, not a setting buried in a YAML that developers control."
@@ -64,10 +71,28 @@ oc get clusterqueue inference-cluster-queue -o wide
 
 **Say:** "Alice's dev job is running. Her queue is at capacity — borrowing is disabled for the inference queue, so her production job has nowhere to go... unless Kueue acts."
 
+Switch to the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Scroll to `gpuaas-cohort` → `inference-cluster-queue`. Total accelerators shows 1 active workload. Compute and memory gauges are non-zero. Queue is at capacity — no headroom. Now watch what happens when a higher-priority job arrives."
+
+Switch back to CLI.
+
 ---
 
 ### Step 3: Submit Alice's High-Priority Production Inference Job
-**Say:** "Now Alice's production inference job arrives — high priority, time-sensitive. Her dev slot is occupied and she can't borrow. Watch what Kueue does."
+
+**Before submitting** — ensure the audience is watching the workload list in **Tab 2 (Workload metrics)** or a live watch terminal. Preemption happens within seconds of submission.
+
+Open a dedicated terminal with the watch running:
+```bash
+oc get workloads -n inference-team-project -w
+```
+
+Or switch to **Tab 2 (Workload metrics)** → filter by `inference-team-project` to see admission state and priority update live.
+
+**Say:** "Watch the screen — I'm about to submit Alice's production inference job. It's high priority. Her dev slot is occupied. Kueue has exactly one choice. And after about 90 seconds, watch what happens when it finishes."
 
 ```bash
 bash use-cases/uc5-priority-preemption/run-demo.sh 2
@@ -84,6 +109,12 @@ Within seconds, observe:
 - `alice-dev-medium`: `Admitted` → `Evicted` (preempted by higher-priority job in same queue)
 
 **Say:** "Kueue preempted Alice's own dev job to make room for her production job. This is `withinClusterQueue: LowerPriority` — the platform enforces priority as policy. No human intervened."
+
+Open the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Notice the `inference-cluster-queue` card — total accelerators still shows 1 in use. The compute and memory gauges stayed non-zero throughout. The slot never went idle — the platform handed it directly from the dev job to the production job."
 
 ---
 
@@ -109,7 +140,10 @@ oc get pods -n inference-team-project
 ---
 
 ### Step 5: Watch Re-admission After alice's Job Completes
-**Say:** "Alice's inference job is short — a validation pass. Let's watch what happens when it finishes."
+
+> **Timing note:** The inference job runs for ~90 seconds. Start this step immediately after Step 4 so the audience is watching when re-admission fires. Keep the workload watch running in a visible terminal — the transition happens automatically within seconds of the inference job completing.
+
+**Say:** "Alice's inference job is short — a validation pass, about 90 seconds. Watch this terminal — the moment it finishes, the platform acts."
 
 Monitor in real time:
 
@@ -127,6 +161,14 @@ oc get workloads -n inference-team-project
 ```
 
 **Say:** "Production got what it needed, instantly. And the moment it was done, the platform restored Alice's dev work. No tickets, no manual re-submissions, no lost jobs."
+
+Switch to the GPUaaS Infrastructure dashboard:
+
+Switch to **Tab 1 (Infrastructure)**
+
+**Say:** "Look at the `inference-cluster-queue` card throughout this entire sequence — 1 accelerator in use the whole time. Compute consumption stayed non-zero. The slot went dev → production → dev without ever dropping to idle. The borrowing trends chart shows a flat, uninterrupted line. That's the efficiency guarantee of priority-aware scheduling."
+
+Switch back to CLI.
 
 ---
 

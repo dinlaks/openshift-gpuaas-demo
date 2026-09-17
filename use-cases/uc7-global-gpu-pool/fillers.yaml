@@ -30,7 +30,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -u, -c, "import time; print('[filler-1] Holding Cluster A mig-1g.6gb slot 1/4'); time.sleep(3600)"]
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"[filler-1] Holding Cluster A slot 1/4 | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '3600'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-1] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -60,7 +73,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -u, -c, "import time; print('[filler-2] Holding Cluster A mig-1g.6gb slot 2/4'); time.sleep(3600)"]
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"[filler-2] Holding Cluster A slot 2/4 | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '3600'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-2] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -90,7 +116,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -u, -c, "import time; print('[filler-3] Holding Cluster A mig-1g.6gb slot 3/4'); time.sleep(3600)"]
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"[filler-3] Holding Cluster A slot 3/4 | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '3600'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-3] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
@@ -120,7 +159,20 @@ spec:
       containers:
         - name: filler
           image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
-          command: [python, -u, -c, "import time; print('[filler-4] Holding Cluster A mig-1g.6gb slot 4/4'); time.sleep(3600)"]
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              mem = torch.cuda.get_device_properties(0).total_memory / 1e9
+              n = min(int((mem * 0.4 * 1e9 / 4) ** 0.5), 8192)
+              x = torch.randn(n, n, device='cuda')
+              print(f"[filler-4] Holding Cluster A slot 4/4 | VRAM: {mem:.1f}GB")
+              duration = int(os.getenv('JOB_DURATION_SECS', '3600'))
+              start, i = time.time(), 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if i % 30 == 0: print(f"  [filler-4] compute running... {int(time.time()-start)}s elapsed")
+                  time.sleep(0.2); i += 1
           resources:
             requests:
               ${MIG_SMALL_RESOURCE}: "1"
