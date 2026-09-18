@@ -88,14 +88,14 @@ Production inference runs on a premium GPU slice weekdays. On weekends, that sli
 
 ## Quick Reference
 
-| UC | Title | Duration | Key Metric | Recording |
-|---|---|---|---|---|
-| UC1 | GPU Flavors & Hardware Profiles | 7 min | Per-project hardware profile dropdown | [▶ Watch](https://youtu.be/BU0Hc7oaKFU) |
-| UC2 | Dynamic Resource Allocation | 10 min | ResourceClaim lifecycle | [▶ Watch](https://youtu.be/GE_x_-298Ss) |
-| UC3 | Multi-Tenant Quotas + Cohort Borrowing | 8 min | 5 teams, 1 pool, 0 conflicts | [▶ Watch](https://youtu.be/sVS9c26ErLQ) |
-| UC4 | Queue-Based Scheduling | 8 min | Job waits → auto-admits on slot free | [▶ Watch](https://youtu.be/w0XPTzQtuTs) |
-| UC5 | Workload Priority & Preemption | 8 min | Dev evicted in <5s, auto re-queued | [▶ Watch](https://youtu.be/3sD9Edd9qQQ) |
-| UC6 | Model-Specific Placement | 7 min | Full GPU vs MIG slice, same cluster | [▶ Watch](https://youtu.be/0nhiYEQb4VQ) |
-| UC7 | Global GPU Pool | 10 min | Cross-cluster dispatch, 1 submission | [▶ Watch](https://youtu.be/DiCK6clvoAc) |
-| UC8 | Gang Scheduling | 8 min | 4 pods start at same second | [▶ Watch](https://youtu.be/JyPpE_ze03Y) |
-| UC9 | Time-Based Policy | 8 min | Friday→economy, Monday→premium, automatic | [▶ Watch](https://youtu.be/_qSfaNyW-_c) |
+| UC | Title | Key Metric | Recording |
+|---|---|---|---|
+| UC1 | GPU Flavors & Hardware Profiles | Per-project hardware profile dropdown | [▶ Watch](https://youtu.be/BU0Hc7oaKFU) |
+| UC2 | Dynamic Resource Allocation | ResourceClaim lifecycle | [▶ Watch](https://youtu.be/GE_x_-298Ss) |
+| UC3 | Multi-Tenant Quotas + Cohort Borrowing | 5 teams, 1 pool, 0 conflicts | [▶ Watch](https://youtu.be/sVS9c26ErLQ) |
+| UC4 | Queue-Based Scheduling | Job waits → auto-admits on slot free | [▶ Watch](https://youtu.be/w0XPTzQtuTs) |
+| UC5 | Workload Priority & Preemption | Dev evicted in <5s, auto re-queued | [▶ Watch](https://youtu.be/3sD9Edd9qQQ) |
+| UC6 | Model-Specific Placement | Full GPU vs MIG slice, same cluster | [▶ Watch](https://youtu.be/0nhiYEQb4VQ) |
+| UC7 | Global GPU Pool | Cross-cluster dispatch, 1 submission | [▶ Watch](https://youtu.be/DiCK6clvoAc) |
+| UC8 | Gang Scheduling | 4 pods start at same second | [▶ Watch](https://youtu.be/JyPpE_ze03Y) |
+| UC9 | Time-Based Policy | Friday→economy, Monday→premium, automatic | [▶ Watch](https://youtu.be/_qSfaNyW-_c) |
