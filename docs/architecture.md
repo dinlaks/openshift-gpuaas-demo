@@ -94,7 +94,7 @@ from basic GPU partitioning to cross-cluster workload dispatch.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Red Hat OpenShift AI (RHOAI) 3.3+                      │
+│  Red Hat OpenShift AI (RHOAI) 3.5                        │
 │  • Workbench UI  • Hardware Profiles  • Model Serving   │
 ├─────────────────────────────────────────────────────────┤
 │  Kueue (Red Hat build) stable-v1.3                      │
