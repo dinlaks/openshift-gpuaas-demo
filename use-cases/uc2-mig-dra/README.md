@@ -40,7 +40,7 @@ oc get deviceclass
 
 ## Demo Steps
 
-> **Dashboard setup:** DRA workloads bypass the device plugin and do not appear in Workload metrics. Use OpenShift Console (**Workloads → Jobs → namespace: research-team-project**) to track pod lifecycle. Tab 1 (Infrastructure) will show 0/0 total accelerators while DRA is active — this is expected and reinforces the DRA story.
+> **Dashboard setup:** DRA workloads bypass the device plugin and do not appear in Workload metrics. Use OpenShift Console (**Workloads → Jobs → namespace: research-team-project**) to track pod lifecycle. the Infrastructure dashboard (Observe & Monitor > Infrastructure) will show 0/0 total accelerators while DRA is active — this is expected and reinforces the DRA story.
 
 ### Step 1: Show the DRA Inventory (1 min)
 
@@ -176,7 +176,11 @@ For the live demo, focus on `dra-gpu-job` (full GPU) which is end-to-end validat
 
 ## Cleanup
 
+Force-delete DRA pods first (they can get stuck in Terminating due to ResourceClaim holding):
+
 ```bash
+oc delete job dra-gpu-job dra-mig-job -n research-team-project --ignore-not-found
+oc delete pod -l demo/approach=dra -n research-team-project --force --grace-period=0 --ignore-not-found
 bash 02-gpu-setup/04-dra/teardown-dra.sh
 ```
 
