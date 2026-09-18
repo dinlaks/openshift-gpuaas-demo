@@ -7,7 +7,7 @@ This add-on extends the single-cluster setup with three capabilities:
 | `01-acm-setup/` | Install ACM Hub, import spoke cluster, enforce GPU policy across clusters |
 | `02-multikueue/` | Cross-cluster GPU job dispatch — users submit once, platform picks the cluster |
 | `03-acm-observability/` | Unified GPU metrics from all clusters in one Grafana dashboard |
-| `uc7-global-gpu-pool/` | UC7 demo — global GPU pool via MultiKueue |
+| `uc7-global-gpu-pool/` | UC7 demo files moved to `use-cases/uc7-global-gpu-pool/` |
 
 ## Cluster roles
 
@@ -77,7 +77,7 @@ bash optional/storage/deploy-storage.sh --minio
 bash multi-cluster/02-multikueue/01-multikueue-setup.sh
 
 # 5. Run UC7 demo
-bash multi-cluster/uc7-global-gpu-pool/run-demo.sh
+bash use-cases/uc7-global-gpu-pool/run-demo.sh
 ```
 
 ## UC7: Global GPU Pool

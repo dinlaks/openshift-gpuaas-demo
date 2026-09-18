@@ -150,14 +150,14 @@ openshift-gpuaas-demo/
 │   ├── uc4-queue-scheduling/
 │   ├── uc5-priority-preemption/
 │   ├── uc6-model-placement/
+│   ├── uc7-global-gpu-pool/    # Multi-cluster demo files (ACM + MultiKueue)
 │   ├── uc8-gang-scheduling/
 │   └── uc9-time-based-policy/
 │
-├── multi-cluster/          # Add-on: ACM + MultiKueue + Observability (UC7)
+├── multi-cluster/          # Add-on: ACM + MultiKueue + Observability infrastructure
 │   ├── 01-acm-setup/       # ACM Hub install, cluster import, GPU policy enforcement
-│   ├── 02-multikueue/      # Cross-cluster job dispatch
-│   ├── 03-acm-observability/ # Unified GPU metrics + Grafana dashboard JSON
-│   └── uc7-global-gpu-pool/
+│   ├── 02-multikueue/      # Cross-cluster job dispatch setup
+│   └── 03-acm-observability/ # Unified GPU metrics + Grafana dashboard JSON
 │
 ├── optional/
 │   ├── storage/            # LVM Operator + MinIO (bare-metal / ACM Observability)
