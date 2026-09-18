@@ -1,4 +1,4 @@
-# UC1: Multiple GPU Types/Flavors (7 min)
+# UC1: Multiple GPU Types/Flavors
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/BU0Hc7oaKFU) — narrated live demo on a real cluster, no login required.
 

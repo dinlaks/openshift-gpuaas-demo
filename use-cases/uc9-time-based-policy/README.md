@@ -1,4 +1,4 @@
-# UC9: Time-Based GPU Placement (8 min)
+# UC9: Time-Based GPU Placement
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/_qSfaNyW-_c) — narrated live demo on a real cluster, no login required.
 

@@ -1,4 +1,4 @@
-# UC3: Multiple Tenants with Quotas (8 min)
+# UC3: Multiple Tenants with Quotas
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/sVS9c26ErLQ) — narrated live demo on a real cluster, no login required.
 

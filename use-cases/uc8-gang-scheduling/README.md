@@ -1,4 +1,4 @@
-# UC8: Gang Scheduling for Multi-GPU Jobs (8 min)
+# UC8: Gang Scheduling for Multi-GPU Jobs
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/JyPpE_ze03Y) — narrated live demo on a real cluster, no login required.
 

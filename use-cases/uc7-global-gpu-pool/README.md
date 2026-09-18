@@ -1,4 +1,4 @@
-# UC7: Global GPU Pools Across Clusters (10 min)
+# UC7: Global GPU Pools Across Clusters
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/DiCK6clvoAc) — narrated live demo on a real cluster, no login required.
 
@@ -55,7 +55,7 @@ oc delete jobs -n inference-team-project -l demo/uc=uc7-multi-cluster --ignore-n
 > - **Spoke Tab 1 — Observe & Monitor > Infrastructure**: Spoke cluster GPU utilization after dispatch
 > - **Hub Tab 2 — Observe & Monitor > Workload metrics**: workload admission state on the hub — filter by `inference-team-project` to see MultiKueue dispatch
 
-### Act 1 (3 min): ACM Fleet Governance
+### Act 1: ACM Fleet Governance
 
 #### Step 1: Show Both Clusters Under ACM Management
 
@@ -112,7 +112,7 @@ What to say: "Both clusters are Compliant. ACM verified that GPU Operator is ins
 
 ---
 
-### Act 2 (2 min): ACM Observability — Unified GPU Metrics
+### Act 2: ACM Observability — Unified GPU Metrics
 
 What to say: "ACM Observability aggregates DCGM metrics from both clusters into a single view. We can see GPU utilization across all GPUs from one dashboard."
 
@@ -131,7 +131,7 @@ What to say: "One pane of glass for all four GPUs across two physical servers. G
 
 ---
 
-### Act 3 (5 min): MultiKueue Cross-Cluster Dispatch
+### Act 3: MultiKueue Cross-Cluster Dispatch
 
 #### Step 3: Fill Cluster A's 2g.12gb Quota
 

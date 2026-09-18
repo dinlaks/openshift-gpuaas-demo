@@ -1,4 +1,4 @@
-# UC5: Workload Priority (8 min)
+# UC5: Workload Priority
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/3sD9Edd9qQQ) — narrated live demo on a real cluster, no login required.
 

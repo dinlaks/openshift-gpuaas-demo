@@ -1,4 +1,4 @@
-# UC4: Queue-Based Scheduling (8 min)
+# UC4: Queue-Based Scheduling
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/w0XPTzQtuTs) — narrated live demo on a real cluster, no login required.
 

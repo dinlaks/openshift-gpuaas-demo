@@ -42,7 +42,7 @@ oc get deviceclass
 
 > **Dashboard setup:** DRA workloads bypass the device plugin and do not appear in Workload metrics. Use OpenShift Console (**Workloads → Jobs → namespace: research-team-project**) to track pod lifecycle. the Infrastructure dashboard (Observe & Monitor > Infrastructure) will show 0/0 total accelerators while DRA is active — this is expected and reinforces the DRA story.
 
-### Step 1: Show the DRA Inventory (1 min)
+### Step 1: Show the DRA Inventory
 
 **Say:** *"With DRA enabled, the cluster publishes every GPU device as a first-class resource. Let me show you what the scheduler sees."*
 
@@ -108,7 +108,7 @@ Then click **Events tab** — shows the ResourceClaim being created and bound dy
 
 ---
 
-### Step 4: Show What Was Allocated (1 min)
+### Step 4: Show What Was Allocated
 
 ```bash
 oc describe resourceclaim -n research-team-project

@@ -1,4 +1,4 @@
-# UC6: Model-Specific Placement (7 min)
+# UC6: Model-Specific Placement
 
 > **Demo Recording:** [▶ Watch on YouTube](https://youtu.be/0nhiYEQb4VQ) — narrated live demo on a real cluster, no login required.
 
