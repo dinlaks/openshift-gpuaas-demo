@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.plugin.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: plugin
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: plugin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: plugin
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: plugin
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.plugin.port }}
+              protocol: TCP
+          env:
+            - name: PORT
+              value: {{ .Values.plugin.port | quote }}
+            - name: DB_PATH
+              value: "{{ .Values.persistence.mountPath }}/bookings.db"
+            - name: PLUGIN_DIST_DIR
+              value: /app/dist
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: BOOKING_WINDOW_DAYS
+              value: {{ .Values.bookingWindowDays | quote }}
+            - name: KUEUE_SYNC_ENABLED
+              value: {{ .Values.kueue.syncEnabled | quote }}
+            - name: KUEUE_SYNC_INTERVAL
+              value: {{ .Values.kueue.syncIntervalSeconds | quote }}
+            - name: KUEUE_SYNC_DAYS
+              value: {{ .Values.kueue.syncDays | quote }}
+            - name: GPU_DISCOVERY_ENABLED
+              value: {{ .Values.gpuDiscovery.enabled | quote }}
+            - name: GPU_DISCOVERY_INTERVAL
+              value: {{ .Values.gpuDiscovery.intervalSeconds | quote }}
+            {{- if .Values.tls.enabled }}
+            - name: TLS_CERT_FILE
+              value: /var/serving-cert/tls.crt
+            - name: TLS_KEY_FILE
+              value: /var/serving-cert/tls.key
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: https
+              {{- if .Values.tls.enabled }}
+              scheme: HTTPS
+              {{- end }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: https
+              {{- if .Values.tls.enabled }}
+              scheme: HTTPS
+              {{- end }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+            {{- if .Values.tls.enabled }}
+            - name: serving-cert
+              readOnly: true
+              mountPath: /var/serving-cert
+            {{- end }}
+            {{- if not .Values.gpuDiscovery.enabled }}
+            - name: gpu-config
+              mountPath: /app/config
+              readOnly: true
+            {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        {{- if .Values.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-data
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        - name: serving-cert
+          secret:
+            secretName: {{ .Values.plugin.name }}-cert
+            defaultMode: 420
+        {{- end }}
+        {{- if not .Values.gpuDiscovery.enabled }}
+        - name: gpu-config
+          configMap:
+            name: {{ .Values.plugin.name }}-gpu-config
+        {{- end }}

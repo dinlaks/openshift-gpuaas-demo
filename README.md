@@ -35,6 +35,7 @@ This demo works on any OpenShift cluster with NVIDIA GPU nodes (OCP 4.17+, valid
 | UC7 | Global GPU Pool | MultiKueue dispatches across clusters transparently (add-on) | [▶ UC7: Global GPU Pool (MultiKueue)](https://youtu.be/DiCK6clvoAc) |
 | UC8 | Gang Scheduling | All-or-nothing batch scheduling — 4 GPUs or zero | [▶ UC8: Gang Scheduling](https://youtu.be/JyPpE_ze03Y) |
 | UC9 | Time-Based Policy | CronJobs auto-switch GPU quota between weekday and weekend tiers | [▶ UC9: Time-Based GPU Cost Policy](https://youtu.be/_qSfaNyW-_c) |
+| UC10 | Self-Service GPU Booking Portal | Calendar-based GPU reservation — self-service, enforced by Kueue | [▶ UC10: Self-Service GPU Booking Portal](https://youtu.be/NPcbaGa6oFY) |
 
 > **Demo recordings** are unlisted YouTube videos — no login required to view. Each recording is a narrated live demo on a real cluster.
 

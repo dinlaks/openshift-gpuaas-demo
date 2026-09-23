@@ -99,3 +99,4 @@ Production inference runs on a premium GPU slice weekdays. On weekends, that sli
 | UC7 | Global GPU Pool | Cross-cluster dispatch, 1 submission | [▶ Watch](https://youtu.be/DiCK6clvoAc) |
 | UC8 | Gang Scheduling | 4 pods start at same second | [▶ Watch](https://youtu.be/JyPpE_ze03Y) |
 | UC9 | Time-Based Policy | Friday→economy, Monday→premium, automatic | [▶ Watch](https://youtu.be/_qSfaNyW-_c) |
+| UC10 | Self-Service GPU Booking Portal | Book a GPU, get a GPU — no tickets, no YAML, no admin | [▶ Watch](https://youtu.be/NPcbaGa6oFY) |

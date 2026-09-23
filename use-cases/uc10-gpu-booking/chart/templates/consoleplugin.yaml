@@ -1,0 +1,22 @@
+apiVersion: console.openshift.io/v1
+kind: ConsolePlugin
+metadata:
+  name: {{ .Values.plugin.name }}
+spec:
+  displayName: {{ .Values.plugin.displayName | quote }}
+  backend:
+    type: Service
+    service:
+      name: {{ .Values.plugin.name }}
+      namespace: {{ .Release.Namespace }}
+      port: {{ .Values.service.port }}
+      basePath: "/"
+  proxy:
+    - alias: backend
+      authorization: UserToken
+      endpoint:
+        type: Service
+        service:
+          name: {{ .Values.plugin.name }}
+          namespace: {{ .Release.Namespace }}
+          port: {{ .Values.service.port }}

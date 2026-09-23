@@ -1,0 +1,75 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/eformat/gpu-booking-plugin
+  tag: latest
+  pullPolicy: Always
+
+plugin:
+  name: gpu-booking-plugin
+  displayName: "GPU Booking Plugin"
+  port: 9443
+
+serviceAccount:
+  create: true
+  name: gpu-booking-plugin
+
+service:
+  type: ClusterIP
+  port: 9443
+
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 2Gi
+  mountPath: /app/data
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+tls:
+  enabled: true
+
+enablePlugin: true
+
+kueue:
+  syncEnabled: true
+  syncIntervalSeconds: 30
+  syncDays: 7
+
+bookingWindowDays: 30
+
+gpuDiscovery:
+  enabled: true
+  intervalSeconds: 600
+
+gpuConfig:
+  resources:
+    - name: "H200 Full GPU"
+      type: "nvidia.com/gpu"
+      count: 8
+      share: 0.0625
+      gpuEquivalent: 1.0
+    - name: "MIG 3g.71gb"
+      type: "nvidia.com/mig-3g.71gb"
+      count: 8
+      share: 0.03125
+      gpuEquivalent: 0.5
+    - name: "MIG 2g.35gb"
+      type: "nvidia.com/mig-2g.35gb"
+      count: 8
+      share: 0.015625
+      gpuEquivalent: 0.25
+    - name: "MIG 1g.18gb"
+      type: "nvidia.com/mig-1g.18gb"
+      count: 16
+      share: 0.0078125
+      gpuEquivalent: 0.125
+  totalCpu: 316
+  totalMemory: 3460

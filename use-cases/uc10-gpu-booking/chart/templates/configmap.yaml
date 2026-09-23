@@ -1,0 +1,14 @@
+{{- if not .Values.gpuDiscovery.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.plugin.name }}-gpu-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: config
+data:
+  gpu-config.json: |
+    {{- .Values.gpuConfig | toPrettyJson | nindent 4 }}
+{{- end }}

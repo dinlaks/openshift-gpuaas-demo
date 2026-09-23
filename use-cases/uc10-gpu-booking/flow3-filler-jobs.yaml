@@ -1,0 +1,119 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: filler-mig-slot-1
+  namespace: research-team-project
+  labels:
+    demo/uc: uc10-booking
+    demo/flow: flow3-filler
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc10-booking
+        demo/flow: flow3-filler
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time
+              print("UC10 FILLER: occupying MIG 1g.6gb slot for Flow 3 demo")
+              x = torch.randn(512, 512, device='cuda')
+              for i in range(7200 // 5):
+                  _ = torch.mm(x, x)
+                  time.sleep(5)
+          env:
+            - name: JOB_DURATION_SECS
+              value: "7200"
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: filler-mig-slot-2
+  namespace: research-team-project
+  labels:
+    demo/uc: uc10-booking
+    demo/flow: flow3-filler
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc10-booking
+        demo/flow: flow3-filler
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time
+              print("UC10 FILLER: occupying MIG 1g.6gb slot for Flow 3 demo")
+              x = torch.randn(512, 512, device='cuda')
+              for i in range(7200 // 5):
+                  _ = torch.mm(x, x)
+                  time.sleep(5)
+          env:
+            - name: JOB_DURATION_SECS
+              value: "7200"
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: filler-mig-slot-3
+  namespace: research-team-project
+  labels:
+    demo/uc: uc10-booking
+    demo/flow: flow3-filler
+    kueue.x-k8s.io/queue-name: research-queue
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc10-booking
+        demo/flow: flow3-filler
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: filler
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time
+              print("UC10 FILLER: occupying MIG 1g.6gb slot for Flow 3 demo")
+              x = torch.randn(512, 512, device='cuda')
+              for i in range(7200 // 5):
+                  _ = torch.mm(x, x)
+                  time.sleep(5)
+          env:
+            - name: JOB_DURATION_SECS
+              value: "7200"
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"

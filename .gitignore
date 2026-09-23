@@ -7,3 +7,4 @@ docs/DEMO-SCRIPT-FAST.md
 preview-demo.sh
 validate-demo.sh
 presenter-view.sh
+use-cases/uc10-gpu-booking/values.yaml

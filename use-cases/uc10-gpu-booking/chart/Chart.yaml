@@ -1,0 +1,6 @@
+apiVersion: v2
+name: gpu-booking-plugin
+description: OpenShift Console Plugin for GPU resource booking with Kueue integration
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

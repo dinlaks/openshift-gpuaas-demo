@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alice-reserved-inference
+  namespace: user-alice
+  labels:
+    demo/uc: uc10-booking
+    demo/flow: flow1
+    demo/user: alice
+    kueue.x-k8s.io/queue-name: reserved
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      labels:
+        demo/uc: uc10-booking
+        demo/flow: flow1
+        demo/user: alice
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: inference
+          image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+          command: [python, -u, -c]
+          args:
+            - |
+              import torch, time, os
+              gpu  = torch.cuda.get_device_name(0)
+              mem  = torch.cuda.get_device_properties(0).total_memory / 1e9
+              print("=" * 60)
+              print("UC10 FLOW 1: SELF-SERVICE GPU BOOKING")
+              print("=" * 60)
+              print(f"User          : alice")
+              print(f"GPU           : {gpu}")
+              print(f"VRAM          : {mem:.1f} GB")
+              print(f"Queue         : reserved  (booking-backed LocalQueue)")
+              print(f"Resource      : nvidia.com/mig-1g.6gb")
+              print("RUNNING ON RESERVED MIG SLICE — booking enforced access")
+              print("=" * 60)
+              x = torch.randn(2048, 2048, device='cuda')
+              duration = int(os.getenv('JOB_DURATION_SECS', '3600'))
+              start = time.time()
+              step = 0
+              while time.time() - start < duration:
+                  _ = torch.mm(x, x)
+                  if step % 30 == 0:
+                      elapsed = int(time.time() - start)
+                      print(f"  [alice] inference running... {elapsed}s elapsed on reserved GPU")
+                  step += 1
+                  time.sleep(2)
+              print("Inference complete — reserved window used successfully.")
+          env:
+            - name: JOB_DURATION_SECS
+              value: "3600"
+          resources:
+            requests:
+              ${MIG_SMALL_RESOURCE}: "1"
+            limits:
+              ${MIG_SMALL_RESOURCE}: "1"
