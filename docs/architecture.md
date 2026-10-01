@@ -20,50 +20,50 @@ from basic GPU partitioning to cross-cluster workload dispatch and self-service 
   │                                                                          │
   │   Users                                                                  │
   │   alice (inference) ──┐                                                  │
-  │   bob   (ds)          ├──► RHOAI Dashboard / oc CLI / API               │
+  │   bob   (ds)          ├──► RHOAI Dashboard / oc CLI / API                │
   │   charlie (research)  │         │                                        │
-  │   diana  (finetune) ──┘         │ job / workbench submit                │
+  │   diana  (finetune) ──┘         │ job / workbench submit                 │
   │                                 ▼                                        │
-  │          ┌──────────────────────────────────────────────┐               │
-  │          │         Red Hat OpenShift AI (RHOAI)         │               │
-  │          │  Hardware Profiles · Workbench UI · Notebooks│               │
-  │          │  (profiles expose GPU tiers, not raw names)  │               │
-  │          └──────────────────────┬───────────────────────┘               │
+  │          ┌──────────────────────────────────────────────┐                │
+  │          │         Red Hat OpenShift AI (RHOAI)         │                │
+  │          │  Hardware Profiles · Workbench UI · Notebooks│                │
+  │          │  (profiles expose GPU tiers, not raw names)  │                │
+  │          └──────────────────────┬───────────────────────┘                │
   │                                 │ workload admission                     │
   │                                 ▼                                        │
-  │          ┌──────────────────────────────────────────────┐               │
-  │          │              Kueue Scheduler                  │               │
-  │          │                                              │               │
-  │          │  inference-queue ──► inference-cluster-queue │               │
-  │          │  ds-queue        ──► ds-cluster-queue        │               │
-  │          │  research-queue  ──► research-cluster-queue  │  gpuaas-      │
-  │          │  finetune-queue  ──► finetune-cluster-queue  │  cohort       │
-  │          │  analytics-queue ──► analytics-cluster-queue │  (borrowing)  │
-  │          │                                              │               │
-  │          │  Priority · Preemption · Gang scheduling     │               │
-  │          │  Time-based policy (CronJobs)                │               │
-  │          └──────────────────────┬───────────────────────┘               │
+  │          ┌──────────────────────────────────────────────┐                │
+  │          │              Kueue Scheduler                 │                │
+  │          │                                              │                │
+  │          │  inference-queue ──► inference-cluster-queue │                │
+  │          │  ds-queue        ──► ds-cluster-queue        │                │
+  │          │  research-queue  ──► research-cluster-queue  │  gpuaas-       │
+  │          │  finetune-queue  ──► finetune-cluster-queue  │  cohort        │
+  │          │  analytics-queue ──► analytics-cluster-queue │  (borrowing)   │
+  │          │                                              │                │
+  │          │  Priority · Preemption · Gang scheduling     │                │
+  │          │  Time-based policy (CronJobs)                │                │
+  │          └──────────────────────┬───────────────────────┘                │
   │                                 │ pod scheduled                          │
   │                                 ▼                                        │
-  │          ┌──────────────────────────────────────────────┐               │
-  │          │              GPU Worker Node                  │               │
-  │          │       (layout adapts to GPU_TYPE in env.sh)  │               │
-  │          │                                              │               │
-  │          │  Small GPU Tier  (MIG slice or timeslice)    │               │
-  │          │  ┌──────────┐ ┌──────────┐ ┌──────────┐    │               │
-  │          │  │  small   │ │  small   │ │  small   │    │               │
-  │          │  │  tier    │ │  tier    │ │  tier    │ .. │               │
-  │          │  │  (bob)   │ │(charlie) │ │  (idle)  │    │               │
-  │          │  └──────────┘ └──────────┘ └──────────┘    │               │
-  │          │                                              │               │
-  │          │  Large GPU Tier  (large MIG or full GPU)     │               │
-  │          │  ┌──────────────────────────────────────┐   │               │
-  │          │  │  large tier (alice / diana)           │   │               │
-  │          │  │  OR full GPU for DRA / large models   │   │               │
-  │          │  └──────────────────────────────────────┘   │               │
-  │          │                                              │               │
-  │          │  NVIDIA GPU Operator · DCGM metrics · NFD   │               │
-  │          └──────────────────────────────────────────────┘               │
+  │          ┌──────────────────────────────────────────────┐                │
+  │          │              GPU Worker Node                 │                │
+  │          │      (layout adapts to GPU_TYPE in env.sh)   │                │
+  │          │                                              │                │
+  │          │  Small GPU Tier  (MIG slice or timeslice)    │                │
+  │          │  ┌──────────┐ ┌──────────┐ ┌──────────┐      │                │
+  │          │  │  small   │ │  small   │ │  small   │      │                │
+  │          │  │  tier    │ │  tier    │ │  tier .. │      │                │
+  │          │  │  (bob)   │ │(charlie) │ │  (idle)  │      │                │
+  │          │  └──────────┘ └──────────┘ └──────────┘      │                │
+  │          │                                              │                │
+  │          │  Large GPU Tier  (large MIG or full GPU)     │                │
+  │          │  ┌──────────────────────────────────────┐    │                │
+  │          │  │  large tier (alice / diana)           │   │                │
+  │          │  │  OR full GPU for DRA / large models   │   │                │
+  │          │  └──────────────────────────────────────┘    │                │
+  │          │                                              │                │
+  │          │  NVIDIA GPU Operator · DCGM metrics · NFD    │                │
+  │          └──────────────────────────────────────────────┘                │
   │                                                                          │
   └──────────────────────────────────────────────────────────────────────────┘
 ```
@@ -91,7 +91,7 @@ from basic GPU partitioning to cross-cluster workload dispatch and self-service 
   │  Kueue (manager)            │         │  Kueue (worker)             │
   │  MultiKueue                 │         │                             │
   │                             │         │  inference-team-project     │
-  │  global-gpu-queue           │─ dispatch──►  (shadow job created)   │
+  │  global-gpu-queue           │─ dispatch──►  (shadow job created)    │
   │   └─► MultiKueue selects    │         │                             │
   │        cluster with capacity│         │  GPU Worker Node            │
   │                             │         │  (same GPU setup)           │
@@ -109,7 +109,7 @@ from basic GPU partitioning to cross-cluster workload dispatch and self-service 
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Red Hat OpenShift AI (RHOAI) 3.5                        │
+│  Red Hat OpenShift AI (RHOAI) 3.5                       │
 │  • Workbench UI  • Hardware Profiles  • Model Serving   │
 ├─────────────────────────────────────────────────────────┤
 │  Kueue (Red Hat build) stable-v1.3                      │
@@ -117,10 +117,10 @@ from basic GPU partitioning to cross-cluster workload dispatch and self-service 
 │  • Priority + Preemption  • Gang scheduling             │
 │  • Time-based policy (CronJobs)                         │
 ├─────────────────────────────────────────────────────────┤
-│  NVIDIA GPU Operator                                     │
-│  • MIG partitioning  • Timeslicing  • DRA (OCP 4.21+)  │
+│  NVIDIA GPU Operator                                    │
+│  • MIG partitioning  • Timeslicing  • DRA (OCP 4.21+)   │
 │  • DCGM metrics  • Node Feature Discovery               │
-│  GPU_TYPE: a30 · a100-40gb · a100-80gb · h100-80gb     │
+│  GPU_TYPE: a30 · a100-40gb · a100-80gb · h100-80gb      │
 │            h100-nvl · h200 · custom                     │
 │  Resource names + MIG profiles resolved from GPU_TYPE   │
 ├─────────────────────────────────────────────────────────┤
